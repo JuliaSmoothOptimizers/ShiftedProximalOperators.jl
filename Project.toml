@@ -1,0 +1,7 @@
+name = "ShiftedProximalOperators"
+uuid = "d4fd37fa-580c-4e43-9b30-361c21aae263"
+authors = ["rjbaraldi <rbaraldi@uw.edu>"]
+version = "0.1.0"
+
+[deps]
+ProximalOperators = "a725b495-10eb-56fe-b38b-717eba820537"
