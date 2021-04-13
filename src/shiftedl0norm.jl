@@ -3,9 +3,10 @@ export ShiftedNormL0
 mutable struct ShiftedNormL0 <: ShiftedProximableFunction
 	h::ProximableFunction
 	x
+  s
 	λ
 	function ShiftedNormL0(n, λ)
-		new(NormL0(λ), Vector{Float64}(undef, n), λ)
+		new(NormL0(λ), Vector{Float64}(undef, n), Vector{Float64}(undef, n), λ)
 	end
 end
 
@@ -18,6 +19,7 @@ end
 
 function prox(ψ::ShiftedNormL0, q, σ) 
  c = sqrt(2 * ψ.λ * σ)
+ s = similar(q)
   for i ∈ eachindex(q)
     xpq = ψ.x[i] + q[i]
     absxpq = abs(xpq)

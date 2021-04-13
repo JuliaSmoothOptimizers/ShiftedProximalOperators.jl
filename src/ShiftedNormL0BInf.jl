@@ -3,6 +3,7 @@ export ShiftedNormL0BInf
 mutable struct ShiftedNormL0BInf <: ShiftedProximalbleFunction
 	h::ProximableFunction
 	x
+  s
 	λ
 	Δ
 	function ShiftedNormL0BInf(n, λ)
@@ -27,16 +28,16 @@ function prox(ψ::ShiftedNormL0BInf,  q, σ)
 	# @show σ/λ, λ
 	c = sqrt(2*ψ.λ*σ)
 	w = ψ.xk+q
-	st = zeros(size(w))
 
 	for i = 1:length(w)
 		absx = abs(w[i])
 		if absx <=c
-			st[i] = 0
+			ψ.s[i] = 0
 		else
-			st[i] = w[i]
+			ψ.s[i] = w[i]
 		end
 	end
-	s = ProjB(st) - xk
-	return s 
+	ProjB!(ψ.s) 
+  ψ.s .-= xk
+	return ψ.s 
 end
