@@ -9,6 +9,7 @@ abstract type ShiftedProximalFunction <: ProximableFunction end
 
 # prox files 
 include("shiftedl0norm.jl")
+include("ShiftedNormL0BInf.jl")
 
 export prox, shift!
 
