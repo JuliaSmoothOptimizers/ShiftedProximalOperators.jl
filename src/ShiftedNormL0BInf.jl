@@ -22,12 +22,12 @@ end
 function prox(ψ::ShiftedNormL0BInf,  q, σ)
 	ProjB!(y) = begin
 		for i ∈ eachindex(y)
-			y[i] = min(max(y[i], ψ.xk[i] - ψ.Δ), ψ.xk[i] +ψ.Δ)
+			y[i] = min(max(y[i], ψ.x[i] - ψ.Δ), ψ.x[i] +ψ.Δ)
 		end
 	end 
 	# @show σ/λ, λ
 	c = sqrt(2*ψ.λ*σ)
-	w = ψ.xk+q
+	w = ψ.x+q
 
 	for i = 1:length(w)
 		absx = abs(w[i])
@@ -38,6 +38,6 @@ function prox(ψ::ShiftedNormL0BInf,  q, σ)
 		end
 	end
 	ProjB!(ψ.s) 
-  ψ.s .-= xk
+  ψ.s .-= ψ.x
 	return ψ.s 
 end
