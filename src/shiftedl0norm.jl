@@ -18,7 +18,7 @@ function shift!(ψ::ShiftedNormL0, x::Vector{Float64})
 	ψ
 end
 
-function prox(ψ::ShiftedNormL0, q, σ)
+function prox(ψ::ShiftedNormL0, q, σ) 
 	c = sqrt(2 * ψ.λ * σ)
 	for i ∈ eachindex(q)
 	xpq = ψ.x[i] + q[i]
@@ -32,6 +32,3 @@ function prox(ψ::ShiftedNormL0, q, σ)
 	ψ.s .-= ψ.x
 	return ψ.s
 end
-# The idea is that you can use a NormL0 object from ProximalOperators to 
-# define your problem, and inside TR and QR, you can set ψ = shifted(h, xk) 
-# to define the shifted L0-norm object. Then you call prox!() on ψ as usual.
