@@ -2,14 +2,13 @@ module ShiftedProximalOperators
 
 using ProximalOperators
 
-export PROXPATH
-PROXPATH = dirname(@__DIR__)
-
-abstract type ShiftedProximalFunction <: ProximableFunction end
+abstract type ShiftedProximableFunction <: ProximableFunction end
 
 # prox files 
 include("shiftedl0norm.jl")
 include("ShiftedNormL0BInf.jl")
+
+(ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.x + y)
 
 export prox, shift!
 
