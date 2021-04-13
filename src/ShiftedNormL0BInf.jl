@@ -1,6 +1,6 @@
 export ShiftedNormL0BInf
 
-mutable struct ShiftedNormL0BInf <: ShiftedProximalbleFunction
+mutable struct ShiftedNormL0BInf <: ShiftedProximableFunction
 	h::ProximableFunction
 	x
   s
