@@ -10,7 +10,7 @@ mutable struct ShiftedNormL0 <: ShiftedProximableFunction
 	end
 end
 
-shifted(h::NormL0, x::Vector{Float64}, λ)= ShiftedNormL0(h, x, λ)
+shifted(h::NormL0, x::Vector{Float64},s::Vector{Float64}(undef, n), λ)= ShiftedNormL0(h, x, s, λ)
 
 function shift!(ψ::ShiftedNormL0, x::Vector{Float64})
 	ψ.x .= x
