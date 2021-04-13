@@ -11,7 +11,7 @@ mutable struct ShiftedNormL0BInf <: ShiftedProximableFunction
 	end
 end
 
-shifted(h::NormL0, x::Vector{Float64},s::Vector{Float64}(undef, n), λ, Δ)= ShiftedNormL0BInf(h, x, s, λ, Δ)
+shifted(h::NormL0, x::Vector{Float64},s::Vector{Float64}, λ, Δ)= ShiftedNormL0BInf(h, x, s, λ, Δ)
 
 function shift!(ψ::ShiftedNormL0BInf, x::Vector{Float64}, Δ)
 	ψ.Δ = Δ
