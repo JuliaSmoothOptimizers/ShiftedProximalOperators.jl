@@ -40,7 +40,7 @@ for shifted_op ∈ (:ShiftedNormL0,)
 end
 
 # loop over operators with a trust region
-for shifted_op ∈ (:ShiftedNormL0BInf,)
+for shifted_op ∈ (:ShiftedNormL0BInf,:ShiftedNormL1BInf,)
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     # test basic types and properties

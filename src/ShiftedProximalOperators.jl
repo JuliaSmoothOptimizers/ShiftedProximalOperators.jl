@@ -1,6 +1,6 @@
 module ShiftedProximalOperators
 
-using ProximalOperators
+using ProximalOperators, Roots
 
 export ShiftedProximableFunction
 export prox, set_radius!, shift!, shifted
@@ -9,6 +9,7 @@ abstract type ShiftedProximableFunction <: ProximableFunction end
 
 include("shiftedNormL0.jl")
 include("shiftedNormL0BInf.jl")
+include("shiftedNormL1Binf.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.x + y)
 
