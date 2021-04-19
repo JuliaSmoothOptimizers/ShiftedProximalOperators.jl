@@ -20,12 +20,12 @@ fun_params(ψ::ShiftedNormL1BInf) = "x = $(ψ.x), Δ = $(ψ.Δ)"
 function prox(ψ::ShiftedNormL1BInf{R, V1, V2}, q::AbstractVector{R}, σ::R) where {R <: Real, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   ProjB!(w) = begin 
     for i ∈ eachindex(w)
-        w[i] = min(max(w[i], q[i] - ψ.λ * σ), q[i] + ψ.λ * σ)
+      w[i] = min(max(w[i], q[i] - ψ.λ * σ), q[i] + ψ.λ * σ)
     end
   end
   ProjΔ!(y) = begin 
-    for ∈ eachindex(y)
-        y[i] = min(max(y[i], -Δ), Δ)
+    for i ∈ eachindex(y)
+      y[i] = min(max(y[i], -Δ), Δ)
     end
   end
   ψ.s .= -ψ.x

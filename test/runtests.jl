@@ -3,7 +3,7 @@ using ShiftedProximalOperators
 using Test
 
 # loop over operators without a trust region
-for shifted_op ∈ (:ShiftedNormL0,)
+for shifted_op ∈ (:ShiftedNormL0,:ShiftedNormL1, :ShiftedIndBallL0)
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     # test basic types and properties
@@ -40,7 +40,7 @@ for shifted_op ∈ (:ShiftedNormL0,)
 end
 
 # loop over operators with a trust region
-for shifted_op ∈ (:ShiftedNormL0BInf,:ShiftedNormL1BInf,)
+for shifted_op ∈ (:ShiftedNormL0BInf,:ShiftedNormL1BInf, :ShiftedNormL1B2, :ShiftedIndBallL0BInf)
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     # test basic types and properties
