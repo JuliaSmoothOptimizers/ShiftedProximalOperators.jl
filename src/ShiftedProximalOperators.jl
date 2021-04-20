@@ -8,7 +8,7 @@ export prox, set_radius!, shift!, shifted
 abstract type ShiftedProximableFunction <: ProximableFunction end
 
 include("shiftedNormL0.jl")
-include("shiftedNormL0BInf.jl")
+# include("shiftedNormL0BInf.jl")
 
 include("shiftedNormL1.jl")
 include("shiftedNormL1Binf.jl")
