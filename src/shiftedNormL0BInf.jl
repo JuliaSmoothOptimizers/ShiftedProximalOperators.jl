@@ -2,7 +2,6 @@ export ShiftedNormL0BInf
 
 mutable struct ShiftedNormL0BInf{R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
   h::NormL0{R}
-<<<<<<< HEAD
   x0::V0  # base shift (nonzero when shifting an already shifted function
   x::V1
   s::V2
@@ -17,19 +16,6 @@ end
 shifted(h::NormL0{R}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real} = ShiftedNormL0BInf(h, zero(x), x, Δ, χ)
 shifted(ψ::ShiftedNormL0BInf{R, V0, V1, V2}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL0{R}}) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R} } = ShiftedNormL0BInf(ψ.h, ψ.x, x, Δ, χ)
 
-=======
-  χ::NormLinf{R}
-  x::V1
-  s::V2
-  Δ::R
-  function ShiftedNormL0BInf(h::NormL0{R}, χ::NormLinf{R}, x::AbstractVector{R}, Δ::R) where {R <: Real}
-    s = similar(x)
-    new{R, typeof(x), typeof(s)}(h, χ, x, s, Δ)
-  end
-end
-
-shifted(h::NormL0{R},χ::NormLinf{R}, x::AbstractVector{R}, Δ::R) where {R <: Real} = ShiftedNormL0BInf(h, χ, x, Δ)
->>>>>>> type error in L0binf
 
 fun_name(ψ::ShiftedNormL0BInf) = "shifted L0 pseudo-norm with L∞-norm trust region indicator"
 fun_expr(ψ::ShiftedNormL0BInf) = "s ↦ h(x + s) + χ({‖s‖∞ ≤ Δ})"
