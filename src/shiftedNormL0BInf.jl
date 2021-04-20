@@ -8,7 +8,7 @@ mutable struct ShiftedNormL0BInf{R <: Real, T <: ProximalOperator, V1 <: Abstrac
   Δ::R
   function ShiftedNormL0BInf(h::NormL0{R}, χ::NormLinf{R}, x::AbstractVector{R}, Δ::R) where {R <: Real}
     s = similar(x)
-    new{R, typeof(x), typeof(s)}(h, χ, x, s, Δ)
+    new{R, typeof(χ), typeof(x), typeof(s)}(h, χ, x, s, Δ)
   end
 end
 
