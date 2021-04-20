@@ -5,14 +5,14 @@ mutable struct ShiftedNormL1BInf{R <: Real, V1 <: AbstractVector{R}, V2 <: Abstr
   x::V1
   s::V2
   Δ::R
-  χ::NormLinf{R}
-  function ShiftedNormL1BInf(h::NormL1{R}, x::AbstractVector{R}, Δ::R, χ::NormLinf{R}) where {R <: Real}
+  χ::Conjugate{IndBallL1{R}}
+  function ShiftedNormL1BInf(h::NormL1{R}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real}
     s = similar(x)
     new{R, typeof(x), typeof(s)}(h, x, s, Δ, χ)
   end
 end
 
-shifted(h::NormL1{R}, x::AbstractVector{R}, Δ::R, χ::NormLinf{R}) where {R <: Real} = ShiftedNormL1BInf(h, x, Δ, χ)
+shifted(h::NormL1{R}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real} = ShiftedNormL1BInf(h, x, Δ, χ)
 
 fun_name(ψ::ShiftedNormL1BInf) = "shifted L1 norm with L∞-norm trust region indicator"
 fun_expr(ψ::ShiftedNormL1BInf) = "s ↦ h(x + s) + χ({‖s‖∞ ≤ Δ})"

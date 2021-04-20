@@ -6,15 +6,15 @@ mutable struct ShiftedIndBallL0BInf{R <: Real, V1 <: AbstractVector{R}, V2 <: Ab
   x::V1
   s::V2
   Δ::R
-  χ::NormLinf{R}
-  function ShiftedIndBallL0BInf(h::IndBallL0{R}, x::AbstractVector{R}, Δ::R, χ::NormLinf{R}) where {R <: Real}
+  χ::Conjugate{IndBallL1{R}}
+  function ShiftedIndBallL0BInf(h::IndBallL0{R}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real}
     s = similar(x)
     new{R, typeof(x), typeof(s)}(h, x, s, Δ)
   end
 end
 
 
-shifted(h::IndBallL0{R}, x::AbstractVector{R}, Δ::R, χ::NormLinf{R}) where {R <: Real} = ShiftedIndBallL0BInf(h, x, Δ, χ)
+shifted(h::IndBallL0{R}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real} = ShiftedIndBallL0BInf(h, x, Δ, χ)
 
 fun_name(ψ::ShiftedIndBallL0BInf) = "shifted L0 norm ball with L∞-norm trust region indicator"
 fun_expr(ψ::ShiftedIndBallL0BInf) = "s ↦ h(x + s) + χ({‖s‖∞ ≤ Δ})"
