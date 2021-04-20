@@ -1,6 +1,6 @@
 export ShiftedNormL0BInf
 
-mutable struct ShiftedNormL0BInf{R <: Real, T <: ProximalOperator, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
+mutable struct ShiftedNormL0BInf{R <: Real, T <: ProximalOperator.NormLinf, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
   h::NormL0{R}
   χ::NormLinf{R}
   x::V1
