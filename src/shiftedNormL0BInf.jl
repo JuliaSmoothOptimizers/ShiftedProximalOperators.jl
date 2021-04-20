@@ -1,6 +1,10 @@
 export ShiftedNormL0BInf
 
+<<<<<<< HEAD
 mutable struct ShiftedNormL0BInf{R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
+=======
+mutable struct ShiftedNormL0BInf{R <: Real, T <: ProximableFunction, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
+>>>>>>> trying proximable function
   h::NormL0{R}
   x0::V0  # base shift (nonzero when shifting an already shifted function
   x::V1
