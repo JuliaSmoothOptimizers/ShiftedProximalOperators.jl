@@ -6,17 +6,18 @@ mutable struct ShiftedIndBallL0BInf{R <: Real, V1 <: AbstractVector{R}, V2 <: Ab
   x::V1
   s::V2
   Δ::R
-  function ShiftedIndBallL0BInf(h::IndBallL0{R}, x::AbstractVector{R}, Δ::R) where {R <: Real}
+  χ::NormLinf{R}
+  function ShiftedIndBallL0BInf(h::IndBallL0{R}, x::AbstractVector{R}, Δ::R, χ::NormLinf{R}) where {R <: Real}
     s = similar(x)
     new{R, typeof(x), typeof(s)}(h, x, s, Δ)
   end
 end
 
 
-shifted(h::IndBallL0{R}, x::AbstractVector{R}, Δ::R) where {R <: Real} = ShiftedIndBallL0BInf(h, x, Δ)
+shifted(h::IndBallL0{R}, x::AbstractVector{R}, Δ::R, χ::NormLinf{R}) where {R <: Real} = ShiftedIndBallL0BInf(h, x, Δ, χ)
 
 fun_name(ψ::ShiftedIndBallL0BInf) = "shifted L0 norm ball with L∞-norm trust region indicator"
-fun_expr(ψ::ShiftedIndBallL0BInf) = "s ↦ h(x + s) + χ({‖s‖ ≤ Δ})"
+fun_expr(ψ::ShiftedIndBallL0BInf) = "s ↦ h(x + s) + χ({‖s‖∞ ≤ Δ})"
 fun_params(ψ::ShiftedIndBallL0BInf) = "x = $(ψ.x), Δ = $(ψ.Δ)"
 
 function prox(ψ::ShiftedIndBallL0BInf{R, V1, V2}, q::AbstractVector{R}, σ::R) where {R <: Real, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
@@ -26,7 +27,6 @@ function prox(ψ::ShiftedIndBallL0BInf{R, V1, V2}, q::AbstractVector{R}, σ::R) 
     end
   end
   
-  # w = q + xk
   q .+= ψ.x
   # find largest entries
   ψ.s .= sortperm(q, rev=true, by = abs) #stock with ψ.s as placeholder

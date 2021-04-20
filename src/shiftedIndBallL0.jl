@@ -13,8 +13,8 @@ end
 
 shifted(h::IndBallL0{R}, x::AbstractVector{R}) where {R <: Real} = ShiftedIndBallL0(h, x)
 
-fun_name(ψ::ShiftedIndBallL0) = "shifted L0 norm ball with L∞-norm trust region indicator"
-fun_expr(ψ::ShiftedIndBallL0) = "s ↦ h(x + s) + χ({‖s‖ ≤ Δ})"
+fun_name(ψ::ShiftedIndBallL0) = "shifted L0 norm ball indicator"
+fun_expr(ψ::ShiftedIndBallL0) = "s ↦ h(x + s)"
 fun_params(ψ::ShiftedIndBallL0) = "x = $(ψ.x), Δ = $(ψ.Δ)"
 
 function prox(ψ::ShiftedIndBallL0{R, V1, V2}, q::AbstractVector{R}, σ::R) where {R <: Real, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}

@@ -5,16 +5,17 @@ mutable struct ShiftedNormL0BInf{R <: Real, V1 <: AbstractVector{R}, V2 <: Abstr
   x::V1
   s::V2
   Δ::R
-  function ShiftedNormL0BInf(h::NormL0{R}, x::AbstractVector{R}, Δ::R) where {R <: Real}
+  χ::NormLinf{R}
+  function ShiftedNormL0BInf(h::NormL0{R}, x::AbstractVector{R}, Δ::R, χ::NormLinf{R}) where {R <: Real}
     s = similar(x)
-    new{R, typeof(x), typeof(s)}(h, x, s, Δ)
+    new{R, typeof(x), typeof(s)}(h, x, s, Δ, χ)
   end
 end
 
-shifted(h::NormL0{R}, x::AbstractVector{R}, Δ::R) where {R <: Real} = ShiftedNormL0BInf(h, x, Δ)
+shifted(h::NormL0{R}, x::AbstractVector{R}, Δ::R, χ::NormLinf{R}) where {R <: Real} = ShiftedNormL0BInf(h, x, Δ, χ)
 
 fun_name(ψ::ShiftedNormL0BInf) = "shifted L0 pseudo-norm with L∞-norm trust region indicator"
-fun_expr(ψ::ShiftedNormL0BInf) = "s ↦ h(x + s) + χ({‖s‖ ≤ Δ})"
+fun_expr(ψ::ShiftedNormL0BInf) = "s ↦ h(x + s) + χ({‖s‖∞ ≤ Δ})"
 fun_params(ψ::ShiftedNormL0BInf) = "x = $(ψ.x), Δ = $(ψ.Δ)"
 
 function prox(ψ::ShiftedNormL0BInf{R, V1, V2}, q::AbstractVector{R}, σ::R) where {R <: Real, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
