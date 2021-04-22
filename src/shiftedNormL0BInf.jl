@@ -2,13 +2,13 @@ export ShiftedNormL0BInf
 
 mutable struct ShiftedNormL0BInf{R <: Real, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
   h::NormL0{R}
-  χ::Conjugate{IndBallL1{R}}
   x::V1
   s::V2
   Δ::R
-  function ShiftedNormL0BInf(h::NormL0{R}, χ::Conjugate{IndBallL1{R}}, x::AbstractVector{R}, Δ::R) where {R <: Real}
+  χ::Conjugate{IndBallL1{R}}
+  function ShiftedNormL0BInf(h::NormL0{R}, x::AbstractVector{R}, Δ::R,  χ::Conjugate{IndBallL1{R}}) where {R <: Real}
     s = similar(x)
-    new{R, typeof(x), typeof(s)}(h, χ, x, s, Δ)
+    new{R, typeof(x), typeof(s)}(h, x, s, Δ, χ)
   end
 end
 
