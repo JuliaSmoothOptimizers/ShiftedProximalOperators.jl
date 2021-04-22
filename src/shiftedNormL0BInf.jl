@@ -12,7 +12,7 @@ mutable struct ShiftedNormL0BInf{R <: Real, V1 <: AbstractVector{R}, V2 <: Abstr
   end
 end
 
-shifted(h::NormL0{R}, χ::Conjugate{IndBallL1{R}}, x::AbstractVector{R}, Δ::R) where {R <: Real} = ShiftedNormL0BInf(h, χ, x, Δ)
+shifted(h::NormL0{R}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real} = ShiftedNormL0BInf(h, x, Δ, χ)
 
 fun_name(ψ::ShiftedNormL0BInf) = "shifted L0 pseudo-norm with L∞-norm trust region indicator"
 fun_expr(ψ::ShiftedNormL0BInf) = "s ↦ h(x + s) + χ({‖s‖∞ ≤ Δ})"
