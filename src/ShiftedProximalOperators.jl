@@ -59,6 +59,6 @@ where
 * q is the vector where the shifted proximal operator should be evaluated;
 * σ is a positive regularization parameter.
 """
-# prox
+prox
 
 end # module
