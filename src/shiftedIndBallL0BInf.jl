@@ -1,13 +1,13 @@
 
 export ShiftedIndBallL0BInf
 
-mutable struct ShiftedIndBallL0BInf{R <: Real, I <: Integer, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
+mutable struct ShiftedIndBallL0BInf{I <: Integer, R <: Real, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
   h::IndBallL0{I}
   x::V1
   s::V2
   Δ::R
   χ::Conjugate{IndBallL1{R}}
-  function ShiftedIndBallL0BInf(h::IndBallL0{I}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real, I <: Integer}
+  function ShiftedIndBallL0BInf(h::IndBallL0{I}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {I <: Integer, R <: Real}
     s = similar(x)
     new{I, R, typeof(x), typeof(s)}(h, x, s, Δ, χ)
   end
