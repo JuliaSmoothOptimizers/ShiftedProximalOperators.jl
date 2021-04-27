@@ -8,7 +8,7 @@ mutable struct ShiftedIndBallL0{I <: Integer, R <: Real, V0 <: AbstractVector{R}
   p::Vector{Int}
   function ShiftedIndBallL0(h::IndBallL0{I}, x0::AbstractVector{R}, x::AbstractVector{R}) where {I <: Integer, R <: Real}
     s = similar(x)
-    new{I, R, typeof(x), typeof(s)}(h, x0, x, s, Vector{Int}(undef, length(x)))
+    new{I, R, typeof(x0), typeof(x), typeof(s)}(h, x0, x, s, Vector{Int}(undef, length(x)))
   end
 end
 

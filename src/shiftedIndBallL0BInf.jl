@@ -11,7 +11,7 @@ mutable struct ShiftedIndBallL0BInf{I <: Integer, R <: Real, V0 <: AbstractVecto
   χ::Conjugate{IndBallL1{R}}
   function ShiftedIndBallL0BInf(h::IndBallL0{I}, x0::AbstractArray{R}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {I <: Integer, R <: Real}
     s = similar(x)
-    new{I, R, typeof(x), typeof(s)}(h, x0, x, s, Vector{Int}(undef, length(x)), Δ, χ)
+    new{I, R, typeof(x0), typeof(x), typeof(s)}(h, x0, x, s, Vector{Int}(undef, length(x)), Δ, χ)
   end
 end
 
