@@ -1,28 +1,31 @@
 export ShiftedIndBallL0
 
-mutable struct ShiftedIndBallL0{R <: Real, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
-  h::IndBallL0{R}
+mutable struct ShiftedIndBallL0{I <: Integer, R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
+  h::IndBallL0{I}
+  x0::V0
   x::V1
   s::V2
-  function ShiftedIndBallL0(h::IndBallL0{R}, x::AbstractVector{R}) where {R <: Real}
+  p::Vector{Int}
+  function ShiftedIndBallL0(h::IndBallL0{I}, x0::AbstractVector{R}, x::AbstractVector{R}) where {I <: Integer, R <: Real}
     s = similar(x)
-    new{R, typeof(x), typeof(s)}(h, x, s)
+    new{I, R, typeof(x), typeof(s)}(h, x0, x, s, Vector{Int}(undef, length(x)))
   end
 end
 
 
-shifted(h::IndBallL0{R}, x::AbstractVector{R}) where {R <: Real} = ShiftedIndBallL0(h, x)
+shifted(h::IndBallL0{I}, x::AbstractVector{R}) where {I <: Integer, R <: Real} = ShiftedIndBallL0(h, zero(x), x)
+shifted(ψ::ShiftedIndBallL0{I, R, V0, V1, V2}, x::AbstractVector{R}) where {I <: Integer, R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} = ShiftedIndBallL0(ψ.h, ψ.x, x)
 
 fun_name(ψ::ShiftedIndBallL0) = "shifted L0 norm ball indicator"
 fun_expr(ψ::ShiftedIndBallL0) = "s ↦ h(x + s)"
 fun_params(ψ::ShiftedIndBallL0) = "x = $(ψ.x), Δ = $(ψ.Δ)"
 
-function prox(ψ::ShiftedIndBallL0{R, V1, V2}, q::AbstractVector{R}, σ::R) where {R <: Real, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  q .+= ψ.x
+function prox(ψ::ShiftedIndBallL0{I, R, V0, V1, V2}, q::AbstractVector{R}, σ::R) where {I <: Integer, R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
+  q .+= (ψ.x + ψ.x0)
   # find largest entries
-  ψ.s .= sortperm(q, rev=true, by = abs) #stock with ψ.s as placeholder
-  q[ψ.s[ψ.h.r + 1:end]] .= 0 # set smallest to zero 
+  sortperm!(ψ.p, q, rev=true, by = abs) #stock with ψ.s as placeholder
+  q[ψ.p[ψ.h.r + 1:end]] .= 0 # set smallest to zero 
   ProjB!(q)# put all entries in projection?
-  ψ.s .= q - ψ.x 
+  ψ.s .= q - (ψ.x + ψ.x0) 
   return ψ.s 
 end
