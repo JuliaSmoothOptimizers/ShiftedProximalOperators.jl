@@ -9,7 +9,7 @@ mutable struct ShiftedNormL1B2{R <: Real, V0 <: AbstractVector{R}, V1 <: Abstrac
   χ::NormL2{R}
   function ShiftedNormL1B2(h::NormL1{R}, x0::AbstractVector{R}, x::AbstractVector{R}, Δ::R, χ::NormL2{R}) where {R <: Real}
     s = similar(x)
-    new{R, typeof(x), typeof(s)}(h, x0, x, s, Δ, χ)
+    new{R, typeof(x0), typeof(x), typeof(s)}(h, x0, x, s, Δ, χ)
   end
 end
 
