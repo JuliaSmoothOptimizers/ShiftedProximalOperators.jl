@@ -29,7 +29,7 @@ function prox(ψ::ShiftedNormL1BInf{R, V1, V2}, q::AbstractVector{R}, σ::R) whe
       y[i] = min(max(y[i], -Δ), Δ)
     end
   end
-  ψ.s .= -ψ.x
+  ψ.s .= -ψ.x #ψ.x0
   ProjΔ!(ProjB!(ψ.s))
   return ψ.s
 end

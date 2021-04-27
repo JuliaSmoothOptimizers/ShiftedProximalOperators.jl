@@ -2,14 +2,15 @@
 export ShiftedIndBallL0BInf
 
 mutable struct ShiftedIndBallL0BInf{I <: Integer, R <: Real, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
-  h::IndBallL0{I}
+  h::IndBallL0{I} #this only takes integers 
   x::V1
   s::V2
+  p::Vector{Int}
   Δ::R
   χ::Conjugate{IndBallL1{R}}
   function ShiftedIndBallL0BInf(h::IndBallL0{I}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {I <: Integer, R <: Real}
     s = similar(x)
-    new{I, R, typeof(x), typeof(s)}(h, x, s, Δ, χ)
+    new{I, R, typeof(x), typeof(s)}(h, x, s, Vector{Int}(undef, length(x)), Δ, χ)
   end
 end
 
@@ -29,8 +30,8 @@ function prox(ψ::ShiftedIndBallL0BInf{I, R, V1, V2}, q::AbstractVector{R}, σ::
   
   q .+= ψ.x
   # find largest entries
-  ψ.s .= sortperm(q, rev=true, by = abs) #stock with ψ.s as placeholder
-  q[ψ.s[ψ.h.r + 1:end]] .= 0 # set smallest to zero 
+  sortperm!(ψ.p, q, rev=true, by = abs) #stock with ψ.s as placeholder
+  q[ψ.p[ψ.h.r + 1:end])] .= 0 # set smallest to zero - saying that radius is 4.0, should be 4
   ProjB!(q)# put all entries in projection?
   ψ.s .= q - ψ.x 
   return ψ.s 
