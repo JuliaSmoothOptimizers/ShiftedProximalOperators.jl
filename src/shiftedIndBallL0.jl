@@ -17,8 +17,6 @@ shifted(h::IndBallL0{I}, x::AbstractVector{R}) where {I <: Integer, R <: Real} =
 shifted(ψ::ShiftedIndBallL0{I, R, V0, V1, V2}, x::AbstractVector{R}) where {I <: Integer, R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} = ShiftedIndBallL0(ψ.h, ψ.x, x)
 
 fun_name(ψ::ShiftedIndBallL0) = "shifted L0 norm ball indicator"
-fun_expr(ψ::ShiftedIndBallL0) = "s ↦ h(x + s)"
-fun_params(ψ::ShiftedIndBallL0) = "x = $(ψ.x), Δ = $(ψ.Δ)"
 
 function prox(ψ::ShiftedIndBallL0{I, R, V0, V1, V2}, q::AbstractVector{R}, σ::R) where {I <: Integer, R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   q .+= (ψ.x + ψ.x0)
