@@ -30,11 +30,13 @@ function set_radius!(ψ::ShiftedProximableFunction, Δ::R) where {R <: Real}
 end
 
 @inline function Base.getproperty(ψ::ShiftedProximableFunction, prop::Symbol)
-  return prop == :λ ? ψ.h.lambda : getfield(ψ, prop)
-end
-
-@inline function Base.getproperty(ψ::ShiftedProximableFunction, prop::Symbol)
-  return prop == :r ? ψ.h.r : getfield(ψ, prop)
+  if prop === :λ
+    return ψ.h.lambda 
+  elseif prop === :r 
+    return ψ.h.r
+  else
+    return getfield(ψ, prop)
+  end
 end
 
 fun_name(ψ::ShiftedProximableFunction) = "undefined"
