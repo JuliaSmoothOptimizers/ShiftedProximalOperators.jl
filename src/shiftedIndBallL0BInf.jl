@@ -33,7 +33,7 @@ function prox(ψ::ShiftedIndBallL0BInf{I, R, V0, V1, V2}, q::AbstractVector{R}, 
   q .+= (ψ.x + ψ.x0)
   # find largest entries
   sortperm!(ψ.p, q, rev=true, by = abs) #stock with ψ.s as placeholder
-  q[ψ.p[ψ.h.r + 1:end])] .= 0 # set smallest to zero - saying that radius is 4.0, should be 4
+  q[ψ.p[ψ.h.r + 1:end]] .= 0 # set smallest to zero - saying that radius is 4.0, should be 4
   ProjB!(q)# put all entries in projection?
   ψ.s .= q - (ψ.x + ψ.x0) 
   return ψ.s 
