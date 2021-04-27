@@ -35,7 +35,7 @@ end
 
 fun_name(ψ::ShiftedProximableFunction) = "undefined"
 fun_expr(ψ::ShiftedProximableFunction) = "s ↦ h(x + s)"
-fun_params(ψ::ShiftedProximableFunction) = "x = $(ψ.x)"
+fun_params(ψ::ShiftedProximableFunction) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x)"
 
 function Base.show(io::IO, ψ::ShiftedProximableFunction)
   println(io, "description : ", fun_name(ψ))
