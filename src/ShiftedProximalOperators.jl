@@ -33,6 +33,10 @@ end
   return prop == :λ ? ψ.h.lambda : getfield(ψ, prop)
 end
 
+@inline function Base.getproperty(ψ::ShiftedProximableFunction, prop::Symbol)
+  return prop == :r ? ψ.h.r : getfield(ψ, prop)
+end
+
 fun_name(ψ::ShiftedProximableFunction) = "undefined"
 fun_expr(ψ::ShiftedProximableFunction) = "s ↦ h(x + s)"
 fun_params(ψ::ShiftedProximableFunction) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x)"
