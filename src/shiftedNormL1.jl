@@ -11,10 +11,8 @@ mutable struct ShiftedNormL1{R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractV
   end
 end
 
-
 shifted(h::NormL1{R}, x::AbstractVector{R}) where {R <: Real} = ShiftedNormL1(h, zero(x), x)
 shifted(ψ::ShiftedNormL1{R, V0, V1, V2}, x::AbstractVector{R}) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} = ShiftedNormL1(ψ.h, ψ.x, x)
-
 
 fun_name(ψ::ShiftedNormL1) = "shifted L1 norm"
 fun_expr(ψ::ShiftedNormL1) = "s ↦ h(x + s)"
@@ -27,7 +25,7 @@ function prox(ψ::ShiftedNormL1{R, V0, V1, V2}, q::AbstractVector{R}, σ::R) whe
     end
   end
   # find largest entries
-  ψ.s .= -(ψ.x + ψ.x0)
+  ψ.s .-= ψ.x .+ ψ.x0
 
   ProjB!(ψ.s)
   return ψ.s 
