@@ -20,7 +20,7 @@ fun_name(ψ::ShiftedIndBallL0) = "shifted L0 norm ball indicator"
 function prox(ψ::ShiftedIndBallL0{I, R, V0, V1, V2}, q::AbstractVector{R}, σ::R) where {I <: Integer, R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   q .+= (ψ.x + ψ.x0)
   # find largest entries
-  sortperm!(ψ.p, q, rev=true, by = abs) #stock with ψ.s as placeholder
+  sortperm!(ψ.p, q, rev = true, by = abs)
   q[ψ.p[ψ.h.r + 1:end]] .= 0 # set smallest to zero 
   ψ.s .= q - (ψ.x + ψ.x0) 
   return ψ.s 
