@@ -20,11 +20,11 @@ fun_params(ψ::ShiftedNormL1) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x)"
 
 function prox(ψ::ShiftedNormL1{R, V0, V1, V2}, q::AbstractVector{R}, σ::R) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
 
-  ψ.s .-= ψ.x .+ ψ.x0
+  ψ.s .= -(ψ.x .+ ψ.x0)
 
   for i ∈ eachindex(ψ.s)
     ψ.s[i] = min(max(ψ.s[i], q[i] - ψ.λ * σ), q[i] + ψ.λ * σ)
   end
-  
+
   return ψ.s 
 end
