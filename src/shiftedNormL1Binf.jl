@@ -29,7 +29,7 @@ function prox(ψ::ShiftedNormL1BInf{R, V0, V1, V2}, q::AbstractVector{R}, σ::R)
   end
   ProjΔ!(y) = begin 
     for i ∈ eachindex(y)
-      y[i] = min(max(y[i], -Δ), Δ)
+      y[i] = min(max(y[i], - ψ.Δ), ψ.Δ)
     end
   end
   ψ.s .= -ψ.x - ψ.x0
