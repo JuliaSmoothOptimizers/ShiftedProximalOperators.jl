@@ -17,11 +17,11 @@ include("shiftedNormL1B2.jl")
 include("shiftedIndBallL0.jl")
 include("shiftedIndBallL0BInf.jl")
 
-(ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.x + y)
+(ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.x0 + ψ.x + y)
 
 function shift!(ψ::ShiftedProximableFunction, x::AbstractVector{R}) where {R <: Real}
-	ψ.x .= x
-	return ψ
+  ψ.x .= x
+  return ψ
 end
 
 function set_radius!(ψ::ShiftedProximableFunction, Δ::R) where {R <: Real}
@@ -35,7 +35,7 @@ end
 
 fun_name(ψ::ShiftedProximableFunction) = "undefined"
 fun_expr(ψ::ShiftedProximableFunction) = "s ↦ h(x + s)"
-fun_params(ψ::ShiftedProximableFunction) = "x = $(ψ.x)"
+fun_params(ψ::ShiftedProximableFunction) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x)"
 
 function Base.show(io::IO, ψ::ShiftedProximableFunction)
   println(io, "description : ", fun_name(ψ))
