@@ -1,4 +1,3 @@
-
 export ShiftedIndBallL0BInf
 
 mutable struct ShiftedIndBallL0BInf{I <: Integer, R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
