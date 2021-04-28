@@ -1,6 +1,6 @@
 module ShiftedProximalOperators
 
-using ProximalOperators, Roots, LinearAlgebra
+using ProximalOperators, Roots
 
 export ShiftedProximableFunction
 export prox, set_radius!, shift!, shifted
