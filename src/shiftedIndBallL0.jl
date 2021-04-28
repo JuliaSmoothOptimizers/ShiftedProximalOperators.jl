@@ -12,7 +12,6 @@ mutable struct ShiftedIndBallL0{I <: Integer, R <: Real, V0 <: AbstractVector{R}
   end
 end
 
-
 shifted(h::IndBallL0{I}, x::AbstractVector{R}) where {I <: Integer, R <: Real} = ShiftedIndBallL0(h, zero(x), x)
 shifted(ψ::ShiftedIndBallL0{I, R, V0, V1, V2}, x::AbstractVector{R}) where {I <: Integer, R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} = ShiftedIndBallL0(ψ.h, ψ.x, x)
 
