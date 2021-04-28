@@ -33,7 +33,7 @@ function prox(ψ::ShiftedNormL1BInf{R, V0, V1, V2}, q::AbstractVector{R}, σ::R)
     end
   end
   ψ.s .= -ψ.x - ψ.x0
-  @show q, ψ.λ, ψ.s, σ
-  ProjΔ!(ProjB!(ψ.s))
+  ProjB!(ψ.s)
+  ProjΔ!(ψ.s)
   return ψ.s
 end
