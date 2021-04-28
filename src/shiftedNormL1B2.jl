@@ -23,16 +23,16 @@ fun_params(ψ::ShiftedNormL1B2) = "x = $(ψ.x), Δ = $(ψ.Δ)"
 function prox(ψ::ShiftedNormL1B2{R, V0, V1, V2}, q::AbstractVector{R}, σ::R) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
 
   ProjB(y) = min.(max.(y, q .- ψ.λ * σ), q .+ ψ.λ * σ)
-  froot(η) = η - norm(ProjB((-ψ.x - ψ.x0) .* (η / ψ.Δ)))
+  froot(η) = η - ψ.χ(ProjB((-ψ.x - ψ.x0) .* (η / ψ.Δ)))
 
   ψ.s .= ProjB(-ψ.x - ψ.x0)
 
   if ψ.χ(ψ.s) > ψ.Δ
     η = fzero(froot, 1e-10, Inf)
-    ψ.s .= ProjB(-ψ.x - ψ.x0) .* (η / ψ.Δ)
+    ψ.s .=* (η / ψ.Δ)
   end
   if ψ.χ(ψ.s) > ψ.Δ
-    ψ.s .= (ψ.Δ / ψ.χ(ψ.s)) .* ψ.x
+    ψ.s .=* (ψ.Δ / ψ.χ(ψ.s))
   end
   return ψ.s
 end
