@@ -22,7 +22,7 @@ fun_params(ψ::ShiftedNormL1B2) = "x = $(ψ.x), Δ = $(ψ.Δ)"
 
 function prox(ψ::ShiftedNormL1B2{R, V0, V1, V2}, q::AbstractVector{R}, σ::R) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
 
-  ProjB(y) = min.(max.(y, q .- σ), q .+ σ)
+  ProjB(y) = min.(max.(y, q .- ψ.λ * σ), q .+ ψ.λ * σ)
   froot(η) = η - norm(ProjB((-ψ.x - ψ.x0) .* (η / ψ.Δ)))
 
   ψ.s .= ProjB(-ψ.x - ψ.x0)
