@@ -27,12 +27,12 @@ function prox(ψ::ShiftedNormL1B2{R, V0, V1, V2}, q::AbstractVector{R}, σ::R) w
 
   ψ.s .= ProjB(-ψ.x - ψ.x0)
 
-  if norm(ψ.s) > ψ.Δ
+  if ψ.χ(ψ.s) > ψ.Δ
     η = fzero(froot, 1e-10, Inf)
     ψ.s .= ProjB(-ψ.x - ψ.x0) .* (η / ψ.Δ)
   end
-  if norm(ψ.s) > ψ.Δ
-    ψ.s .=*(ψ.Δ /norm(ψ.s))
+  if ψ.χ(ψ.s) > ψ.Δ
+    ψ.s .= (ψ.Δ / ψ.χ(ψ.s)) .* ψ.x
   end
   return ψ.s
 end
