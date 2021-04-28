@@ -23,7 +23,6 @@ function prox(ψ::ShiftedIndBallL0{I, R, V0, V1, V2}, q::AbstractVector{R}, σ::
   # find largest entries
   sortperm!(ψ.p, q, rev=true, by = abs) #stock with ψ.s as placeholder
   q[ψ.p[ψ.h.r + 1:end]] .= 0 # set smallest to zero 
-  ProjB!(q)# put all entries in projection?
   ψ.s .= q - (ψ.x + ψ.x0) 
   return ψ.s 
 end
