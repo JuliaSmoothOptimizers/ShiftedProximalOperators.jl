@@ -2,7 +2,7 @@ export ShiftedNormL0BInf
 
 mutable struct ShiftedNormL0BInf{R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} <: ShiftedProximableFunction
   h::NormL0{R}
-  x0::V0  # base shift (nonzero when shifting an already shifted function
+  x0::V0
   x::V1
   s::V2
   Δ::R
@@ -17,7 +17,7 @@ shifted(h::NormL0{R}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) 
 shifted(ψ::ShiftedNormL0BInf{R, V0, V1, V2}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL0{R}}) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R} } = ShiftedNormL0BInf(ψ.h, ψ.x, x, Δ, χ)
 
 fun_name(ψ::ShiftedNormL0BInf) = "shifted L0 pseudo-norm with L∞-norm trust region indicator"
-fun_expr(ψ::ShiftedNormL0BInf) = "s ↦ h(x + s) + χ({‖s‖∞ ≤ Δ})"
+fun_expr(ψ::ShiftedNormL0BInf) = "s ↦ ‖x + s‖₀ + χ({‖s‖∞ ≤ Δ})"
 fun_params(ψ::ShiftedNormL0BInf) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x), Δ = $(ψ.Δ)"
 
 function prox(ψ::ShiftedNormL0BInf{R, V0, V1, V2}, q::AbstractVector{R}, σ::R) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}

@@ -17,7 +17,7 @@ shifted(h::NormL1{R}, x::AbstractVector{R}, Δ::R, χ::NormL2{R}) where {R <: Re
 shifted(ψ::ShiftedNormL1B2{R, V0, V1, V2}, x::AbstractVector{R}, Δ::R, χ::NormL2{R}) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} = ShiftedNormL1B2(ψ.h, ψ.x, x, Δ, χ)
 
 fun_name(ψ::ShiftedNormL1B2) = "shifted L1 norm with L₂-norm trust region indicator"
-fun_expr(ψ::ShiftedNormL1B2) = "s ↦ h(x + s) + χ({‖s‖₂ ≤ Δ})"
+fun_expr(ψ::ShiftedNormL1B2) = "s ↦ ‖x + s‖₁ + χ({‖s‖₂ ≤ Δ})"
 fun_params(ψ::ShiftedNormL1B2) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x), Δ = $(ψ.Δ)"
 
 function prox(ψ::ShiftedNormL1B2{R, V0, V1, V2}, q::AbstractVector{R}, σ::R) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
