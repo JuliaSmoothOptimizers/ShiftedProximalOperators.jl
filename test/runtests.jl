@@ -52,7 +52,7 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0,:ShiftedNormL1)
 end
 
 # loop over integer operators without a trust region
-for (op, shifted_op) ∈ zip((:IndBallL0,), (:ShiftedIndBallL0,)) ### -> add more if we come up with some? 
+for (op, shifted_op) ∈ zip((:IndBallL0,), (:ShiftedIndBallL0,))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     Op = eval(op)
@@ -86,7 +86,6 @@ for (op, shifted_op) ∈ zip((:IndBallL0,), (:ShiftedIndBallL0,)) ### -> add mor
     @test typeof(ψ.r) == Int32
     @test ψ.r == h.r
     @test ψ(zeros(Int32, 5)) == h(x)
-
   end
 end
 

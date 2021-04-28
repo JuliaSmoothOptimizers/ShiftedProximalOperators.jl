@@ -16,7 +16,6 @@ end
 shifted(h::NormL1{R}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real} = ShiftedNormL1BInf(h, zero(x), x, Δ, χ)
 shifted(ψ::ShiftedNormL1BInf{R, V0, V1, V2}, x::AbstractVector{R}, Δ::R, χ::NormL2{R}) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} = ShiftedNormL1BInf(ψ.h, ψ.x, x, Δ, χ)
 
-
 fun_name(ψ::ShiftedNormL1BInf) = "shifted L1 norm with L∞-norm trust region indicator"
 fun_expr(ψ::ShiftedNormL1BInf) = "s ↦ h(x + s) + χ({‖s‖∞ ≤ Δ})"
 fun_params(ψ::ShiftedNormL1BInf) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x), Δ = $(ψ.Δ)"
