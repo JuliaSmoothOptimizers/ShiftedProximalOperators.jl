@@ -12,7 +12,7 @@ mutable struct ShiftedNormL0{R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractV
 end
 
 fun_name(ψ::ShiftedNormL0) = "shifted L0 pseudo-norm"
-fun_expr(ψ::ShiftedNormL0BInf) = "s ↦ ‖x + s‖₀"
+fun_expr(ψ::ShiftedNormL0) = "s ↦ ‖x + s‖₀"
 
 shifted(h::NormL0{R}, x::AbstractVector{R}) where {R <: Real} = ShiftedNormL0(h, zero(x), x)
 shifted(ψ::ShiftedNormL0{R, V0, V1, V2}, x::AbstractVector{R}) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} = ShiftedNormL0(ψ.h, ψ.x, x)
