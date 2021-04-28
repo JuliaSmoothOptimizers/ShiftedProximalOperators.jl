@@ -12,10 +12,7 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0,:ShiftedNormL1)
     x = ones(3)
     ψ = shifted(h, x)
     @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
-<<<<<<< HEAD
     @test all(ψ.x0 .== 0)
-=======
->>>>>>> 6accdc82fc4bdcbbb80b3dea7186ea64136417a8
     @test all(ψ.x .== x)
     @test typeof(ψ.λ) == Float64
     @test ψ.λ == h.lambda
@@ -104,10 +101,7 @@ for (op, tr, shifted_op) ∈ zip((:NormL0, :NormL1, :NormL1), (:NormLinf, :NormL
     Δ = 0.5
     ψ = shifted(h, x, Δ, χ)
     @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
-<<<<<<< HEAD
     @test all(ψ.x0 .== 0)
-=======
->>>>>>> 6accdc82fc4bdcbbb80b3dea7186ea64136417a8
     @test all(ψ.x .== x)
     @test typeof(ψ.λ) == Float64
     @test ψ.λ == h.lambda
