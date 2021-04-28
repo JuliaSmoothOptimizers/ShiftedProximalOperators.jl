@@ -29,10 +29,10 @@ function prox(ψ::ShiftedNormL1B2{R, V0, V1, V2}, q::AbstractVector{R}, σ::R) w
 
   if ψ.χ(ψ.s) > ψ.Δ
     η = fzero(froot, 1e-10, Inf)
-    ψ.s .=* (η / ψ.Δ)
+    ψ.s .*= (η / ψ.Δ)
   end
   if ψ.χ(ψ.s) > ψ.Δ
-    ψ.s .=* (ψ.Δ / ψ.χ(ψ.s))
+    ψ.s .*= (ψ.Δ / ψ.χ(ψ.s))
   end
   return ψ.s
 end
