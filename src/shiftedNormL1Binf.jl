@@ -19,18 +19,20 @@ shifted(ψ::ShiftedNormL1BInf{R, V0, V1, V2}, x::AbstractVector{R}, Δ::R, χ::N
 
 fun_name(ψ::ShiftedNormL1BInf) = "shifted L1 norm with L∞-norm trust region indicator"
 fun_expr(ψ::ShiftedNormL1BInf) = "s ↦ h(x + s) + χ({‖s‖∞ ≤ Δ})"
-fun_params(ψ::ShiftedNormL1BInf) = "x = $(ψ.x), Δ = $(ψ.Δ)"
+fun_params(ψ::ShiftedNormL1BInf) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x), Δ = $(ψ.Δ)"
 
 function prox(ψ::ShiftedNormL1BInf{R, V0, V1, V2}, q::AbstractVector{R}, σ::R) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   ProjB!(w) = begin 
     for i ∈ eachindex(w)
       w[i] = min(max(w[i], q[i] - ψ.λ * σ), q[i] + ψ.λ * σ)
     end
+    return w
   end
   ProjΔ!(y) = begin 
     for i ∈ eachindex(y)
       y[i] = min(max(y[i], - ψ.Δ), ψ.Δ)
     end
+    return y
   end
   ψ.s .= -ψ.x - ψ.x0
   ProjB!(ψ.s)

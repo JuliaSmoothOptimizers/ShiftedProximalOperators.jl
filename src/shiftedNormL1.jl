@@ -18,13 +18,14 @@ shifted(ψ::ShiftedNormL1{R, V0, V1, V2}, x::AbstractVector{R}) where {R <: Real
 
 fun_name(ψ::ShiftedNormL1) = "shifted L1 norm"
 fun_expr(ψ::ShiftedNormL1) = "s ↦ h(x + s)"
-fun_params(ψ::ShiftedNormL1) = "x = $(ψ.x), Δ = $(ψ.Δ)"
+fun_params(ψ::ShiftedNormL1) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x)"
 
 function prox(ψ::ShiftedNormL1{R, V0, V1, V2}, q::AbstractVector{R}, σ::R) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   ProjB!(w) = begin 
     for i ∈ eachindex(w)
       w[i] = min(max(w[i], q[i] - ψ.λ * σ), q[i] + ψ.λ * σ)
     end
+    return w
   end
   # find largest entries
   ψ.s .= -(ψ.x + ψ.x0)
