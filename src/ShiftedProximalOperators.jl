@@ -13,6 +13,8 @@ include("shiftedNormL0BInf.jl")
 include("shiftedNormL1.jl")
 include("shiftedNormL1B2.jl")
 include("shiftedNormL1Binf.jl")
+include("shiftedIndBallL0.jl")
+include("shiftedIndBallL0BInf.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.x0 + ψ.x + y)
 
@@ -27,7 +29,13 @@ function set_radius!(ψ::ShiftedProximableFunction, Δ::R) where {R <: Real}
 end
 
 @inline function Base.getproperty(ψ::ShiftedProximableFunction, prop::Symbol)
-  return prop == :λ ? ψ.h.lambda : getfield(ψ, prop)
+  if prop === :λ
+    return ψ.h.lambda 
+  elseif prop === :r 
+    return ψ.h.r
+  else
+    return getfield(ψ, prop)
+  end
 end
 
 fun_name(ψ::ShiftedProximableFunction) = "undefined"
