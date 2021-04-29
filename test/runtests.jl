@@ -51,7 +51,7 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0,:ShiftedNormL1)
   end
 end
 
-#loop over integer operators without a trust-region
+# loop over integer operators without a trust region
 for (op, shifted_op) ∈ zip((:IndBallL0,), (:ShiftedIndBallL0,))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
@@ -90,7 +90,7 @@ for (op, shifted_op) ∈ zip((:IndBallL0,), (:ShiftedIndBallL0,))
 end
 
 # loop over operators with a trust region
-for (op, tr, shifted_op) ∈ zip((:NormL1, :NormL1), (:NormLinf, :NormL2), (:ShiftedNormL1BInf, :ShiftedNormL1B2))
+for (op, tr, shifted_op) ∈ zip((:NormL0, :NormL1, :NormL1), (:NormLinf, :NormLinf, :NormL2), (:ShiftedNormL0BInf,:ShiftedNormL1BInf, :ShiftedNormL1B2))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     Op = eval(op)
@@ -137,7 +137,7 @@ for (op, tr, shifted_op) ∈ zip((:NormL1, :NormL1), (:NormLinf, :NormL2), (:Shi
   end
 end
 
-# loop over integer operators with a trust region
+# loop over operators with a trust region
 for (op, tr, shifted_op) ∈ zip((:IndBallL0, ), (:NormLinf,), (:ShiftedIndBallL0BInf, ))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
