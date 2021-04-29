@@ -3,11 +3,12 @@ using ShiftedProximalOperators
 using Test
 
 # loop over operators without a trust region
-for shifted_op ∈ (:ShiftedNormL0,)
+for (op, shifted_op) ∈ zip((:NormL0,), (:ShiftedNormL0,))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
+    Op = eval(op)
     # test basic types and properties
-    h = NormL0(1.2)
+    h = Op(1.2)
     x = ones(3)
     ψ = shifted(h, x)
     @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
@@ -51,14 +52,16 @@ for shifted_op ∈ (:ShiftedNormL0,)
 end
 
 # loop over operators with a trust region
-for shifted_op ∈ (:ShiftedNormL0BInf,)
+for (op, shifted_op, tr) ∈ zip((:NormL0,), (:ShiftedNormL0BInf,), (:NormLinf,))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
+    Op = eval(op)
+    χ = eval(tr)(1.0)
     # test basic types and properties
-    h = NormL0(1.2)
+    h = Op(1.2)
     x = ones(3)
     Δ = 0.5
-    ψ = shifted(h, x, Δ)
+    ψ = shifted(h, x, Δ, χ)
     @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
     @test all(ψ.x0 .== 0)
     @test all(ψ.x .== x)
@@ -84,10 +87,11 @@ for shifted_op ∈ (:ShiftedNormL0BInf,)
     @test ψ.Δ == 1.1
 
     # test different types
-    h = NormL0(Float32(1.2))
+    h = Op(Float32(1.2))
+    χ = eval(tr)(Float32(1.0))
     y = rand(Float32, 10)
     x = view(y, 1:2:10)
-    ψ = shifted(h, x, Float32(0.5))
+    ψ = shifted(h, x, Float32(0.5), χ)
     @test typeof(ψ) == ShiftedOp{Float32, Vector{Float32}, SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true}, Vector{Float32}}
     @test typeof(ψ.λ) == Float32
     @test ψ.λ == h.lambda
