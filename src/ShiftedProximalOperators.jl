@@ -10,6 +10,10 @@ abstract type ShiftedProximableFunction <: ProximableFunction end
 include("shiftedNormL0.jl")
 include("shiftedNormL0BInf.jl")
 
+include("shiftedNormL1.jl")
+include("shiftedNormL1B2.jl")
+include("shiftedNormL1Binf.jl")
+
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.x0 + ψ.x + y)
 
 function shift!(ψ::ShiftedProximableFunction, x::AbstractVector{R}) where {R <: Real}

@@ -3,7 +3,7 @@ using ShiftedProximalOperators
 using Test
 
 # loop over operators without a trust region
-for (op, shifted_op) ∈ zip((:NormL0,), (:ShiftedNormL0,))
+for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0,:ShiftedNormL1))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     Op = eval(op)
@@ -40,7 +40,7 @@ for (op, shifted_op) ∈ zip((:NormL0,), (:ShiftedNormL0,))
     @test φ(y) == h(x + s + y)
 
     # test different types
-    h = NormL0(Float32(1.2))
+    h = Op(Float32(1.2))
     y = rand(Float32, 10)
     x = view(y, 1:2:10)
     ψ = shifted(h, x)
@@ -52,7 +52,7 @@ for (op, shifted_op) ∈ zip((:NormL0,), (:ShiftedNormL0,))
 end
 
 # loop over operators with a trust region
-for (op, shifted_op, tr) ∈ zip((:NormL0,), (:ShiftedNormL0BInf,), (:NormLinf,))
+for (op, tr, shifted_op) ∈ zip((:NormL1, :NormL1), (:NormLinf, :NormL2), (:ShiftedNormL1BInf, :ShiftedNormL1B2))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     Op = eval(op)
