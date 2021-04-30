@@ -19,7 +19,6 @@ shifted(ψ::ShiftedNormL0{R, V0, V1, V2}, x::AbstractVector{R}) where {R <: Real
 
 function prox(ψ::ShiftedNormL0{R, V0, V1, V2}, q::AbstractVector{R}, σ::R) where{R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   c = sqrt(2 * ψ.λ * σ)
-  s = similar(q)
   for i ∈ eachindex(q)
     xpq = ψ.x0[i] + ψ.x[i] + q[i]
     if abs(xpq) ≤ c

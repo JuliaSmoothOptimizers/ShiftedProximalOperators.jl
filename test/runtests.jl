@@ -77,6 +77,15 @@ for (op, shifted_op) ∈ zip((:IndBallL0,), (:ShiftedIndBallL0,))
     shift!(ψ, y)
     @test all(ψ.x .== y)
 
+    # shift a shifted operator
+    s = ones(3) / 2
+    φ = shifted(ψ, s)
+    @test all(φ.x0 .== x)
+    @test all(φ.x .== s)
+    @test φ(zeros(3)) == h(x + s)
+    y = rand(3)
+    @test φ(y) == h(x + s + y)
+
     # test different types
     h = Op(Int32(1))
     y = rand(Float32, 10)
@@ -124,6 +133,15 @@ for (op, tr, shifted_op) ∈ zip((:NormL0, :NormL1, :NormL1), (:NormLinf, :NormL
     set_radius!(ψ, 1.1)
     @test ψ.Δ == 1.1
 
+    # shift a shifted operator
+    s = ones(3) / 2
+    φ = shifted(ψ, s)
+    @test all(φ.x0 .== x)
+    @test all(φ.x .== s)
+    @test φ(zeros(3)) == h(x + s)
+    y = rand(3)
+    @test φ(y) == h(x + s + y)
+
     # test different types
     h = Op(Float32(1.2))
     χ = eval(tr)(Float32(1.0))
@@ -169,6 +187,15 @@ for (op, tr, shifted_op) ∈ zip((:IndBallL0, ), (:NormLinf,), (:ShiftedIndBallL
     # test radius update
     set_radius!(ψ, 1.1)
     @test ψ.Δ == 1.1
+
+    # shift a shifted operator
+    s = ones(3) / 2
+    φ = shifted(ψ, s)
+    @test all(φ.x0 .== x)
+    @test all(φ.x .== s)
+    @test φ(zeros(3)) == h(x + s)
+    y = rand(3)
+    @test φ(y) == h(x + s + y)
 
     # test different types
     h = Op(Int32(1))
