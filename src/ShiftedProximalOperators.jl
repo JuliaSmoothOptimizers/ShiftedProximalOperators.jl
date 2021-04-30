@@ -31,8 +31,8 @@ end
 
 @inline function Base.getproperty(ψ::ShiftedProximableFunction, prop::Symbol)
   if prop === :λ
-    return ψ.h.lambda 
-  elseif prop === :r 
+    return ψ.h.lambda
+  elseif prop === :r
     return ψ.h.r
   else
     return getfield(ψ, prop)
