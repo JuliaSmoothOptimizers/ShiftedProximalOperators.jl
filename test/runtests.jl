@@ -3,7 +3,7 @@ using ShiftedProximalOperators
 using Test
 
 # loop over operators without a trust region
-for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0,:ShiftedNormL1))
+for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0, :ShiftedNormL1))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     Op = eval(op)
@@ -44,7 +44,12 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0,:ShiftedNormL1)
     y = rand(Float32, 10)
     x = view(y, 1:2:10)
     ψ = shifted(h, x)
-    @test typeof(ψ) == ShiftedOp{Float32, Vector{Float32}, SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true}, Vector{Float32}}
+    @test typeof(ψ) == ShiftedOp{
+      Float32,
+      Vector{Float32},
+      SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+      Vector{Float32},
+    }
     @test typeof(ψ.λ) == Float32
     @test ψ.λ == h.lambda
     @test ψ(zeros(Float32, 5)) == h(x)
@@ -91,7 +96,13 @@ for (op, shifted_op) ∈ zip((:IndBallL0,), (:ShiftedIndBallL0,))
     y = rand(Float32, 10)
     x = view(y, 1:2:10)
     ψ = shifted(h, x)
-    @test typeof(ψ) == ShiftedOp{Int32, Float32, Vector{Float32}, SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true}, Vector{Float32}}
+    @test typeof(ψ) == ShiftedOp{
+      Int32,
+      Float32,
+      Vector{Float32},
+      SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+      Vector{Float32},
+    }
     @test typeof(ψ.r) == Int32
     @test ψ.r == h.r
     @test ψ(zeros(Int32, 5)) == h(x)
@@ -99,7 +110,11 @@ for (op, shifted_op) ∈ zip((:IndBallL0,), (:ShiftedIndBallL0,))
 end
 
 # loop over operators with a trust region
-for (op, tr, shifted_op) ∈ zip((:NormL0, :NormL1, :NormL1), (:NormLinf, :NormLinf, :NormL2), (:ShiftedNormL0BInf,:ShiftedNormL1BInf, :ShiftedNormL1B2))
+for (op, tr, shifted_op) ∈ zip(
+  (:NormL0, :NormL1, :NormL1),
+  (:NormLinf, :NormLinf, :NormL2),
+  (:ShiftedNormL0BInf, :ShiftedNormL1BInf, :ShiftedNormL1B2),
+)
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     Op = eval(op)
@@ -148,7 +163,12 @@ for (op, tr, shifted_op) ∈ zip((:NormL0, :NormL1, :NormL1), (:NormLinf, :NormL
     y = rand(Float32, 10)
     x = view(y, 1:2:10)
     ψ = shifted(h, x, Float32(0.5), χ)
-    @test typeof(ψ) == ShiftedOp{Float32, Vector{Float32}, SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true}, Vector{Float32}}
+    @test typeof(ψ) == ShiftedOp{
+      Float32,
+      Vector{Float32},
+      SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+      Vector{Float32},
+    }
     @test typeof(ψ.λ) == Float32
     @test ψ.λ == h.lambda
     @test ψ(zeros(Float32, 5)) == h(x)
@@ -156,7 +176,7 @@ for (op, tr, shifted_op) ∈ zip((:NormL0, :NormL1, :NormL1), (:NormLinf, :NormL
 end
 
 # loop over operators with a trust region
-for (op, tr, shifted_op) ∈ zip((:IndBallL0, ), (:NormLinf,), (:ShiftedIndBallL0BInf, ))
+for (op, tr, shifted_op) ∈ zip((:IndBallL0,), (:NormLinf,), (:ShiftedIndBallL0BInf,))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     χ = eval(tr)(1.0)
@@ -203,7 +223,13 @@ for (op, tr, shifted_op) ∈ zip((:IndBallL0, ), (:NormLinf,), (:ShiftedIndBallL
     y = rand(Float32, 10)
     x = view(y, 1:2:10)
     ψ = shifted(h, x, Float32(0.5), χ)
-    @test typeof(ψ) == ShiftedOp{Int32, Float32, Vector{Float32}, SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true}, Vector{Float32}}
+    @test typeof(ψ) == ShiftedOp{
+      Int32,
+      Float32,
+      Vector{Float32},
+      SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+      Vector{Float32},
+    }
     @test typeof(ψ.r) == Int32
     @test ψ.r == h.r
     @test ψ(zeros(Float32, 5)) == h(x)
