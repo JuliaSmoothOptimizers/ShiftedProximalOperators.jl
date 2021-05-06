@@ -26,6 +26,8 @@ mutable struct ShiftedIndBallL0BInf{
   end
 end
 
+(ψ::ShiftedIndBallL0BInf)(y) = ψ.h(ψ.x0 + ψ.x + y) + IndBallLinf(ψ.Δ)(y)
+
 shifted(
   h::IndBallL0{I},
   x::AbstractVector{R},
