@@ -120,9 +120,10 @@ for (op, tr, shifted_op) ∈ zip(
     Op = eval(op)
     χ = eval(tr)(1.0)
     # test basic types and properties
-    h = Op(1.2)
-    x = ones(3)
-    Δ = 0.5
+    n = 5
+    h = Op(1.0)
+    x = ones(n)
+    Δ = .01
     ψ = shifted(h, x, Δ, χ)
     @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
     @test all(ψ.x0 .== 0)
@@ -132,14 +133,25 @@ for (op, tr, shifted_op) ∈ zip(
     @test ψ.Δ == Δ
 
     # test values
-    @test ψ(zeros(3)) == h(x)
-    y = rand(3)
+    @test ψ(zeros(n)) == h(x)
+    y = rand(n)
     y .*= ψ.Δ / ψ.χ(y) / 2
     @test ψ(y) == h(x + y)  # y inside the trust region
     @test ψ(3 * y) == Inf   # y outside the trust region
 
     # test prox
-    # TODO
+    ν = 1/(9.1e+04)
+    q = -ν.*[2631.441298528196, -533.9101219466443, 466.56156501426733, 1770.8953574224836, -2554.7769423950244]
+    if "$shifted_op"=="ShiftedNormL0BInf"
+      s_correct = [-0.010000000000000, 0.005867144197216, -0.005127050164992, -0.010000000000000, 0.010000000000000]
+    elseif "$shifted_op"=="ShiftedNormL1B2"
+      s_correct = [-0.006367076930786, 0.001288947922799, -0.001130889587543, -0.004285677352167, 0.006176811716709]
+    elseif "$shifted_op"=="ShiftedNormL1BInf"
+      s_correct = [  -0.010000000000000, 0.005856155186227, -0.005138039175981, -0.010000000000000, 0.010000000000000]
+    end
+    s = ShiftedProximalOperators.prox(ψ, q, ν) 
+    @test all(s .≈ s_correct)
+    @test ψ.χ(s) < ψ.Δ || ψ.χ(s) ≈ ψ.Δ
 
     # test shift update
     shift!(ψ, y)
@@ -151,18 +163,18 @@ for (op, tr, shifted_op) ∈ zip(
     @test ψ.Δ == 1.1
 
     # shift a shifted operator
-    s = ones(3) / 2
+    s = ones(n) / 2
     φ = shifted(ψ, s)
     @test all(φ.x0 .== x)
     @test all(φ.x .== s)
-    @test φ(zeros(3)) == h(x + s)
-    y = rand(3)
+    @test φ(zeros(n)) == h(x + s)
+    y = rand(n)
     y .*= ψ.Δ / ψ.χ(y) / 2
     @test φ(y) == h(x + s + y)  # y inside the trust region
     @test φ(3 * y) == Inf       # y outside the trust region
 
     # test different types
-    h = Op(Float32(1.2))
+    h = Op(Float32(1.0))
     χ = eval(tr)(Float32(1.0))
     y = rand(Float32, 10)
     x = view(y, 1:2:10)
