@@ -134,7 +134,9 @@ for (op, tr, shifted_op) ∈ zip(
     # test values
     @test ψ(zeros(3)) == h(x)
     y = rand(3)
-    @test ψ(y) == h(x + y)
+    y .*= ψ.Δ / ψ.χ(y) / 2
+    @test ψ(y) == h(x + y)  # y inside the trust region
+    @test ψ(3 * y) == Inf   # y outside the trust region
 
     # test prox
     # TODO
@@ -155,7 +157,9 @@ for (op, tr, shifted_op) ∈ zip(
     @test all(φ.x .== s)
     @test φ(zeros(3)) == h(x + s)
     y = rand(3)
-    @test φ(y) == h(x + s + y)
+    y .*= ψ.Δ / ψ.χ(y) / 2
+    @test φ(y) == h(x + s + y)  # y inside the trust region
+    @test φ(3 * y) == Inf       # y outside the trust region
 
     # test different types
     h = Op(Float32(1.2))
@@ -195,7 +199,9 @@ for (op, tr, shifted_op) ∈ zip((:IndBallL0,), (:NormLinf,), (:ShiftedIndBallL0
     # test values
     @test ψ(zeros(3)) == h(x)
     y = rand(3)
-    @test ψ(y) == h(x + y)
+    y .*= ψ.Δ / ψ.χ(y) / 2
+    @test ψ(y) == h(x + y)  # y inside the trust region
+    @test ψ(3 * y) == Inf   # y outside the trust region
 
     # test prox
     # TODO
@@ -215,7 +221,9 @@ for (op, tr, shifted_op) ∈ zip((:IndBallL0,), (:NormLinf,), (:ShiftedIndBallL0
     @test all(φ.x .== s)
     @test φ(zeros(3)) == h(x + s)
     y = rand(3)
-    @test φ(y) == h(x + s + y)
+    y .*= ψ.Δ / ψ.χ(y) / 2
+    @test φ(y) == h(x + s + y)  # y inside the trust region
+    @test φ(3 * y) == Inf       # y outside the trust region
 
     # test different types
     h = Op(Int32(1))

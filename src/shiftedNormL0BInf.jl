@@ -25,6 +25,8 @@ mutable struct ShiftedNormL0BInf{
   end
 end
 
+(ψ::ShiftedNormL0BInf)(y) = ψ.h(ψ.x0 + ψ.x + y) + IndBallLinf(ψ.Δ)(y)
+
 shifted(h::NormL0{R}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real} =
   ShiftedNormL0BInf(h, zero(x), x, Δ, χ)
 shifted(
