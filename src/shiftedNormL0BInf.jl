@@ -47,18 +47,13 @@ function prox(
   c = sqrt(2 * ψ.λ * σ)
 
   for i ∈ eachindex(q)
-    xpq = ψ.x0[i] + ψ.x[i] + q[i]
-    if abs(xpq) ≤ c
-      ψ.s[i] = 0
+    x0px = ψ.x0[i] + ψ.x[i]
+    if abs(x0px + q[i]) ≤ c
+      ψ.s[i] = min(-min(x0px, ψ.Δ), ψ.Δ)
     else
-      ψ.s[i] = xpq
+      ψ.s[i] = min(max(q[i], -ψ.Δ), ψ.Δ)
     end
   end
 
-  for i ∈ eachindex(ψ.s)
-    ψ.s[i] = min(max(ψ.s[i], ψ.x0[i] + ψ.x[i] - ψ.Δ), ψ.x0[i] + ψ.x[i] + ψ.Δ)
-  end
-
-  ψ.s .-= ψ.x0 .+ ψ.x
   return ψ.s
 end
