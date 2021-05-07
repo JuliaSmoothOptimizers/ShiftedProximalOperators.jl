@@ -66,9 +66,8 @@ function prox(
   ψ.s[ψ.p[(ψ.h.r + 1):end]] .= 0 # set smallest to zero
 
   for i ∈ eachindex(ψ.s)
-    ψ.s[i] = min(max(ψ.s[i], ψ.x0[i] + ψ.x[i] - ψ.Δ), ψ.x0[i] + ψ.x[i] + ψ.Δ)
+    ψ.s[i] = min(max(ψ.s[i] - (ψ.x0[i] + ψ.x[i]), -ψ.Δ), ψ.Δ)
   end
 
-  ψ.s .-= ψ.x .+ ψ.x0
   return ψ.s
 end
