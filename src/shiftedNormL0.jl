@@ -7,28 +7,30 @@ mutable struct ShiftedNormL0{
   V2 <: AbstractVector{R},
 } <: ShiftedProximableFunction
   h::NormL0{R}
-  x0::V0  # base shift (nonzero when shifting an already shifted function)
-  x::V1   # current shift
-  s::V2   # internal storage
+  xk::V0  # base shift (nonzero when shifting an already shifted function)
+  sj::V1  # current shift
+  sol::V2   # internal storage
+  shifted_twice::Bool
   function ShiftedNormL0(
     h::NormL0{R},
-    x0::AbstractVector{R},
-    x::AbstractVector{R},
+    xk::AbstractVector{R},
+    sj::AbstractVector{R},
+    shifted_twice::Bool,
   ) where {R <: Real}
-    s = similar(x)
-    new{R, typeof(x0), typeof(x), typeof(s)}(h, x0, x, s)
+    sol = similar(xk)
+    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, shifted_twice)
   end
 end
 
 fun_name(ψ::ShiftedNormL0) = "shifted L0 pseudo-norm"
-fun_expr(ψ::ShiftedNormL0) = "s ↦ ‖x + s‖₀"
+fun_expr(ψ::ShiftedNormL0) = "t ↦ ‖xk + sj + t‖₀"
 
-shifted(h::NormL0{R}, x::AbstractVector{R}) where {R <: Real} = ShiftedNormL0(h, zero(x), x)
+shifted(h::NormL0{R}, xk::AbstractVector{R}) where {R <: Real} = ShiftedNormL0(h, xk, zero(xk), false)
 shifted(
   ψ::ShiftedNormL0{R, V0, V1, V2},
-  x::AbstractVector{R},
+  sj::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
-  ShiftedNormL0(ψ.h, ψ.x, x)
+  ShiftedNormL0(ψ.h, ψ.xk, sj, true)
 
 function prox(
   ψ::ShiftedNormL0{R, V0, V1, V2},
@@ -37,13 +39,12 @@ function prox(
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   c = sqrt(2 * ψ.λ * σ)
   for i ∈ eachindex(q)
-    xpq = ψ.x0[i] + ψ.x[i] + q[i]
-    if abs(xpq) ≤ c
-      ψ.s[i] = 0
+    xps = ψ.xk[i] + ψ.sj[i]
+    if abs(xps + q[i]) ≤ c
+      ψ.sol[i] = -xps
     else
-      ψ.s[i] = xpq
+      ψ.sol[i] = q[i]
     end
   end
-  ψ.s .-= ψ.x0 .+ ψ.x
-  return ψ.s
+  return ψ.sol
 end

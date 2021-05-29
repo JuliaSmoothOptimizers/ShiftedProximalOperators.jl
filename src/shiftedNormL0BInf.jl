@@ -7,53 +7,71 @@ mutable struct ShiftedNormL0BInf{
   V2 <: AbstractVector{R},
 } <: ShiftedProximableFunction
   h::NormL0{R}
-  x0::V0
-  x::V1
-  s::V2
+  xk::V0
+  sj::V1
+  sol::V2
   Δ::R
   χ::Conjugate{IndBallL1{R}}
+  shifted_twice::Bool
 
   function ShiftedNormL0BInf(
     h::NormL0{R},
-    x0::AbstractVector{R},
-    x::AbstractVector{R},
+    xk::AbstractVector{R},
+    sj::AbstractVector{R},
     Δ::R,
     χ::Conjugate{IndBallL1{R}},
+    shifted_twice::Bool,
   ) where {R <: Real}
-    s = similar(x)
-    new{R, typeof(x0), typeof(x), typeof(s)}(h, x0, x, s, Δ, χ)
+    sol = similar(xk)
+    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Δ, χ, shifted_twice)
   end
 end
 
-(ψ::ShiftedNormL0BInf)(y) = ψ.h(ψ.x0 + ψ.x + y) + IndBallLinf(ψ.Δ)(y)
+function (ψ::ShiftedNormL0BInf)(y)
+  return ψ.h(ψ.xk + ψ.sj + y) + IndBallLinf(1.01 * ψ.Δ)(ψ.sj + y)
+end
 
-shifted(h::NormL0{R}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real} =
-  ShiftedNormL0BInf(h, zero(x), x, Δ, χ)
+shifted(h::NormL0{R}, xk::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real} =
+  ShiftedNormL0BInf(h, xk, zero(xk), Δ, χ, false)
 shifted(
   ψ::ShiftedNormL0BInf{R, V0, V1, V2},
-  x::AbstractVector{R},
+  sj::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
-  ShiftedNormL0BInf(ψ.h, ψ.x, x, ψ.Δ, ψ.χ)
+  ShiftedNormL0BInf(ψ.h, ψ.xk, sj, ψ.Δ, ψ.χ, true)
 
 fun_name(ψ::ShiftedNormL0BInf) = "shifted L0 pseudo-norm with L∞-norm trust region indicator"
-fun_expr(ψ::ShiftedNormL0BInf) = "s ↦ ‖x + s‖₀ + χ({‖s‖∞ ≤ Δ})"
-fun_params(ψ::ShiftedNormL0BInf) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x), Δ = $(ψ.Δ)"
+fun_expr(ψ::ShiftedNormL0BInf) = "t ↦ λ ‖xk + sj + t‖₀ + χ({‖sj + t‖∞ ≤ Δ})"
+fun_params(ψ::ShiftedNormL0BInf) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "Δ = $(ψ.Δ)"
 
 function prox(
   ψ::ShiftedNormL0BInf{R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  c = sqrt(2 * ψ.λ * σ)
+  c2 = 2 * ψ.λ * σ
+  c = sqrt(c2)
 
   for i ∈ eachindex(q)
-    x0px = ψ.x0[i] + ψ.x[i]
-    if abs(x0px + q[i]) ≤ c
-      ψ.s[i] = min(-min(x0px, ψ.Δ), ψ.Δ)
-    else
-      ψ.s[i] = min(max(q[i], -ψ.Δ), ψ.Δ)
+    xs = ψ.xk[i] + ψ.sj[i]
+    xsq = xs + q[i]
+    left = ψ.xk[i] - ψ.Δ
+    right = ψ.xk[i] + ψ.Δ
+    val_left = (left - xsq)^2 + (ψ.xk[i] == ψ.Δ ? 0 : c2)
+    val_right = (right - xsq)^2 + (ψ.xk[i] == -ψ.Δ ? 0 : c2)
+    # subtract x + s from solution explicitly here instead of doing it
+    # numerically at the end
+    ψ.sol[i] = val_left < val_right ? (-ψ.sj[i] - ψ.Δ) : (-ψ.sj[i] + ψ.Δ)
+    val_min = min(val_left, val_right)
+    val_0 = xsq^2
+    val_xsq = xsq == 0 ? 0 : c2
+    if left ≤ 0 ≤ right
+      val_0 < val_min && (ψ.sol[i] = -xs)
+      val_min = min(val_0, val_min)
+    end
+    if left ≤ xsq ≤ right
+      val_xsq < val_min && (ψ.sol[i] = q[i])
     end
   end
 
-  return ψ.s
+  return ψ.sol
 end
