@@ -8,46 +8,48 @@ mutable struct ShiftedIndBallL0BInf{
   V2 <: AbstractVector{R},
 } <: ShiftedProximableFunction
   h::IndBallL0{I}
-  x0::V0
-  x::V1
-  s::V2
+  xk::V0
+  sj::V1
+  sol::V2
   p::Vector{Int}
   Δ::R
   χ::Conjugate{IndBallL1{R}}
+  shifted_twice::Bool
   function ShiftedIndBallL0BInf(
     h::IndBallL0{I},
-    x0::AbstractArray{R},
-    x::AbstractVector{R},
+    xk::AbstractArray{R},
+    sj::AbstractVector{R},
     Δ::R,
     χ::Conjugate{IndBallL1{R}},
+    shifted_twice::Bool
   ) where {I <: Integer, R <: Real}
-    s = similar(x)
-    new{I, R, typeof(x0), typeof(x), typeof(s)}(h, x0, x, s, Vector{Int}(undef, length(x)), Δ, χ)
+    sol = similar(sj)
+    new{I, R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Vector{Int}(undef, length(sj)), Δ, χ, shifted_twice)
   end
 end
 
-(ψ::ShiftedIndBallL0BInf)(y) = ψ.h(ψ.x0 + ψ.x + y) + IndBallLinf(ψ.Δ)(y)
+(ψ::ShiftedIndBallL0BInf)(y) = ψ.h(ψ.xk + ψ.sj + y) + IndBallLinf(ψ.Δ)(ψ.sj + y)
 
 shifted(
   h::IndBallL0{I},
-  x::AbstractVector{R},
+  xk::AbstractVector{R},
   Δ::R,
   χ::Conjugate{IndBallL1{R}},
-) where {I <: Integer, R <: Real} = ShiftedIndBallL0BInf(h, zero(x), x, Δ, χ)
+) where {I <: Integer, R <: Real} = ShiftedIndBallL0BInf(h, xk, zero(xk), Δ, χ, false)
 shifted(
   ψ::ShiftedIndBallL0BInf{I, R, V0, V1, V2},
-  x::AbstractVector{R},
+  sj::AbstractVector{R},
 ) where {
   I <: Integer,
   R <: Real,
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
-} = ShiftedIndBallL0BInf(ψ.h, ψ.x, x, ψ.Δ, ψ.χ)
+} = ShiftedIndBallL0BInf(ψ.h, ψ.xk, sj, ψ.Δ, ψ.χ, true)
 
 fun_name(ψ::ShiftedIndBallL0BInf) = "shifted L0 norm ball with L∞-norm trust region indicator"
-fun_expr(ψ::ShiftedIndBallL0BInf) = "s ↦ χ({‖x + s‖₀ ≤ r}) + χ({‖s‖∞ ≤ Δ})"
-fun_params(ψ::ShiftedIndBallL0BInf) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x), Δ = $(ψ.Δ)"
+fun_expr(ψ::ShiftedIndBallL0BInf) = "t ↦ χ({‖xk + sj + t‖₀ ≤ r}) + χ({‖sj + t‖∞ ≤ Δ})"
+fun_params(ψ::ShiftedIndBallL0BInf) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)," * " "^14 * "Δ = $(ψ.Δ)"
 
 function prox(
   ψ::ShiftedIndBallL0BInf{I, R, V0, V1, V2},
@@ -60,14 +62,14 @@ function prox(
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
 }
-  ψ.s .= ψ.x .+ ψ.x0 .+ q
+  ψ.sol .= ψ.xk .+ ψ.sj .+ q
   # find largest entries
-  sortperm!(ψ.p, ψ.s, rev = true, by = abs) # stock with ψ.p as placeholder
-  ψ.s[ψ.p[(ψ.h.r + 1):end]] .= 0 # set smallest to zero
+  sortperm!(ψ.p, ψ.sol, rev = true, by = abs) # stock with ψ.p as placeholder
+  ψ.sol[ψ.p[(ψ.h.r + 1):end]] .= 0 # set smallest to zero
 
-  for i ∈ eachindex(ψ.s)
-    ψ.s[i] = min(max(ψ.s[i] - (ψ.x0[i] + ψ.x[i]), -ψ.Δ), ψ.Δ)
+  for i ∈ eachindex(ψ.sol)
+    ψ.sol[i] = min(max(ψ.sol[i] - (ψ.xk[i] + ψ.sj[i]), -ψ.Δ), ψ.Δ)
   end
 
-  return ψ.s
+  return ψ.sol
 end
