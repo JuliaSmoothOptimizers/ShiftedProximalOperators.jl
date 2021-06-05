@@ -18,15 +18,19 @@ include("shiftedNormL1Binf.jl")
 include("shiftedIndBallL0.jl")
 include("shiftedIndBallL0BInf.jl")
 
-(ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.x0 + ψ.x + y)
+(ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
 
 """
     shift!(ψ, x)
 
 Update the shift of a shifted proximable function.
 """
-function shift!(ψ::ShiftedProximableFunction, x::AbstractVector{R}) where {R <: Real}
-  ψ.x .= x
+function shift!(ψ::ShiftedProximableFunction, shift::AbstractVector{R}) where {R <: Real}
+  if ψ.shifted_twice
+    ψ.sj .= shift
+  else
+    ψ.xk .= shift
+  end
   return ψ
 end
 
@@ -52,8 +56,8 @@ end
 end
 
 fun_name(ψ::ShiftedProximableFunction) = "undefined"
-fun_expr(ψ::ShiftedProximableFunction) = "s ↦ h(x + s)"
-fun_params(ψ::ShiftedProximableFunction) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x)"
+fun_expr(ψ::ShiftedProximableFunction) = "t ↦ h(xk + sj + t)"
+fun_params(ψ::ShiftedProximableFunction) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)"
 
 function Base.show(io::IO, ψ::ShiftedProximableFunction)
   println(io, "description : ", fun_name(ψ))

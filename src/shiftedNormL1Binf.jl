@@ -7,48 +7,50 @@ mutable struct ShiftedNormL1BInf{
   V2 <: AbstractVector{R},
 } <: ShiftedProximableFunction
   h::NormL1{R}
-  x0::V0
-  x::V1
-  s::V2
+  xk::V0
+  sj::V1
+  sol::V2
   Δ::R
   χ::Conjugate{IndBallL1{R}}
+  shifted_twice::Bool
 
   function ShiftedNormL1BInf(
     h::NormL1{R},
-    x0::AbstractVector{R},
-    x::AbstractVector{R},
+    xk::AbstractVector{R},
+    sj::AbstractVector{R},
     Δ::R,
     χ::Conjugate{IndBallL1{R}},
+    shifted_twice::Bool
   ) where {R <: Real}
-    s = similar(x)
-    new{R, typeof(x0), typeof(x), typeof(s)}(h, x0, x, s, Δ, χ)
+    sol = similar(sj)
+    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Δ, χ, shifted_twice)
   end
 end
 
-(ψ::ShiftedNormL1BInf)(y) = ψ.h(ψ.x0 + ψ.x + y) + IndBallLinf(ψ.Δ)(y)
+(ψ::ShiftedNormL1BInf)(y) = ψ.h(ψ.xk + ψ.sj + y) + IndBallLinf(ψ.Δ)(ψ.sj + y)
 
-shifted(h::NormL1{R}, x::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real} =
-  ShiftedNormL1BInf(h, zero(x), x, Δ, χ)
+shifted(h::NormL1{R}, xk::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real} =
+  ShiftedNormL1BInf(h, xk, zero(xk), Δ, χ, false)
 shifted(
   ψ::ShiftedNormL1BInf{R, V0, V1, V2},
-  x::AbstractVector{R},
+  sj::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
-  ShiftedNormL1BInf(ψ.h, ψ.x, x, ψ.Δ, ψ.χ)
+  ShiftedNormL1BInf(ψ.h, ψ.xk, sj, ψ.Δ, ψ.χ, true)
 
 fun_name(ψ::ShiftedNormL1BInf) = "shifted L1 norm with L∞-norm trust region indicator"
-fun_expr(ψ::ShiftedNormL1BInf) = "s ↦ ‖x + s‖₁ + χ({‖s‖∞ ≤ Δ})"
-fun_params(ψ::ShiftedNormL1BInf) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x), Δ = $(ψ.Δ)"
+fun_expr(ψ::ShiftedNormL1BInf) = "t ↦ ‖xk + sj + t‖₁ + χ({‖sj + t‖∞ ≤ Δ})"
+fun_params(ψ::ShiftedNormL1BInf) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "Δ = $(ψ.Δ)"
 
 function prox(
   ψ::ShiftedNormL1BInf{R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  ψ.s .= -ψ.x .- ψ.x0
+  ψ.sol .= -ψ.sj .- ψ.xk
 
-  for i ∈ eachindex(ψ.s)
-    ψ.s[i] = min(max(min(max(ψ.s[i], q[i] - ψ.λ * σ), q[i] + ψ.λ * σ), -ψ.Δ), ψ.Δ)
+  for i ∈ eachindex(ψ.sol)
+    ψ.sol[i] = min(max(min(max(ψ.sol[i], q[i] - ψ.λ * σ), q[i] + ψ.λ * σ), -ψ.Δ), ψ.Δ)
   end
 
-  return ψ.s
+  return ψ.sol
 end

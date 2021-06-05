@@ -12,8 +12,8 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0, :ShiftedNormL1
     x = ones(3)
     ψ = shifted(h, x)
     @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
-    @test all(ψ.x0 .== 0)
-    @test all(ψ.x .== x)
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== x)
     @test typeof(ψ.λ) == Float64
     @test ψ.λ == h.lambda
 
@@ -27,14 +27,14 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0, :ShiftedNormL1
 
     # test shift update
     shift!(ψ, y)
-    @test all(ψ.x0 .== 0)
-    @test all(ψ.x .== y)
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== y)
 
     # shift a shifted operator
     s = ones(3) / 2
     φ = shifted(ψ, s)
-    @test all(φ.x0 .== x)
-    @test all(φ.x .== s)
+    @test all(φ.sj .== s)
+    @test all(φ.xk .== x)
     @test φ(zeros(3)) == h(x + s)
     y = rand(3)
     @test φ(y) == h(x + s + y)
@@ -46,8 +46,8 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0, :ShiftedNormL1
     ψ = shifted(h, x)
     @test typeof(ψ) == ShiftedOp{
       Float32,
-      Vector{Float32},
       SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+      Vector{Float32},
       Vector{Float32},
     }
     @test typeof(ψ.λ) == Float32
@@ -66,7 +66,7 @@ for (op, shifted_op) ∈ zip((:IndBallL0,), (:ShiftedIndBallL0,))
     x = ones(3)
     ψ = shifted(h, x)
     @test typeof(ψ) == ShiftedOp{Int64, Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
-    @test all(ψ.x .== x)
+    @test all(ψ.xk .== x)
     @test typeof(ψ.r) == Int64
     @test ψ.r == h.r
 
@@ -80,13 +80,13 @@ for (op, shifted_op) ∈ zip((:IndBallL0,), (:ShiftedIndBallL0,))
 
     # test shift update
     shift!(ψ, y)
-    @test all(ψ.x .== y)
+    @test all(ψ.xk .== y)
 
     # shift a shifted operator
     s = ones(3) / 2
     φ = shifted(ψ, s)
-    @test all(φ.x0 .== x)
-    @test all(φ.x .== s)
+    @test all(φ.sj .== s)
+    @test all(φ.xk .== x)
     @test φ(zeros(3)) == h(x + s)
     y = rand(3)
     @test φ(y) == h(x + s + y)
@@ -99,8 +99,8 @@ for (op, shifted_op) ∈ zip((:IndBallL0,), (:ShiftedIndBallL0,))
     @test typeof(ψ) == ShiftedOp{
       Int32,
       Float32,
-      Vector{Float32},
       SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+      Vector{Float32},
       Vector{Float32},
     }
     @test typeof(ψ.r) == Int32
@@ -126,8 +126,8 @@ for (op, tr, shifted_op) ∈ zip(
     Δ = 0.01
     ψ = shifted(h, x, Δ, χ)
     @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
-    @test all(ψ.x0 .== 0)
-    @test all(ψ.x .== x)
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== x)
     @test typeof(ψ.λ) == Float64
     @test ψ.λ == h.lambda
     @test ψ.Δ == Δ
@@ -180,23 +180,24 @@ for (op, tr, shifted_op) ∈ zip(
 
     # test shift update
     shift!(ψ, y)
-    @test all(ψ.x0 .== 0)
-    @test all(ψ.x .== y)
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== y)
 
     # test radius update
     set_radius!(ψ, 1.1)
     @test ψ.Δ == 1.1
 
     # shift a shifted operator
-    s = ones(n) / 2
+    s = ones(n)
+    s /= 2 * ψ.χ(s)
     φ = shifted(ψ, s)
-    @test all(φ.x0 .== x)
-    @test all(φ.x .== s)
-    @test φ(zeros(n)) == h(x + s)
-    y = rand(n)
-    y .*= ψ.Δ / ψ.χ(y) / 2
-    @test φ(y) == h(x + s + y)  # y inside the trust region
-    @test φ(3 * y) == Inf       # y outside the trust region
+    @test all(φ.sj .== s)
+    @test all(φ.xk .== x)
+    @test φ(zeros(n)) == h(y + s)
+    t = rand(n)
+    t .*= ψ.Δ / ψ.χ(t) / 2
+    @test φ(t) == h(y + s + t)  # y inside the trust region
+    @test φ(3 * t) == Inf       # y outside the trust region
 
     # test different types
     h = Op(Float32(1.2))
@@ -206,8 +207,8 @@ for (op, tr, shifted_op) ∈ zip(
     ψ = shifted(h, x, Float32(0.5), χ)
     @test typeof(ψ) == ShiftedOp{
       Float32,
-      Vector{Float32},
       SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+      Vector{Float32},
       Vector{Float32},
     }
     @test typeof(ψ.λ) == Float32
@@ -228,7 +229,7 @@ for (op, tr, shifted_op) ∈ zip((:IndBallL0,), (:NormLinf,), (:ShiftedIndBallL0
     Δ = 0.5
     ψ = shifted(h, x, Δ, χ)
     @test typeof(ψ) == ShiftedOp{Int64, Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
-    @test all(ψ.x .== x)
+    @test all(ψ.xk .== x)
     @test typeof(ψ.r) == Int64
     @test ψ.r == h.r
     @test ψ.Δ == Δ
@@ -245,7 +246,7 @@ for (op, tr, shifted_op) ∈ zip((:IndBallL0,), (:NormLinf,), (:ShiftedIndBallL0
 
     # test shift update
     shift!(ψ, y)
-    @test all(ψ.x .== y)
+    @test all(ψ.xk .== y)
 
     # test radius update
     set_radius!(ψ, 1.1)
@@ -254,8 +255,8 @@ for (op, tr, shifted_op) ∈ zip((:IndBallL0,), (:NormLinf,), (:ShiftedIndBallL0
     # shift a shifted operator
     s = ones(3) / 2
     φ = shifted(ψ, s)
-    @test all(φ.x0 .== x)
-    @test all(φ.x .== s)
+    @test all(φ.sj .== s)
+    @test all(φ.xk .== x)
     @test φ(zeros(3)) == h(x + s)
     y = rand(3)
     y .*= ψ.Δ / ψ.χ(y) / 2
@@ -271,8 +272,8 @@ for (op, tr, shifted_op) ∈ zip((:IndBallL0,), (:NormLinf,), (:ShiftedIndBallL0
     @test typeof(ψ) == ShiftedOp{
       Int32,
       Float32,
-      Vector{Float32},
       SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+      Vector{Float32},
       Vector{Float32},
     }
     @test typeof(ψ.r) == Int32
