@@ -18,10 +18,17 @@ mutable struct ShiftedIndBallL0{
     h::IndBallL0{I},
     xk::AbstractVector{R},
     sj::AbstractVector{R},
-    shifted_twice::Bool
+    shifted_twice::Bool,
   ) where {I <: Integer, R <: Real}
     sol = similar(sj)
-    new{I, R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Vector{Int}(undef, length(sj)), shifted_twice)
+    new{I, R, typeof(xk), typeof(sj), typeof(sol)}(
+      h,
+      xk,
+      sj,
+      sol,
+      Vector{Int}(undef, length(sj)),
+      shifted_twice,
+    )
   end
 end
 

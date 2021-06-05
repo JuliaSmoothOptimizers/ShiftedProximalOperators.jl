@@ -21,10 +21,19 @@ mutable struct ShiftedIndBallL0BInf{
     sj::AbstractVector{R},
     Δ::R,
     χ::Conjugate{IndBallL1{R}},
-    shifted_twice::Bool
+    shifted_twice::Bool,
   ) where {I <: Integer, R <: Real}
     sol = similar(sj)
-    new{I, R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Vector{Int}(undef, length(sj)), Δ, χ, shifted_twice)
+    new{I, R, typeof(xk), typeof(sj), typeof(sol)}(
+      h,
+      xk,
+      sj,
+      sol,
+      Vector{Int}(undef, length(sj)),
+      Δ,
+      χ,
+      shifted_twice,
+    )
   end
 end
 
@@ -49,7 +58,8 @@ shifted(
 
 fun_name(ψ::ShiftedIndBallL0BInf) = "shifted L0 norm ball with L∞-norm trust region indicator"
 fun_expr(ψ::ShiftedIndBallL0BInf) = "t ↦ χ({‖xk + sj + t‖₀ ≤ r}) + χ({‖sj + t‖∞ ≤ Δ})"
-fun_params(ψ::ShiftedIndBallL0BInf) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)," * " "^14 * "Δ = $(ψ.Δ)"
+fun_params(ψ::ShiftedIndBallL0BInf) =
+  "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)," * " "^14 * "Δ = $(ψ.Δ)"
 
 function prox(
   ψ::ShiftedIndBallL0BInf{I, R, V0, V1, V2},

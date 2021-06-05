@@ -20,7 +20,7 @@ mutable struct ShiftedNormL1B2{
     sj::AbstractVector{R},
     Δ::R,
     χ::NormL2{R},
-    shifted_twice::Bool
+    shifted_twice::Bool,
   ) where {R <: Real}
     sol = similar(sj)
     new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Δ, χ, shifted_twice)
@@ -39,7 +39,8 @@ shifted(
 
 fun_name(ψ::ShiftedNormL1B2) = "shifted L1 norm with L2-norm trust region indicator"
 fun_expr(ψ::ShiftedNormL1B2) = "t ↦ ‖xk + sj + t‖₁ + χ({‖sj + t‖₂ ≤ Δ})"
-fun_params(ψ::ShiftedNormL1B2) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "Δ = $(ψ.Δ)"
+fun_params(ψ::ShiftedNormL1B2) =
+  "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "Δ = $(ψ.Δ)"
 
 function prox(
   ψ::ShiftedNormL1B2{R, V0, V1, V2},
