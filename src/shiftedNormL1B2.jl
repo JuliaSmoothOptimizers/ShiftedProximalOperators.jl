@@ -7,37 +7,39 @@ mutable struct ShiftedNormL1B2{
   V2 <: AbstractVector{R},
 } <: ShiftedProximableFunction
   h::NormL1{R}
-  x0::V0
-  x::V1
-  s::V2
+  xk::V0
+  sj::V1
+  sol::V2
   Δ::R
   χ::NormL2{R}
+  shifted_twice::Bool
 
   function ShiftedNormL1B2(
     h::NormL1{R},
-    x0::AbstractVector{R},
-    x::AbstractVector{R},
+    xk::AbstractVector{R},
+    sj::AbstractVector{R},
     Δ::R,
     χ::NormL2{R},
+    shifted_twice::Bool
   ) where {R <: Real}
-    s = similar(x)
-    new{R, typeof(x0), typeof(x), typeof(s)}(h, x0, x, s, Δ, χ)
+    sol = similar(sj)
+    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Δ, χ, shifted_twice)
   end
 end
 
-(ψ::ShiftedNormL1B2)(y) = ψ.h(ψ.x0 + ψ.x + y) + IndBallL2(ψ.Δ)(y)
+(ψ::ShiftedNormL1B2)(y) = ψ.h(ψ.xk + ψ.sj + y) + IndBallL2(ψ.Δ)(ψ.sj + y)
 
-shifted(h::NormL1{R}, x::AbstractVector{R}, Δ::R, χ::NormL2{R}) where {R <: Real} =
-  ShiftedNormL1B2(h, zero(x), x, Δ, χ)
+shifted(h::NormL1{R}, xk::AbstractVector{R}, Δ::R, χ::NormL2{R}) where {R <: Real} =
+  ShiftedNormL1B2(h, xk, zero(xk), Δ, χ, false)
 shifted(
   ψ::ShiftedNormL1B2{R, V0, V1, V2},
-  x::AbstractVector{R},
+  sj::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
-  ShiftedNormL1B2(ψ.h, ψ.x, x, ψ.Δ, ψ.χ)
+  ShiftedNormL1B2(ψ.h, ψ.xk, sj, ψ.Δ, ψ.χ, true)
 
 fun_name(ψ::ShiftedNormL1B2) = "shifted L1 norm with L2-norm trust region indicator"
-fun_expr(ψ::ShiftedNormL1B2) = "s ↦ ‖x + s‖₁ + χ({‖s‖₂ ≤ Δ})"
-fun_params(ψ::ShiftedNormL1B2) = "x0 = $(ψ.x0)\n" * " "^14 * "x = $(ψ.x), Δ = $(ψ.Δ)"
+fun_expr(ψ::ShiftedNormL1B2) = "t ↦ ‖xk + sj + t‖₁ + χ({‖sj + t‖₂ ≤ Δ})"
+fun_params(ψ::ShiftedNormL1B2) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "Δ = $(ψ.Δ)"
 
 function prox(
   ψ::ShiftedNormL1B2{R, V0, V1, V2},
@@ -45,16 +47,16 @@ function prox(
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   ProjB(y) = min.(max.(y, q .- ψ.λ * σ), q .+ ψ.λ * σ)
-  froot(η) = η - ψ.χ(ProjB((-ψ.x - ψ.x0) .* (η / ψ.Δ)))
+  froot(η) = η - ψ.χ(ProjB((-ψ.sj - ψ.xk) .* (η / ψ.Δ)))
 
-  ψ.s .= ProjB(-ψ.x - ψ.x0)
+  ψ.sol .= ProjB(-ψ.sj - ψ.xk)
 
-  if ψ.χ(ψ.s) > ψ.Δ
+  if ψ.χ(ψ.sol) > ψ.Δ
     η = fzero(froot, 1e-10, Inf)
-    ψ.s .*= (η / ψ.Δ)
+    ψ.sol .*= (η / ψ.Δ)
   end
-  if ψ.χ(ψ.s) > ψ.Δ
-    ψ.s .*= (ψ.Δ / ψ.χ(ψ.s))
+  if ψ.χ(ψ.sol) > ψ.Δ
+    ψ.sol .*= (ψ.Δ / ψ.χ(ψ.sol))
   end
-  return ψ.s
+  return ψ.sol
 end
