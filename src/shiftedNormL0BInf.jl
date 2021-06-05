@@ -41,7 +41,8 @@ shifted(
 
 fun_name(ψ::ShiftedNormL0BInf) = "shifted L0 pseudo-norm with L∞-norm trust region indicator"
 fun_expr(ψ::ShiftedNormL0BInf) = "t ↦ λ ‖xk + sj + t‖₀ + χ({‖sj + t‖∞ ≤ Δ})"
-fun_params(ψ::ShiftedNormL0BInf) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "Δ = $(ψ.Δ)"
+fun_params(ψ::ShiftedNormL0BInf) =
+  "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "Δ = $(ψ.Δ)"
 
 function prox(
   ψ::ShiftedNormL0BInf{R, V0, V1, V2},

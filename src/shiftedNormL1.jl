@@ -23,7 +23,8 @@ mutable struct ShiftedNormL1{
   end
 end
 
-shifted(h::NormL1{R}, xk::AbstractVector{R}) where {R <: Real} = ShiftedNormL1(h, xk, zero(xk), false)
+shifted(h::NormL1{R}, xk::AbstractVector{R}) where {R <: Real} =
+  ShiftedNormL1(h, xk, zero(xk), false)
 shifted(
   ψ::ShiftedNormL1{R, V0, V1, V2},
   sj::AbstractVector{R},
