@@ -47,10 +47,18 @@ function prox(
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  ψ.sol .= -ψ.sj .- ψ.xk
-
+  σλ = σ * ψ.λ
   for i ∈ eachindex(ψ.sol)
-    ψ.sol[i] = min(max(min(max(ψ.sol[i], q[i] - ψ.λ * σ), q[i] + ψ.λ * σ), -ψ.Δ), ψ.Δ)
+    xs = ψ.xk[i] + ψ.sj[i]
+    xsq = xs + q[i]
+    ψ.sol[i] = if xsq ≤ -σλ
+      q[i] + σλ
+    elseif xsq ≥ σλ
+      q[i] - σλ
+    else
+      -xs
+    end
+    ψ.sol[i] = min(max(ψ.sol[i], -ψ.sj[i] - ψ.Δ), -ψ.sj[i] + ψ.Δ)
   end
 
   return ψ.sol
