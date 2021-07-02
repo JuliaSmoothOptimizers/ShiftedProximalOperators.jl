@@ -48,9 +48,9 @@ function prox(
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   ProjB(y) = min.(max.(y, ψ.sj + q .- ψ.λ * σ), ψ.sj + q .+ ψ.λ * σ)
-  froot(η) = η - ψ.χ(ProjB((- ψ.xk) .* (η / ψ.Δ)))
+  froot(η) = η - ψ.χ(ProjB((- ψ.xk) .* (η / ψ.Δ)) - ψ.sj)
 
-  ψ.sol .= ProjB( - ψ.xk)
+  ψ.sol .= ProjB( - ψ.xk) .- ψ.sj
 
   if ψ.χ(ψ.sol) > ψ.Δ
     η = fzero(froot, 1e-10, Inf)
@@ -59,7 +59,5 @@ function prox(
   if ψ.χ(ψ.sol) > ψ.Δ
     ψ.sol .*= (ψ.Δ / ψ.χ(ψ.sol))
   end
-  ψ.sol .-= ψ.sj
-  ψ.sol *= (ψ.Δ /ψ.χ(ψ.sol))
   return ψ.sol
 end
