@@ -60,6 +60,6 @@ function prox(
     ψ.sol .*= (ψ.Δ / ψ.χ(ψ.sol))
   end
   ψ.sol .-= ψ.sj
-  ψ.sol /= ψ.χ(ψ.sol)
+  ψ.sol *= (ψ.Δ /ψ.χ(ψ.sol))
   return ψ.sol
 end
