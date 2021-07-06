@@ -54,7 +54,7 @@ function prox(
 
   if ψ.χ(ψ.sol) > ψ.Δ
     η = fzero(froot, 1e-10, Inf)
-    ψ.sol .*= (η / ψ.Δ)
+    ψ.sol .= ProjB((- ψ.xk) .* (η / ψ.Δ))*(ψ.Δ / η)
   end
   ψ.sol .-= ψ.sj
   return ψ.sol
