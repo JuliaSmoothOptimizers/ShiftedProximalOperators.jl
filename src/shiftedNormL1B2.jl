@@ -47,17 +47,15 @@ function prox(
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  ProjB(y) = min.(max.(y, q .- ψ.λ * σ), q .+ ψ.λ * σ)
-  froot(η) = η - ψ.χ(ProjB((-ψ.sj - ψ.xk) .* (η / ψ.Δ)))
+  ProjB(y) = min.(max.(y, ψ.sj .+ q .- ψ.λ * σ), ψ.sj .+ q .+ ψ.λ * σ)
+  froot(η) = η - ψ.χ(ProjB((- ψ.xk) .* (η / ψ.Δ)))
 
-  ψ.sol .= ProjB(-ψ.sj - ψ.xk)
+  ψ.sol .= ProjB(- ψ.xk)
 
   if ψ.χ(ψ.sol) > ψ.Δ
     η = fzero(froot, 1e-10, Inf)
-    ψ.sol .*= (η / ψ.Δ)
+    ψ.sol .= ProjB((- ψ.xk) .* (η / ψ.Δ)) * (ψ.Δ / η)
   end
-  if ψ.χ(ψ.sol) > ψ.Δ
-    ψ.sol .*= (ψ.Δ / ψ.χ(ψ.sol))
-  end
+  ψ.sol .-= ψ.sj
   return ψ.sol
 end
