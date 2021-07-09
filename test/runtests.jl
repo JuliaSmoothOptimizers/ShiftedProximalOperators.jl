@@ -281,3 +281,35 @@ for (op, tr, shifted_op) ∈ zip((:IndBallL0,), (:NormLinf,), (:ShiftedIndBallL0
     @test ψ(zeros(Float32, 5)) == h(x)
   end
 end
+
+# loop over separable convex operators with separable trust region
+for (op, tr) ∈ zip((:NormL1,), (:NormLinf,))
+  @testset "prox for $op with $tr trust region" begin
+    χ = eval(tr)(1.0)
+    h = eval(op)(1.0)
+    n = 4
+    Δ = 2 * rand()
+    q = 2 * (rand(n) .- 0.5)
+    ν = rand()
+
+    # shift once
+    xk = rand(n) .- 0.5
+    ψ = shifted(h, xk, Δ, χ)
+
+    # check prox
+    p1 = ProximalOperators.prox(h, xk + q, ν)[1]
+    p1 .= min.(max.(p1, xk .- Δ), xk .+ Δ) - xk
+    p2 = ShiftedProximalOperators.prox(ψ, q, ν)
+    @test all(p1 .≈ p2)
+
+    # shift a second time
+    sj = rand(n) .- 0.5
+    ω = shifted(ψ, sj)
+
+    # check prox
+    p1 = ProximalOperators.prox(h, xk + sj + q, ν)[1]
+    p1 .= min.(max.(p1, xk .- Δ), xk .+ Δ) - (xk + sj)
+    p2 = ShiftedProximalOperators.prox(ω, q, ν)
+    @test all(p1 .≈ p2)
+  end
+end
