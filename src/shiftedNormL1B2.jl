@@ -53,7 +53,7 @@ function prox(
   ψ.sol .= ProjB(- ψ.xk)
 
   if ψ.Δ ≤ ψ.χ(ψ.sol)
-    η = fzero(froot, 1e-10, Inf)
+    η = find_zero(froot, ψ.Δ)
     ψ.sol .= ProjB((- ψ.xk) .* (η / ψ.Δ)) * (ψ.Δ / η)
   end
   ψ.sol .-= ψ.sj
