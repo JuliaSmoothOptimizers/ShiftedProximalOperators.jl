@@ -44,7 +44,8 @@ fun_expr(ψ::ShiftedNormL0BInf) = "t ↦ λ ‖xk + sj + t‖₀ + χ({‖sj + t
 fun_params(ψ::ShiftedNormL0BInf) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "Δ = $(ψ.Δ)"
 
-function prox(
+function prox!(
+  y::AbstractVector{R},
   ψ::ShiftedNormL0BInf{R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
@@ -61,18 +62,18 @@ function prox(
     val_right = (right - xsq)^2 + (ψ.xk[i] == -ψ.Δ ? 0 : c2)
     # subtract x + s from solution explicitly here instead of doing it
     # numerically at the end
-    ψ.sol[i] = val_left < val_right ? (-ψ.sj[i] - ψ.Δ) : (-ψ.sj[i] + ψ.Δ)
+    y[i] = val_left < val_right ? (-ψ.sj[i] - ψ.Δ) : (-ψ.sj[i] + ψ.Δ)
     val_min = min(val_left, val_right)
     val_0 = xsq^2
-    val_xsq = xsq == 0 ? 0 : c2
+    val_xsq = xsq == 0 ? zero(R) : c2
     if left ≤ 0 ≤ right
-      val_0 < val_min && (ψ.sol[i] = -xs)
+      val_0 < val_min && (y[i] = -xs)
       val_min = min(val_0, val_min)
     end
     if left ≤ xsq ≤ right
-      val_xsq < val_min && (ψ.sol[i] = q[i])
+      val_xsq < val_min && (y[i] = q[i])
     end
   end
 
-  return ψ.sol
+  return y
 end

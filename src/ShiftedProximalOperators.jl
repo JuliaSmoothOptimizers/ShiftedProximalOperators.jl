@@ -4,7 +4,7 @@ using ProximalOperators
 using Roots
 
 export ShiftedProximableFunction
-export prox, set_radius!, shift!, shifted
+export prox, prox!, set_radius!, shift!, shifted
 
 "Abstract type for shifted proximable functions."
 abstract type ShiftedProximableFunction <: ProximableFunction end
@@ -68,12 +68,12 @@ function Base.show(io::IO, ψ::ShiftedProximableFunction)
 end
 
 """
-    prox(ψ, q, σ)
+    prox!(y, ψ, q, σ)
 
 Evaluate the proximal operator of a shifted regularizer, i.e, return
 a solution s of
 
-    minimize{s}  ½σ ‖s - q‖₂² + ψ(s),
+    minimize{s}  ½ σ⁻¹ ‖s - q‖₂² + ψ(s),
 
 where
 
@@ -81,8 +81,19 @@ where
   possibly including the indicator of a trust region;
 * q is the vector where the shifted proximal operator should be evaluated;
 * σ is a positive regularization parameter.
+
+The solution is stored in the input vector `y` an `y` is returned.
 """
-prox
+prox!
+
+"""
+    prox(ψ, q, σ)
+
+See the documentation of `prox!`.
+In this form, the solution is stored in ψ's internal storage and a reference
+is returned.
+"""
+prox(ψ::ShiftedProximableFunction, args...) = prox!(ψ.sol, ψ, args...)
 
 """
     shifted(h, x)

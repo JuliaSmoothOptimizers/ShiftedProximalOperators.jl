@@ -42,24 +42,25 @@ fun_expr(ψ::ShiftedNormL1BInf) = "t ↦ ‖xk + sj + t‖₁ + χ({‖sj + t‖
 fun_params(ψ::ShiftedNormL1BInf) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "Δ = $(ψ.Δ)"
 
-function prox(
+function prox!(
+  y::AbstractVector{R},
   ψ::ShiftedNormL1BInf{R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   σλ = σ * ψ.λ
-  for i ∈ eachindex(ψ.sol)
+  for i ∈ eachindex(y)
     xs = ψ.xk[i] + ψ.sj[i]
     xsq = xs + q[i]
-    ψ.sol[i] = if xsq ≤ -σλ
+    y[i] = if xsq ≤ -σλ
       q[i] + σλ
     elseif xsq ≥ σλ
       q[i] - σλ
     else
       -xs
     end
-    ψ.sol[i] = min(max(ψ.sol[i], -ψ.sj[i] - ψ.Δ), -ψ.sj[i] + ψ.Δ)
+    y[i] = min(max(y[i], -ψ.sj[i] - ψ.Δ), -ψ.sj[i] + ψ.Δ)
   end
 
-  return ψ.sol
+  return y
 end
