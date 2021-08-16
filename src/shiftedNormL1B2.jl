@@ -42,20 +42,21 @@ fun_expr(ψ::ShiftedNormL1B2) = "t ↦ ‖xk + sj + t‖₁ + χ({‖sj + t‖�
 fun_params(ψ::ShiftedNormL1B2) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "Δ = $(ψ.Δ)"
 
-function prox(
+function prox!(
+  y::AbstractVector{R},
   ψ::ShiftedNormL1B2{R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  ProjB(y) = min.(max.(y, ψ.sj .+ q .- ψ.λ * σ), ψ.sj .+ q .+ ψ.λ * σ)
+  ProjB(z) = min.(max.(z, ψ.sj .+ q .- ψ.λ * σ), ψ.sj .+ q .+ ψ.λ * σ)
   froot(η) = η - ψ.χ(ProjB((-ψ.xk) .* (η / ψ.Δ)))
 
-  ψ.sol .= ProjB(-ψ.xk)
+  y .= ProjB(-ψ.xk)
 
-  if ψ.Δ ≤ ψ.χ(ψ.sol)
+  if ψ.Δ ≤ ψ.χ(y)
     η = find_zero(froot, ψ.Δ)
-    ψ.sol .= ProjB((-ψ.xk) .* (η / ψ.Δ)) * (ψ.Δ / η)
+    y .= ProjB((-ψ.xk) .* (η / ψ.Δ)) * (ψ.Δ / η)
   end
-  ψ.sol .-= ψ.sj
-  return ψ.sol
+  y .-= ψ.sj
+  return y
 end

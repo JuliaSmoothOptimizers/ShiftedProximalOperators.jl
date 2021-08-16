@@ -48,7 +48,8 @@ shifted(
 fun_name(ψ::ShiftedIndBallL0) = "shifted L0 norm ball indicator"
 fun_expr(ψ::ShiftedIndBallL0) = "t ↦ χ({‖xk + sj + t‖₀ ≤ r})"
 
-function prox(
+function prox!(
+  y::AbstractVector{R},
   ψ::ShiftedIndBallL0{I, R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
@@ -59,10 +60,10 @@ function prox(
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
 }
-  ψ.sol .= ψ.xk .+ ψ.sj .+ q
+  y .= ψ.xk .+ ψ.sj .+ q
   # find largest entries
-  sortperm!(ψ.p, ψ.sol, rev = true, by = abs) # stock with ψ.p as placeholder
-  ψ.sol[ψ.p[(ψ.h.r + 1):end]] .= 0 # set smallest to zero
-  ψ.sol .-= ψ.xk .+ ψ.sj
-  return ψ.sol
+  sortperm!(ψ.p, y, rev = true, by = abs) # stock with ψ.p as placeholder
+  y[ψ.p[(ψ.h.r + 1):end]] .= 0 # set smallest to zero
+  y .-= ψ.xk .+ ψ.sj
+  return y
 end

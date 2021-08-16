@@ -35,16 +35,17 @@ fun_name(ψ::ShiftedNormL1) = "shifted L1 norm"
 fun_expr(ψ::ShiftedNormL1) = "t ↦ ‖xk + sk + t‖₁"
 fun_params(ψ::ShiftedNormL1) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)"
 
-function prox(
+function prox!(
+  y::AbstractVector{R},
   ψ::ShiftedNormL1{R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  ψ.sol .= -ψ.xk .- ψ.sj
+  y .= -ψ.xk .- ψ.sj
 
-  for i ∈ eachindex(ψ.sol)
-    ψ.sol[i] = min(max(ψ.sol[i], q[i] - ψ.λ * σ), q[i] + ψ.λ * σ)
+  for i ∈ eachindex(y)
+    y[i] = min(max(y[i], q[i] - ψ.λ * σ), q[i] + ψ.λ * σ)
   end
 
-  return ψ.sol
+  return y
 end

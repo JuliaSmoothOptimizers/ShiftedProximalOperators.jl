@@ -61,7 +61,8 @@ fun_expr(ψ::ShiftedIndBallL0BInf) = "t ↦ χ({‖xk + sj + t‖₀ ≤ r}) + �
 fun_params(ψ::ShiftedIndBallL0BInf) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)," * " "^14 * "Δ = $(ψ.Δ)"
 
-function prox(
+function prox!(
+  y::AbstractVector{R},
   ψ::ShiftedIndBallL0BInf{I, R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
@@ -72,14 +73,14 @@ function prox(
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
 }
-  ψ.sol .= ψ.xk .+ ψ.sj .+ q
+  y .= ψ.xk .+ ψ.sj .+ q
   # find largest entries
-  sortperm!(ψ.p, ψ.sol, rev = true, by = abs) # stock with ψ.p as placeholder
-  ψ.sol[ψ.p[(ψ.h.r + 1):end]] .= 0 # set smallest to zero
+  sortperm!(ψ.p, y, rev = true, by = abs) # stock with ψ.p as placeholder
+  y[ψ.p[(ψ.h.r + 1):end]] .= 0 # set smallest to zero
 
-  for i ∈ eachindex(ψ.sol)
-    ψ.sol[i] = min(max(ψ.sol[i] - (ψ.xk[i] + ψ.sj[i]), -ψ.Δ), ψ.Δ)
+  for i ∈ eachindex(y)
+    y[i] = min(max(y[i] - (ψ.xk[i] + ψ.sj[i]), -ψ.Δ), ψ.Δ)
   end
 
-  return ψ.sol
+  return y
 end

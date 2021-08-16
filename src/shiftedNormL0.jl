@@ -33,7 +33,8 @@ shifted(
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
   ShiftedNormL0(ψ.h, ψ.xk, sj, true)
 
-function prox(
+function prox!(
+  y::AbstractVector{R},
   ψ::ShiftedNormL0{R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
@@ -42,10 +43,10 @@ function prox(
   for i ∈ eachindex(q)
     xps = ψ.xk[i] + ψ.sj[i]
     if abs(xps + q[i]) ≤ c
-      ψ.sol[i] = -xps
+      y[i] = -xps
     else
-      ψ.sol[i] = q[i]
+      y[i] = q[i]
     end
   end
-  return ψ.sol
+  return y
 end
