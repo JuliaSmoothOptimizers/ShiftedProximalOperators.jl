@@ -37,7 +37,8 @@ mutable struct ShiftedIndBallL0BInf{
   end
 end
 
-(ψ::ShiftedIndBallL0BInf)(y) = ψ.h(ψ.xk + ψ.sj + y) + IndBallLinf(ψ.Δ)(ψ.sj + y)
+# TODO: find a more robust solution than the factor 1.1 here.
+(ψ::ShiftedIndBallL0BInf)(y) = ψ.h(ψ.xk + ψ.sj + y) + IndBallLinf(1.1 * ψ.Δ)(ψ.sj + y)
 
 shifted(
   h::IndBallL0{I},
