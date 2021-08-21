@@ -96,11 +96,8 @@ See the documentation of `prox!`.
 In this form, the solution is stored in ψ's internal storage and a reference
 is returned.
 """
-prox(
-  ψ::ShiftedProximableFunction,
-  q::V,
-  σ::R,
- ) where {R <: Real, V <: AbstractVector{R}} = prox!(ψ.sol, ψ, q, σ)
+prox(ψ::ShiftedProximableFunction, q::V, σ::R) where {R <: Real, V <: AbstractVector{R}} =
+  prox!(ψ.sol, ψ, q, σ)
 
 """
     shifted(h, x)
