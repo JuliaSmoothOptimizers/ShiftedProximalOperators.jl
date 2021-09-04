@@ -48,8 +48,7 @@ fun_expr(f::RootNormLhalf{T}) where {T <: Real} = "x ↦ (λ/2)||x||^(1/2)_(1/2)
 fun_params(f::RootNormLhalf{T}) where {T <: Real} = "λ = $(f.lambda)"
 
 function prox_naive(f::RootNormLhalf, x::AbstractArray{T}, gamma::Real=1) where {R, T <: Real}
-  γλ = 2 * gamma * f.lambda
-  over = abs.(x) .> 3 * (γλ)^(2/3) / 4
-  y = (2 / 3 * sign.(x) .* abs.(x) .* (1 .+ cos.((2/3) * (π .- acos( γλ/8 * (abs.(x) ./ 3).^(-3/2))) ))) .* over
-  return y, f.lambda * R(sum(sqrt.(abs.(y))))
+  y = similar(x)
+  cost = prox!(y, f, x, gamma)
+  return y, cost
 end
