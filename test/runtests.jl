@@ -18,7 +18,6 @@ for op ∈ (:RootNormLhalf,)
   end
 end
 
-
 # loop over operators without a trust region
 for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0, :ShiftedNormL1))
   @testset "$shifted_op" begin
