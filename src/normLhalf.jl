@@ -29,11 +29,11 @@ function (f::RootNormLhalf)(x::AbstractArray{T}) where {T <: Real}
 end
 
 function prox!(y::AbstractArray{T}, f::RootNormLhalf, x::AbstractArray{T}, gamma::Real=1) where {T <: Real}
-  γλ = 2 * gamma * f.lambda
-  ϕ(z) = acos(γλ / 8 * (abs(z) /3 )^(-3/2))
+  γλ = gamma * f.lambda
+  ϕ(z) = acos(γλ / 4 * (abs(z) /3 )^(-3/2))
   ysum = zero(T)
   for i in eachindex(x)
-    if abs(x[i]) <= 54^(1/3) * (γλ^(2/3)) / 4
+    if abs(x[i]) <= 54^(1/3) * ((2γλ)^(2/3)) / 4
       y[i] = 0
     else
       y[i] = 2 * sign(x[i]) / 3 * abs(x[i]) * (1 + cos(2 * π / 3 - 2 * ϕ(x[i]) / 3))
@@ -50,7 +50,8 @@ fun_expr(f::RootNormLhalf{T}) where {T <: Real} = "x ↦ (λ/2)||x||^(1/2)_(1/2)
 fun_params(f::RootNormLhalf{T}) where {T <: Real} = "λ = $(f.lambda)"
 
 function prox_naive(f::RootNormLhalf, x::AbstractArray{T}, gamma::Real=1) where {R, T <: Real}
-  y = similar(x)
-  cost = prox!(y, f, x, gamma)
-  return y, cost
+  γλ = gamma * f.lambda
+  over = abs.(x) .> 3 * (2γλ)^(2/3) / 4
+  y = (2 / 3 * sign.(x) .* abs.(x) .* (1 .+ cos.((2/3) * (π .- acos( γλ/4 * (abs.(x) ./ 3).^(-3/2))) ))) .* over
+  return y, f.lambda * R(sum(sqrt.(abs.(y))))
 end
