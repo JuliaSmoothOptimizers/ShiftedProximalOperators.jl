@@ -1,6 +1,6 @@
-export ShiftedNormLhalf
+export ShiftedRootNormLhalf
 
-mutable struct ShiftedNormLhalf{
+mutable struct ShiftedRootNormLhalf{
   R <: Real,
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
@@ -12,7 +12,7 @@ mutable struct ShiftedNormLhalf{
   sol::V2
   shifted_twice::Bool
 
-  function ShiftedNormLhalf(
+  function ShiftedRootNormLhalf(
     h::RootNormLhalf{R},
     xk::AbstractVector{R},
     sj::AbstractVector{R},
@@ -24,20 +24,20 @@ mutable struct ShiftedNormLhalf{
 end
 
 shifted(h::RootNormLhalf{R}, xk::AbstractVector{R}) where {R <: Real} =
-  ShiftedNormLhalf(h, xk, zero(xk), false)
+  ShiftedRootNormLhalf(h, xk, zero(xk), false)
 shifted(
-  ψ::ShiftedNormLhalf{R, V0, V1, V2},
+  ψ::ShiftedRootNormLhalf{R, V0, V1, V2},
   sj::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
-  ShiftedNormLhalf(ψ.h, ψ.xk, sj, true)
+  ShiftedRootNormLhalf(ψ.h, ψ.xk, sj, true)
 
-fun_name(ψ::ShiftedNormLhalf) = "shifted Lhalf norm"
-fun_expr(ψ::ShiftedNormLhalf) = "t ↦ ‖xk + sk + t‖ₚᵖ, p = 1/2"
-fun_params(ψ::ShiftedNormLhalf) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)"
+fun_name(ψ::ShiftedRootNormLhalf) = "shifted Lhalf norm"
+fun_expr(ψ::ShiftedRootNormLhalf) = "t ↦ ‖xk + sk + t‖ₚᵖ, p = 1/2"
+fun_params(ψ::ShiftedRootNormLhalf) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)"
 
 function prox!(
   y::AbstractVector{R},
-  ψ::ShiftedNormLhalf{R, V0, V1, V2},
+  ψ::ShiftedRootNormLhalf{R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
