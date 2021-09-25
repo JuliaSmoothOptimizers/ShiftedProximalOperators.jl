@@ -17,6 +17,7 @@ include("normLhalf.jl")
 include("shiftedNormL0.jl")
 include("shiftedNormL0BInf.jl")
 include("shiftedRootNormLhalf.jl")
+include("shiftedNormLhalf.jl")
 
 include("shiftedNormL1.jl")
 include("shiftedNormL1B2.jl")
