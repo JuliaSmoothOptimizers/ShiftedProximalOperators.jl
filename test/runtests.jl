@@ -20,7 +20,7 @@ end
 
 
 # loop over operators without a trust region
-for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0, :ShiftedNormL1))
+for (op, shifted_op) ∈ zip((:NormL0, :NormL1, :RootNormLhalf), (:ShiftedNormL0, :ShiftedNormL1, :ShiftedRootNormLhalf))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     Op = eval(op)
