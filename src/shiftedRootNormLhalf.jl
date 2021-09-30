@@ -31,7 +31,7 @@ shifted(
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
   ShiftedRootNormLhalf(ψ.h, ψ.xk, sj, true)
 
-fun_name(ψ::ShiftedRootNormLhalf) = "shifted Lhalf norm"
+fun_name(ψ::ShiftedRootNormLhalf) = "shifted L½  norm"
 fun_expr(ψ::ShiftedRootNormLhalf) = "t ↦ ‖xk + sk + t‖ₚᵖ, p = 1/2"
 fun_params(ψ::ShiftedRootNormLhalf) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)"
 

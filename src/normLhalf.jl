@@ -44,9 +44,9 @@ function prox!(y::AbstractArray{T}, f::RootNormLhalf, x::AbstractArray{T}, gamma
   return f.lambda * ysum
 end
 
-fun_name(f::RootNormLhalf) = "L_(1/2)^(1/2) pseudo-norm"
+fun_name(f::RootNormLhalf) = "L½^(½) pseudo-norm"
 fun_dom(f::RootNormLhalf) = "AbstractArray{Real}, AbstractArray{Complex}"
-fun_expr(f::RootNormLhalf{T}) where {T <: Real} = "x ↦ (λ/2)||x||^(1/2)_(1/2)"
+fun_expr(f::RootNormLhalf{T}) where {T <: Real} = "x ↦ ½ λ ‖x‖_(½)^(½)"
 fun_params(f::RootNormLhalf{T}) where {T <: Real} = "λ = $(f.lambda)"
 
 function prox_naive(f::RootNormLhalf, x::AbstractArray{T}, gamma::Real=1) where {R, T <: Real}
