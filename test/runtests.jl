@@ -6,20 +6,21 @@ using Test
 for op ∈ (:RootNormLhalf,)
   @testset "$op" begin
     Op = eval(op)
-    x = [0.4754  1.1741  0.1269  -0.6568]
+    x = [0.4754 1.1741 0.1269 -0.6568]
     y = similar(x)
-    q = [0.1097  1.1287  -0.29  1.2616]
+    q = [0.1097 1.1287 -0.29 1.2616]
     λ = 0.7788
     ν = 0.1056
-    ytrue = [0.0  1.0893  -0.197463  1.22444]
+    ytrue = [0.0 1.0893 -0.197463 1.22444]
     h = Op(λ)
     prox!(y, h, q, ν)
-    @test sum((y - ytrue).^2) ≤ 1e-11
+    @test sum((y - ytrue) .^ 2) ≤ 1e-11
   end
 end
 
 # loop over operators without a trust region
-for (op, shifted_op) ∈ zip((:NormL0, :NormL1, :RootNormLhalf), (:ShiftedNormL0, :ShiftedNormL1, :ShiftedRootNormLhalf))
+for (op, shifted_op) ∈
+    zip((:NormL0, :NormL1, :RootNormLhalf), (:ShiftedNormL0, :ShiftedNormL1, :ShiftedRootNormLhalf))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     Op = eval(op)
