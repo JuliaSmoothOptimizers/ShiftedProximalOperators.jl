@@ -31,15 +31,17 @@ end
 function prox!(y::AbstractArray{T}, f::RootNormLhalf, x::AbstractArray{T}, gamma::Real=1) where {T <: Real}
   γλ = 2 * gamma * f.lambda
   ϕ(z) = acos(γλ / 8 * (abs(z) /3 )^(-3/2))
+  ysum = zero(T)
   for i in eachindex(x)
     if abs(x[i]) <= 54^(1/3) * (γλ^(2/3)) / 4
       y[i] = 0
     else
       y[i] = 2 * sign(x[i]) / 3 * abs(x[i]) * (1 + cos(2 * π / 3 - 2 * ϕ(x[i]) / 3))
+      ysum += sqrt(abs(y[i]))
     end
   end
 
-  return f.lambda * sum(sqrt.(abs.(y)))
+  return f.lambda * ysum
 end
 
 fun_name(f::RootNormLhalf) = "L_(1/2)^(1/2) pseudo-norm"
