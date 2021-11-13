@@ -42,8 +42,8 @@ function prox!(
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   γλ =  σ * ψ.λ
-  ϕ(z) = acos(γλ / 8 * (abs(z) /3 )^(-3/2))
-  p = 54^(1/3) * ((2γλ)^(2/3) / 4
+  ϕ(z) = acos(γλ / 4 * (abs(z) /3 )^(-3/2))
+  p = 54^(1/3) * (2γλ)^(2/3) / 4
 
   q .+= (ψ.xk .+ ψ.sj)
 
