@@ -32,8 +32,9 @@ function prox!(y::AbstractArray{T}, f::RootNormLhalf, x::AbstractArray{T}, gamma
   γλ = gamma * f.lambda
   ϕ(z) = acos(γλ / 4 * (abs(z) /3 )^(-3/2))
   ysum = zero(T)
+  threshold = 54^(1/3) * ((2γλ)^(2/3)) / 4
   for i in eachindex(x)
-    if abs(x[i]) <= 54^(1/3) * ((2γλ)^(2/3)) / 4
+    if abs(x[i]) <= threshold
       y[i] = 0
     else
       y[i] = 2 * sign(x[i]) / 3 * abs(x[i]) * (1 + cos(2 * π / 3 - 2 * ϕ(x[i]) / 3))
