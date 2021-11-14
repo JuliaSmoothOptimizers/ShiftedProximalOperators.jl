@@ -1,15 +1,15 @@
 # ShiftedProximalOperators
 
-[![CI](https://github.com/rjbaraldi/ShiftedProximalOperators/actions/workflows/ci.yml/badge.svg)](https://github.com/rjbaraldi/ShiftedProximalOperators.jl/actions/workflows/ci.yml)
-[![](https://img.shields.io/badge/docs-latest-3f51b5.svg)](https://rjbaraldi.github.io/ShiftedProximalOperators.jl/dev)
-[![codecov](https://codecov.io/gh/rjbaraldi/ShiftedProximalOperators.jl/branch/master/graph/badge.svg?token=LFPTDGDTP6)](https://codecov.io/gh/rjbaraldi/ShiftedProximalOperators.jl)
+[![CI](https://github.com/JuliaSmoothOptimizers/ShiftedProximalOperators.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/JuliaSmoothOptimizers/ShiftedProximalOperators.jl/actions/workflows/ci.yml)
+[![](https://img.shields.io/badge/docs-latest-3f51b5.svg)](https://JuliaSmoothOptimizers.github.io/ShiftedProximalOperators.jl/dev)
+[![codecov](https://codecov.io/gh/JuliaSmoothOptimizers/ShiftedProximalOperators.jl/branch/master/graph/badge.svg?token=CZzi6ufcXI)](https://codecov.io/gh/JuliaSmoothOptimizers/ShiftedProximalOperators.jl)
 
 ## Synopsis
 
 ShiftedProximalOperators is a library of proximal operators associated with proper
 lower-semicontinuous functions such as those implemented in
 [ProximalOperators.jl](https://github.com/JuliaFirstOrder/ProximalOperators.jl)
-for use in the algorithms implemented in [RegularizedOptimization.jl](https://github.com/UW-AMO/RegularizedOptimization.jl).
+for use in the algorithms implemented in [RegularizedOptimization.jl](https://github.com/JuliaSmoothOptimizers/RegularizedOptimization.jl).
 
 The main difference between the proximal operators implemented in
 [ProximalOperators.jl](https://github.com/JuliaFirstOrder/ProximalOperators.jl)
@@ -36,7 +36,7 @@ Please refer to the documentation.
 ## Related Software
 
 * [RegularizedProblems.jl](https://github.com/JuliaSmoothOptimizers/RegularizedProblems.jl)
-* [RegularizedOptimization.jl](https://github.com/UW-AMO/RegularizedOptimization.jl)
+* [RegularizedOptimization.jl](https://github.com/JuliaSmoothOptimizers/RegularizedOptimization.jl)
 
 ## References
 
