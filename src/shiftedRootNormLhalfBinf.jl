@@ -70,7 +70,7 @@ function prox!(
       ψ.sj[i]
 
     for j = 1:4
-      if abs(t[j] + ψ.sj[i]) ≤ ψ.Δ + eps() #necessary eps here?
+      if abs(t[j] + ψ.sj[i]) ≤ ψ.Δ
         ft[j] = RNorm(t[j], i)
       else
         ft[j] = Inf
