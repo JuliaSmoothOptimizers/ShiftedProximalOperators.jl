@@ -1,4 +1,5 @@
 export ShiftedRootNormLhalf
+using LinearAlgebra
 
 mutable struct ShiftedRootNormLhalf{
   R <: Real,
@@ -41,18 +42,17 @@ function prox!(
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  γλ = σ * ψ.λ
-  ϕ(z) = acos(γλ / 4 * (abs(z) / 3)^(-3 / 2))
-  p = 54^(1 / 3) * (2γλ)^(2 / 3) / 4
-
-  q .+= (ψ.xk .+ ψ.sj)
+  νλ = σ * ψ.λ
+  ϕ(z) = acos(νλ / 4 * (abs(z) / 3)^(-3 / 2))
+  p = 54^(1 / 3) * (2νλ)^(2 / 3) / 4
+  qs = q + (ψ.xk .+ ψ.sj)
 
   for i ∈ eachindex(y)
-    aqi = abs(q[i])
+    aqi = abs(qs[i])
     if aqi ≤ p
       y[i] = 0
     else
-      y[i] = 2 * sign(q[i]) / 3 * aqi * (1 + cos(2 * π / 3 - 2 * ϕ(q[i]) / 3))
+      y[i] = 2 * sign(qs[i]) / 3 * aqi * (1 + cos(2 * π / 3 - 2 * ϕ(qs[i]) / 3))
     end
     y[i] -= (ψ.xk[i] + ψ.sj[i])
   end
