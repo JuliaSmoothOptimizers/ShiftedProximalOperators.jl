@@ -21,6 +21,7 @@ ShiftedProximalOperators.prox(ψ, q, ν)
 using LinearAlgebra
 using ProximalOperators
 
+
 struct IndSet
     l::Real
     u::Real
@@ -30,7 +31,7 @@ end
 
 function (f::IndSet)(x)
     ind = zeros(Float64,size(x))
-    ind[.!(l .<= x .<= u)] .= Inf
+    ind[.!(f.l .<= x .<= f.u)] .= Inf
     return ind
 end
 
