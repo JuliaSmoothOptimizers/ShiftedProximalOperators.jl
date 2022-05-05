@@ -2,6 +2,7 @@
 ### Des commandes pour tester la lib
 
 #=
+
 h = NormL1(1.0)
 n = 4
 Δ = 2 * rand()
@@ -11,7 +12,7 @@ q = 2 * (rand(n) .- 0.5)
 xk = rand(n) .- 0.5
 ψ = shifted(h, xk, Δ, χ) # idee : shifted(h, xk, l, u, χ)
 ShiftedProximalOperators.prox(ψ, q, ν)
-=#
+
 
 ##############################################################################################################
 
@@ -123,11 +124,11 @@ mutable struct ShiftedNormL1SetTR{
     return y
   end
 
-
+=#
 
 # TEST 
 
-λ = 2.0
+λ = 1.0
 h = NormL1(λ)
 xk = vec([1 2 3 4 5 6.3])
 l = 2.0
@@ -139,3 +140,7 @@ q = 2 * (rand(n) .- 0.5)
 
 ψ = shifted(h, xk, l, u, χ)
 res = ShiftedProximalOperators.prox(ψ, q, ν)
+
+
+
+

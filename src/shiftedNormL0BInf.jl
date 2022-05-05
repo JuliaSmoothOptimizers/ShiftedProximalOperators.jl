@@ -13,7 +13,6 @@ mutable struct ShiftedNormL0BInf{
   sol::V2
   l::V3
   u::V3
-  χ::Conjugate{IndBallL1{R}}
   shifted_twice::Bool
 
   function ShiftedNormL0BInf(
@@ -22,11 +21,10 @@ mutable struct ShiftedNormL0BInf{
     sj::AbstractVector{R},
     l::AbstractVector{R},
     u::AbstractVector{R},
-    χ::Conjugate{IndBallL1{R}},
     shifted_twice::Bool,
   ) where {R <: Real}
     sol = similar(xk)
-    new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l)}(h, xk, sj, sol, l, u, χ, shifted_twice)
+    new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l)}(h, xk, sj, sol, l, u, shifted_twice)
   end
 end
 
@@ -37,13 +35,13 @@ function (ψ::ShiftedNormL0BInf)(y)
 end 
 =#
 
-shifted(h::NormL0{R}, xk::AbstractVector{R}, l::AbstractVector{R}, u::AbstractVector{R}, χ::Conjugate{IndBallL1{R}}) where {R <: Real} =
-  ShiftedNormL0BInf(h, xk, zero(xk), l, u, χ, false)
+shifted(h::NormL0{R}, xk::AbstractVector{R}, l::AbstractVector{R}, u::AbstractVector{R}) where {R <: Real} =
+  ShiftedNormL0BInf(h, xk, zero(xk), l, u, false)
 shifted(
   ψ::ShiftedNormL0BInf{R, V0, V1, V2, V3},
   sj::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}} =
-  ShiftedNormL0BInf(ψ.h, ψ.xk, sj, ψ.l, ψ.u, ψ.χ, true)
+  ShiftedNormL0BInf(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true)
 
 fun_name(ψ::ShiftedNormL0BInf) = "shifted L0 pseudo-norm with generalized trust region indicator"
 fun_expr(ψ::ShiftedNormL0BInf) = "t ↦ λ ‖xk + sj + t‖₀ + χ({sj + t .∈ [l,u]})"
