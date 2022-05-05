@@ -15,34 +15,10 @@ ShiftedProximalOperators.prox(ψ, q, ν)
 
 ##############################################################################################################
 
-### Pb : on fait appel a IndBallLinf qui est une fonction de la lib ProximalOperators
-### or cela correspond uniquement à une indicatrice pour une region de la forme [-a,a]
-### alors aue l'on voudrait [l,u] quelconque. la fonction ci dessous implemente ca (IndSet).
+
 
 using LinearAlgebra
 using ProximalOperators
-
-
-struct IndSet
-    l::Real
-    u::Real
-    IndSet(l,u) = l > u ? error("out of order") : new(l,u)
-end
-
-# input : x, matrix or vetors of real elements x
-# output : ind, element wise indicator of x for the  real segment [l,u]
-
-function (f::IndSet)(x)
-    ind = zero(x)
-    ind[.!(f.l .<= x .<= f.u)] .= Inf
-    return ind
-end
-
-
-# Example :
-# > f = IndSet(4, 5.6)
-# > f([5])
-# > f([4 5 6.3])
 
 
 #############################################################################################################
@@ -156,7 +132,10 @@ h = NormL1(λ)
 xk = vec([1 2 3 4 5 6.3])
 l = 2.0
 u = 6.0
-χ = eval(:NormLinf)(λ)
+χ = eval(:NormLinf)(1.0)
 
-f = shifted(h, xk, l, u, χ)
-res = f(xk)
+q = 2 * (rand(n) .- 0.5)
+ν = rand()
+
+ψ = shifted(h, xk, l, u, χ)
+res = ShiftedProximalOperators.prox(ψ, q, ν)
