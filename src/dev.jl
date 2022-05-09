@@ -128,19 +128,57 @@ mutable struct ShiftedNormL1SetTR{
 
 # TEST 
 
-λ = 1.0
-h = NormL1(λ)
-xk = vec([1 2 3 4 5 6.3])
-l = 2.0
-u = 6.0
-χ = eval(:NormLinf)(1.0)
 
-q = 2 * (rand(n) .- 0.5)
+include("ShiftedProximalOperators.jl")
+
+h = NormL1(1.0)
+n = 10
 ν = rand()
+l = -10*rand(n)
+u = 10*rand(n)
+q = 20*(rand(n).-0.5)
 
-ψ = shifted(h, xk, l, u, χ)
-res = ShiftedProximalOperators.prox(ψ, q, ν)
+# shift once
+xk = rand(n) .- 0.5
+ψ = shifted(h, xk, l, u)
 
+# check prox
+p = prox(ψ, q, ν)
 
+# shift a second time
+sj = rand(n) .- 0.5
+ω = shifted(ψ, sj)
 
+p = prox(ω, q, ν)
+
+#=
+
+# plot
+
+dom_x = LinRange(floor(Int,l) - 1, ceil(Int,u) + 1,1000)
+x_min, F_min = min_F_lu(F, l, u, q, δ)
+
+plot(dom_x,F(dom_x, q, δ), label = "F")
+scatter!([x_min],[F_min], label = "Minimum")
+vline!([l, u], label = "Region de confiance")
+
+=#
+
+#=
+
+function ps(
+  a::AbstractVector{R},
+  b::AbstractVector{R},
+  l::R,
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}}
+  return l .* sum(a .* b)
+end 
+
+a = 10*rand(1)
+b = 20*(rand(1).-0.5)
+l = 4*(rand(1).-0.5)[1]
+
+ps(a,b,l)
+
+=#
 

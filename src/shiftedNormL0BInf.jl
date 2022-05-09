@@ -55,7 +55,6 @@ function prox!(
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}}
   c2 = 2 * ψ.λ * σ
-  c = sqrt(c2)
 
   for i ∈ eachindex(q)
 

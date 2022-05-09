@@ -5,61 +5,88 @@ mutable struct ShiftedNormL1BInf{
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
+  V3 <: AbstractVector{R}
 } <: ShiftedProximableFunction
   h::NormL1{R}
   xk::V0
   sj::V1
   sol::V2
-  Δ::R
-  χ::Conjugate{IndBallL1{R}}
+  l::V3
+  u::V3
   shifted_twice::Bool
 
   function ShiftedNormL1BInf(
     h::NormL1{R},
     xk::AbstractVector{R},
     sj::AbstractVector{R},
-    Δ::R,
-    χ::Conjugate{IndBallL1{R}},
+    l::AbstractVector{R},
+    u::AbstractVector{R},
     shifted_twice::Bool,
   ) where {R <: Real}
-    sol = similar(sj)
-    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Δ, χ, shifted_twice)
+    sol = similar(xk)
+    new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l)}(h, xk, sj, sol, l, u, shifted_twice)
   end
 end
 
+# We cannot use this function anymore with [l,u] trust region 
+#=
 (ψ::ShiftedNormL1BInf)(y) = ψ.h(ψ.xk + ψ.sj + y) + IndBallLinf(ψ.Δ)(ψ.sj + y)
+=#
 
-shifted(h::NormL1{R}, xk::AbstractVector{R}, Δ::R, χ::Conjugate{IndBallL1{R}}) where {R <: Real} =
-  ShiftedNormL1BInf(h, xk, zero(xk), Δ, χ, false)
+shifted(h::NormL1{R}, xk::AbstractVector{R}, l::AbstractVector{R}, u::AbstractVector{R}) where {R <: Real} =
+  ShiftedNormL1BInf(h, xk, zero(xk), l, u, false)
 shifted(
-  ψ::ShiftedNormL1BInf{R, V0, V1, V2},
+  ψ::ShiftedNormL1BInf{R, V0, V1, V2, V3},
   sj::AbstractVector{R},
-) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
-  ShiftedNormL1BInf(ψ.h, ψ.xk, sj, ψ.Δ, ψ.χ, true)
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}} =
+  ShiftedNormL1BInf(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true)
 
-fun_name(ψ::ShiftedNormL1BInf) = "shifted L1 norm with L∞-norm trust region indicator"
-fun_expr(ψ::ShiftedNormL1BInf) = "t ↦ ‖xk + sj + t‖₁ + χ({‖sj + t‖∞ ≤ Δ})"
+fun_name(ψ::ShiftedNormL1BInf) = "shifted L1 norm with generalized trust region indicator"
+fun_expr(ψ::ShiftedNormL1BInf) = "t ↦ ‖xk + sj + t‖₁ + χ({sj + t .∈ [l,u]})"
 fun_params(ψ::ShiftedNormL1BInf) =
-  "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "Δ = $(ψ.Δ)"
+  "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "l = $(ψ.l)\n" * " "^14 * "u = $(ψ.u)"
 
 function prox!(
   y::AbstractVector{R},
-  ψ::ShiftedNormL1BInf{R, V0, V1, V2},
+  ψ::ShiftedNormL1BInf{R, V0, V1, V2, V3},
   q::AbstractVector{R},
   σ::R,
-) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}}
+  
   σλ = σ * ψ.λ
+
   for i ∈ eachindex(y)
+
+    li = ψ.l[i]
+    ui = ψ.u[i]
+    qi = q[i]
     xs = ψ.xk[i] + ψ.sj[i]
-    xsq = xs + q[i]
-    y[i] = if xsq ≤ -σλ
-      q[i] + σλ
-    elseif xsq ≥ σλ
-      q[i] - σλ
-    else
-      -xs
+
+    if ui <= 0 
+
+      candidates = [li, ui, qi + σλ]
+      Σi = candidates[li .<= candidates .<= ui] # set of potential solutions
+      y[i] = Σi[argmin((Σi .- qi).^2 + 2 * σλ .* abs.(xs .+ Σi))]
+
+    elseif 0 <= li
+
+      candidates = [li, ui, qi - σλ]
+      Σi = candidates[li .<= candidates .<= ui] # set of potential solutions
+      y[i] = Σi[argmin((Σi .- qi).^2 + 2 * σλ .* abs.(xs .+ Σi))]
+
+    else 
+
+      candidates1 = [li, 0, qi + σλ]
+      Σi1 = candidates1[li .<= candidates1 .<= 0] # set of potential negative solutions
+
+      candidates2 = [0, ui, qi - σλ]
+      Σi2 = candidates2[0 .<= candidates2 .<= ui] # set of potential positive solutions
+
+      Σi = vcat(Σi1, Σi2)
+      y[i] = Σi[argmin((Σi .- qi).^2 + 2 * σλ .* abs.(xs .+ Σi))]
+
     end
-    y[i] = min(max(y[i], -ψ.sj[i] - ψ.Δ), -ψ.sj[i] + ψ.Δ)
+
   end
 
   return y
