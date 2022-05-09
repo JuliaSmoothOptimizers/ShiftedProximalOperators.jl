@@ -29,8 +29,7 @@ fun_name(ψ::ShiftedNormL0) = "shifted L0 pseudo-norm"
 fun_expr(ψ::ShiftedNormL0) = "t ↦ ‖xk + sj + t‖₀"
 
 shifted(h::NormL0{R}, xk::AbstractVector{R}) where {R <: Real} =
-  selected = [0:size(xk)[1];]
-  ShiftedNormL0(h, xk, zero(xk),selected, false)
+  ShiftedNormL0(h, xk, zero(xk),[0:size(xk)[1];], false)
 shifted(
   ψ::ShiftedNormL0{R, V0, V1, V2,V3},
   sj::AbstractVector{R},
