@@ -47,6 +47,7 @@ fun_params(ψ::ShiftedNormL0BInf) =
 function prox!(
   y::AbstractVector{R},
   ψ::ShiftedNormL0BInf{R, V0, V1, V2},
+  selected::AbstractVector{R},
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
@@ -54,26 +55,29 @@ function prox!(
   c = sqrt(c2)
 
   for i ∈ eachindex(q)
-    xs = ψ.xk[i] + ψ.sj[i]
-    xsq = xs + q[i]
-    left = ψ.xk[i] - ψ.Δ
-    right = ψ.xk[i] + ψ.Δ
-    val_left = (left - xsq)^2 + (ψ.xk[i] == ψ.Δ ? 0 : c2)
-    val_right = (right - xsq)^2 + (ψ.xk[i] == -ψ.Δ ? 0 : c2)
-    # subtract x + s from solution explicitly here instead of doing it
-    # numerically at the end
-    y[i] = val_left < val_right ? (-ψ.sj[i] - ψ.Δ) : (-ψ.sj[i] + ψ.Δ)
-    val_min = min(val_left, val_right)
-    val_0 = xsq^2
-    val_xsq = xsq == 0 ? zero(R) : c2
-    if left ≤ 0 ≤ right
-      val_0 < val_min && (y[i] = -xs)
-      val_min = min(val_0, val_min)
-    end
-    if left ≤ xsq ≤ right
-      val_xsq < val_min && (y[i] = q[i])
+    if i ∈ selected
+      xs = ψ.xk[i] + ψ.sj[i]
+      xsq = xs + q[i]
+      left = ψ.xk[i] - ψ.Δ
+      right = ψ.xk[i] + ψ.Δ
+      val_left = (left - xsq)^2 + (ψ.xk[i] == ψ.Δ ? 0 : c2)
+      val_right = (right - xsq)^2 + (ψ.xk[i] == -ψ.Δ ? 0 : c2)
+      # subtract x + s from solution explicitly here instead of doing it
+      # numerically at the end
+      y[i] = val_left < val_right ? (-ψ.sj[i] - ψ.Δ) : (-ψ.sj[i] + ψ.Δ)
+      val_min = min(val_left, val_right)
+      val_0 = xsq^2
+      val_xsq = xsq == 0 ? zero(R) : c2
+      if left ≤ 0 ≤ right
+        val_0 < val_min && (y[i] = -xs)
+        val_min = min(val_0, val_min)
+      end
+      if left ≤ xsq ≤ right
+        val_xsq < val_min && (y[i] = q[i])
+      end
+    else
+      y[i] = q[i]
     end
   end
-
   return y
 end
