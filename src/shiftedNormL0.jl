@@ -28,18 +28,18 @@ fun_expr(ψ::ShiftedNormL0) = "t ↦ ‖xk + sj + t‖₀"
 shifted(h::NormL0{R}, xk::AbstractVector{R}) where {R <: Real} =
   ShiftedNormL0(h, xk, zero(xk), false)
 shifted(
-  ψ::ShiftedNormL0{R, V0, V1, V2,V3},
+  ψ::ShiftedNormL0{R, V0, V1, V2},
   sj::AbstractVector{R},
-) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}} =
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
   ShiftedNormL0(ψ.h, ψ.xk, sj,true)
 
 function prox!(
   y::AbstractVector{R},
-  ψ::ShiftedNormL0{R, V0, V1, V2,V3},
+  ψ::ShiftedNormL0{R, V0, V1, V2},
   selected::AbstractVector{R},
   q::AbstractVector{R},
   σ::R,
-) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R},V3 <: AbstractVector{R}}
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   c = sqrt(2 * ψ.λ * σ)
   for i ∈ eachindex(q)
     if i ∈ selected
