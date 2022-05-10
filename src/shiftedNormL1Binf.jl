@@ -24,7 +24,11 @@ mutable struct ShiftedNormL1BInf{
     shifted_twice::Bool,
   ) where {R <: Real}
     sol = similar(xk)
-    new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l)}(h, xk, sj, sol, l, u, shifted_twice)
+    if sum(l .> u) > 0 
+      error("Error on the trust region bounds, at least one lower bound is greater than the upper bound.")
+    else
+      new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l)}(h, xk, sj, sol, l, u, shifted_twice)
+    end
   end
 end
 
