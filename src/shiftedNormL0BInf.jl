@@ -65,12 +65,12 @@ function prox!(
     li = ψ.l[i]
     ui = ψ.u[i]
     qi = q[i]
-    _xki_sji = -ψ.xk[i]-ψ.sj[i]
+    xs = ψ.xk[i] + ψ.sj[i]
 
-    candidates = [li, ui, qi, _xki_sji]
+    candidates = [li, ui, qi, -xs]
     Σi = candidates[li .<= candidates .<= ui] # set of potential solutions
 
-    y[i] = Σi[argmin((Σi .- qi).^2 + c2 .* (-_xki_sji .+ Σi .!= 0))]
+    y[i] = Σi[argmin((Σi .- qi).^2 + c2 .* (xs .+ Σi .!= 0))]
 
   end
 

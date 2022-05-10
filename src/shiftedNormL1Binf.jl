@@ -66,13 +66,13 @@ function prox!(
     qi = q[i]
     xs = ψ.xk[i] + ψ.sj[i]
 
-    if ui <= 0 
+    if ui <= -xs 
 
       candidates = [li, ui, qi + σλ]
       Σi = candidates[li .<= candidates .<= ui] # set of potential solutions
       y[i] = Σi[argmin((Σi .- qi).^2 + 2 * σλ .* abs.(xs .+ Σi))]
 
-    elseif 0 <= li
+    elseif -xs <= li
 
       candidates = [li, ui, qi - σλ]
       Σi = candidates[li .<= candidates .<= ui] # set of potential solutions
@@ -80,11 +80,11 @@ function prox!(
 
     else 
 
-      candidates1 = [li, 0, qi + σλ]
-      Σi1 = candidates1[li .<= candidates1 .<= 0] # set of potential negative solutions
+      candidates1 = [li, -xs, qi + σλ]
+      Σi1 = candidates1[li .<= candidates1 .<= -xs] # set of potential "left" solutions
 
-      candidates2 = [0, ui, qi - σλ]
-      Σi2 = candidates2[0 .<= candidates2 .<= ui] # set of potential positive solutions
+      candidates2 = [-xs, ui, qi - σλ]
+      Σi2 = candidates2[-xs .<= candidates2 .<= ui] # set of potential "right" solutions
 
       Σi = vcat(Σi1, Σi2)
       y[i] = Σi[argmin((Σi .- qi).^2 + 2 * σλ .* abs.(xs .+ Σi))]

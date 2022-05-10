@@ -21,10 +21,10 @@ ShiftedProximalOperators.prox(ψ, q, ν)
 include("ShiftedProximalOperators.jl")
 using Plots
 
-#=
 
-h = NormL0(1.0)
-n = 10
+
+h = NormL0(5.0)
+n = 5
 ν = rand()
 l = -10*rand(n)
 u = 10*rand(n)
@@ -53,19 +53,20 @@ for i in 1:n
   x_min = p[i]
   F_min = (x_min - q[i])^2 + 2 * ω.λ * ν * (ω.xk[i] + ω.sj[i] + x_min != 0)
   if i == 1
-    plot(dom_x,F_x)
+    plot(dom_x,F_x,label="F_"*string(i))
   else
-    plot!(dom_x,F_x)
+    plot!(dom_x,F_x,label="F_"*string(i))
   end
-  scatter!([x_min],[F_min])
+  scatter!([x_min],[F_min],label="min of F_"*string(i))
 end 
 current()
 
-=#
 
 
-h = NormL1(1.0)
-n = 10
+#=
+
+h = NormL1(2.0)
+n = 5
 ν = rand()
 l = -10*rand(n)
 u = 10*rand(n)
@@ -94,10 +95,12 @@ for i in 1:n
   x_min = p[i]
   F_min = (x_min - q[i])^2 + 2 * ω.λ * ν * abs.(ω.xk[i] + ω.sj[i] + x_min)
   if i == 1
-    plot(dom_x,F_x)
+    plot(dom_x,F_x,label="F_"*string(i))
   else
-    plot!(dom_x,F_x)
+    plot!(dom_x,F_x,label="F_"*string(i))
   end
-  scatter!([x_min],[F_min])
+  scatter!([x_min],[F_min],label="min of F_"*string(i))
 end 
 current()
+
+=#
