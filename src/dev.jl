@@ -24,7 +24,7 @@ using Plots
 
 
 h = NormL0(5.0)
-n = 5
+n = 10000000
 ν = rand()
 l = -10*rand(n)
 u = 10*rand(n)
@@ -43,7 +43,7 @@ sj = rand(n) .- 0.5
 
 p = prox(ω, q, ν)
 
-
+#=
 
 # plot
 
@@ -62,7 +62,7 @@ end
 current()
 
 
-
+=#
 #=
 
 h = NormL1(2.0)
