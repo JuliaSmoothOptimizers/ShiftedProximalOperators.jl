@@ -36,7 +36,7 @@ shifted(
 function prox!(
   y::AbstractVector{R},
   ψ::ShiftedNormL0{R, V0, V1, V2},
-  selected::AbstractVector{Int},
+  selected::AbstractVector{Integer},
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
