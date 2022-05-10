@@ -47,10 +47,10 @@ fun_params(ψ::ShiftedNormL0BInf) =
 function prox!(
   y::AbstractVector{R},
   ψ::ShiftedNormL0BInf{R, V0, V1, V2},
-  selected::AbstractVector{Integer},
+  selected::AbstractVector{T},
   q::AbstractVector{R},
   σ::R,
-) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
+) where {R <: Real,T<: Integer, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   c2 = 2 * ψ.λ * σ
   c = sqrt(c2)
 
