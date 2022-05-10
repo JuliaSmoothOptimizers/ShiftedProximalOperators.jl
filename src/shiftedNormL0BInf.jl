@@ -49,6 +49,7 @@ function prox!(
   ψ::ShiftedNormL0BInf{R, V0, V1, V2},
   q::AbstractVector{R},
   selected::AbstractVector{T},
+
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R},T<: Integer}
   c2 = 2 * ψ.λ * σ
@@ -75,8 +76,16 @@ function prox!(
       if left ≤ xsq ≤ right
         val_xsq < val_min && (y[i] = q[i])
       end
-    else
-      y[i] = q[i]
+    else # min ½ σ⁻¹ (y - q)² subject to -Δ ≤ y ≤ Δ
+      left = ψ.xk[i] - ψ.Δ
+      right = ψ.xk[i] + ψ.Δ
+      val_left = (left - q[i])^2 
+      val_right = (right - q[i])^2 
+      if left ≤ q[i] ≤ right
+        y[i] = q[i]
+      else 
+        y[i] = val_left < val_right ? (- ψ.Δ) : (+ ψ.Δ)
+      end
     end
   end
   return y
