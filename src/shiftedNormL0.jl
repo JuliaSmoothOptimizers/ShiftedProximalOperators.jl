@@ -55,3 +55,22 @@ function prox!(
   end
   return y
 end
+
+
+function prox!(
+  y::AbstractVector{R},
+  ψ::ShiftedNormL0{R, V0, V1, V2},
+  q::AbstractVector{R},
+  σ::R,
+) where {R <: Real,T<: Integer ,V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
+  c = sqrt(2 * ψ.λ * σ)
+  for i ∈ eachindex(q)
+      xps = ψ.xk[i] + ψ.sj[i]
+      if abs(xps + q[i]) ≤ c
+        y[i] = -xps
+      else
+        y[i] = q[i]
+      end
+  end
+  return y
+end
