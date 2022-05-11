@@ -52,33 +52,6 @@ fun_expr(ψ::ShiftedNormL0BInf) = "t ↦ λ ‖xk + sj + t‖₀ + χ({sj + t .�
 fun_params(ψ::ShiftedNormL0BInf) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "l = $(ψ.l)\n" * " "^14 * "u = $(ψ.u)"
 
-#=
-function prox!(
-  y::AbstractVector{R},
-  ψ::ShiftedNormL0BInf{R, V0, V1, V2, V3},
-  q::AbstractVector{R},
-  σ::R,
-) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}}
-  c2 = 2 * ψ.λ * σ
-
-  for i ∈ eachindex(q)
-
-    li = ψ.l[i]
-    ui = ψ.u[i]
-    qi = q[i]
-    xs = ψ.xk[i] + ψ.sj[i]
-
-    candidates = [li, ui, qi, -xs]
-    Σi = candidates[li .<= candidates .<= ui] # set of potential solutions
-
-    y[i] = Σi[argmin((Σi .- qi).^2 + c2 .* (xs .+ Σi .!= 0))]
-
-  end
-
-  return y
-
-end
-=#
 
 function prox!(
   y::AbstractVector{R},
@@ -86,9 +59,8 @@ function prox!(
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}}
+  
   c2 = 2 * ψ.λ * σ
-
-
 
   for i ∈ eachindex(q)
 
@@ -98,7 +70,6 @@ function prox!(
     xs = ψ.xk[i] + ψ.sj[i]
 
     if ui < qi
-
       if li <= -xs <= ui
         if (xs + qi)^2 < (ui - qi)^2 + c2
           y[i] = -xs
@@ -110,7 +81,6 @@ function prox!(
       end
 
     elseif li > qi
-
       if li <= -xs <= ui
         if (xs + qi)^2 < (li - qi)^2 + c2
           y[i] = -xs
@@ -122,7 +92,6 @@ function prox!(
       end
 
     else 
-
       if li <= -xs <= ui
         if (xs + qi)^2 < c2
           y[i] = -xs
@@ -132,8 +101,8 @@ function prox!(
       else
         y[i] = qi
       end
-
     end
+    
   end
   return y
 end

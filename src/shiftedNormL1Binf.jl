@@ -50,6 +50,7 @@ fun_expr(ψ::ShiftedNormL1BInf) = "t ↦ ‖xk + sj + t‖₁ + χ({sj + t .∈ 
 fun_params(ψ::ShiftedNormL1BInf) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "l = $(ψ.l)\n" * " "^14 * "u = $(ψ.u)"
 
+  
 function prox!(
   y::AbstractVector{R},
   ψ::ShiftedNormL1BInf{R, V0, V1, V2, V3},
@@ -57,41 +58,44 @@ function prox!(
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}}
   
-  σλ = σ * ψ.λ
+  c = σ * ψ.λ
 
   for i ∈ eachindex(y)
 
     li = ψ.l[i]
     ui = ψ.u[i]
-    qi = q[i]
+    opt_left = q[i] + c
+    opt_right = q[i] - c
     xs = ψ.xk[i] + ψ.sj[i]
 
-    if ui <= -xs 
+    if opt_left < -xs
+      if ui < opt_left
+        y[i] = ui
+      elseif opt_left < li
+        y[i] = li
+      else
+        y[i] = opt_left
+      end
 
-      candidates = [li, ui, qi + σλ]
-      Σi = candidates[li .<= candidates .<= ui] # set of potential solutions
-      y[i] = Σi[argmin((Σi .- qi).^2 + 2 * σλ .* abs.(xs .+ Σi))]
+    elseif -xs < opt_right
+      if ui < opt_right
+        y[i] = ui
+      elseif opt_right < li
+        y[i] = li
+      else
+        y[i] = opt_right
+      end
 
-    elseif -xs <= li
-
-      candidates = [li, ui, qi - σλ]
-      Σi = candidates[li .<= candidates .<= ui] # set of potential solutions
-      y[i] = Σi[argmin((Σi .- qi).^2 + 2 * σλ .* abs.(xs .+ Σi))]
-
-    else 
-
-      candidates1 = [li, -xs, qi + σλ]
-      Σi1 = candidates1[li .<= candidates1 .<= -xs] # set of potential "left" solutions
-
-      candidates2 = [-xs, ui, qi - σλ]
-      Σi2 = candidates2[-xs .<= candidates2 .<= ui] # set of potential "right" solutions
-
-      Σi = vcat(Σi1, Σi2)
-      y[i] = Σi[argmin((Σi .- qi).^2 + 2 * σλ .* abs.(xs .+ Σi))]
-
+    else
+      if ui < -xs
+        y[i] = ui
+      elseif -xs < li
+        y[i] = li
+      else
+        y[i] = -xs
+      end
     end
 
   end
-
   return y
 end
