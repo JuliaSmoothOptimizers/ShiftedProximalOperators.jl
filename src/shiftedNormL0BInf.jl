@@ -80,9 +80,7 @@ function prox!(
 
       left = - ψ.Δ
       right =  ψ.Δ
-      val_left = (left - q[i])^2 
-      val_right = (right - q[i])^2 
-      y[i] = val_left < val_right ? ( - ψ.Δ) : ( ψ.Δ)
+      y[i] = q[i] < 0 ? left : right
       if left ≤ q[i] ≤ right
         (y[i] = q[i])
       end
