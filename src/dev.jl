@@ -18,17 +18,14 @@ ShiftedProximalOperators.prox(ψ, q, ν)
 # TEST 
 
 
-
 include("ShiftedProximalOperators.jl")
 #using Plots
 
 
-
-h = NormL1(5.0)
+h = NormL0(5.0)
 n = 10000000
 ν = rand()
-l = -5*rand(n)
-u = 5*rand(n)
+l = -5.0 ; u = 5*rand(n)
 q = 20*(rand(n).-0.5)
 
 # shift once
@@ -38,15 +35,14 @@ xk = rand(n) .- 0.5
 # check prox
 p = prox(ψ, q, ν)
 
-# shift a second time
-#sj = rand(n) .- 0.5
-#ω = shifted(ψ, sj)
-
-#p = prox(ω, q, ν)
-
-
-
 #=
+
+# shift a second time
+sj = rand(n) .- 0.5
+ω = shifted(ψ, sj)
+
+p = prox(ω, q, ν)
+
 
 # plot
 
@@ -61,7 +57,7 @@ for i in 1:n
     plot!(dom_x,F_x,label="F_"*string(i))
   end
   scatter!([x_min],[F_min],label="min of F_"*string(i))
-  vline!([-ω.xk[i] - ω.sj[i]])
+  #vline!([-ω.xk[i] - ω.sj[i]])
   #hline!([F_min])
 end 
 current()
