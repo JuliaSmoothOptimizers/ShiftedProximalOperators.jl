@@ -62,13 +62,8 @@ function prox!(
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: Union{R, AbstractVector{R}}}
   
   c2 = 2 * ψ.λ * σ
-  tr_Δ_l = typeof(ψ.l) <: Real
-  tr_Δ_u = typeof(ψ.u) <: Real
-
-  println(typeof(ψ.l))
-  println(typeof(ψ.u))
   
-  if tr_Δ_l & tr_Δ_u
+  if isa(ψ.l, Real) & isa(ψ.u, Real)
 
     li = ψ.l
     ui = ψ.u
@@ -113,7 +108,7 @@ function prox!(
       end
       
     end
-  elseif !tr_Δ_l & tr_Δ_u
+  elseif isa(ψ.u, Real)
 
     ui = ψ.u
 
@@ -158,7 +153,7 @@ function prox!(
       end
       
     end
-  elseif tr_Δ_l & !tr_Δ_u
+  elseif isa(ψ.l, Real)
     for i ∈ eachindex(q)
 
       li = ψ.l
@@ -247,3 +242,4 @@ function prox!(
   end
   return y
 end
+

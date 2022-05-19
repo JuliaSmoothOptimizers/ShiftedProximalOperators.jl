@@ -25,7 +25,7 @@ include("ShiftedProximalOperators.jl")
 h = NormL0(5.0)
 n = 10000000
 ν = rand()
-l = -5.0 ; u = 5*rand(n)
+l = -5.0 ; u = 5.0
 q = 20*(rand(n).-0.5)
 
 # shift once
@@ -34,6 +34,7 @@ xk = rand(n) .- 0.5
 
 # check prox
 p = prox(ψ, q, ν)
+
 
 #=
 
@@ -105,3 +106,29 @@ end
 current()
 
 =#
+
+
+#=
+mutable struct foo1{
+  R <: Float64,
+  V <: Union{R, Vector{Float64}}
+}
+  a::R
+  l::V
+  u::V
+  function foo1(
+    a::Float64,
+    l::Union{Float64, Vector{Float64}},
+    u::Union{Float64, Vector{Float64}})
+    new{Float64, Union{Float64, Vector{Float64}}}(a,l,u)
+  end
+end
+
+a = 1.0
+l = rand(1000)
+u = rand(1000)
+
+x = foo1(a,l,u)
+=#
+
+
