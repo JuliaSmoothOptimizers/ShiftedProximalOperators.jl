@@ -25,7 +25,7 @@ include("ShiftedProximalOperators.jl")
 h = NormL0(5.0)
 n = 10000000
 ν = rand()
-l = -5.0 ; u = 5.0
+l = -5.0*rand(n); u = 5.0*rand(n)
 q = 20*(rand(n).-0.5)
 
 # shift once
