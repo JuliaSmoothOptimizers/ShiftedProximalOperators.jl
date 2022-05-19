@@ -48,9 +48,19 @@ end
 
 Set the trust-region radius of a shifted proximable function to Δ.
 This method updates the indicator of the trust region that is part of ψ.
+
+    set_radius!(ψ, l, u)
+
+Set the trust-region l and u parameters if it is defined as a box [l,u].
 """
 function set_radius!(ψ::ShiftedProximableFunction, Δ::R) where {R <: Real}
   ψ.Δ = Δ
+  return ψ
+end
+
+function set_radius!(ψ::ShiftedProximableFunction, l::Union{R, AbstractVector{R}}, u::Union{R, AbstractVector{R}}) where {R <: Real}
+  ψ.l = l
+  ψ.u = u
   return ψ
 end
 
