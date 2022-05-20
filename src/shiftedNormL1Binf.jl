@@ -5,8 +5,8 @@ mutable struct ShiftedNormL1BInf{
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
-  V3 <: AbstractVector{R},
-  V4 <: AbstractVector{R}
+  V3,
+  V4
 } <: ShiftedProximableFunction
   h::NormL1{R}
   xk::V0
@@ -20,8 +20,8 @@ mutable struct ShiftedNormL1BInf{
     h::NormL1{R},
     xk::AbstractVector{R},
     sj::AbstractVector{R},
-    l::AbstractVector{R},
-    u::AbstractVector{R},
+    l,
+    u,
     shifted_twice::Bool,
   ) where {R <: Real}
     sol = similar(xk)
@@ -37,12 +37,12 @@ end
 (ψ::ShiftedNormL1BInf)(y) = ψ.h(ψ.xk + ψ.sj + y) + IndBallLinf(ψ.Δ)(ψ.sj + y)
 =#
 
-shifted(h::NormL1{R}, xk::AbstractVector{R}, l::AbstractVector{R}, u::AbstractVector{R}) where {R <: Real} =
+shifted(h::NormL1{R}, xk::AbstractVector{R}, l, u) where {R <: Real} =
   ShiftedNormL1BInf(h, xk, zero(xk), l, u, false)
 shifted(
   ψ::ShiftedNormL1BInf{R, V0, V1, V2, V3, V4},
   sj::AbstractVector{R},
-) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}} =
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3, V4} =
   ShiftedNormL1BInf(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true)
 
 fun_name(ψ::ShiftedNormL1BInf) = "shifted L1 norm with generalized trust region indicator"
@@ -56,21 +56,21 @@ function prox!(
   ψ::ShiftedNormL1BInf{R, V0, V1, V2, V3, V4},
   q::AbstractVector{R},
   σ::R,
-) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3, V4}
   
   c = σ * ψ.λ
 
   for i ∈ eachindex(y)
 
-    if length(ψ.l) == 1 && length(ψ.u) == 1
-      li = ψ.l[1]
-      ui = ψ.u[1]
-    elseif length(ψ.l) == 1
-      li = ψ.l[1]
+    if isa(ψ.l, Real) && isa(ψ.u, Real)
+      li = ψ.l
+      ui = ψ.u
+    elseif isa(ψ.l, Real)
+      li = ψ.l
       ui = ψ.u[i]
-    elseif length(ψ.u) == 1
+    elseif isa(ψ.u, Real)
       li = ψ.l[i]
-      ui = ψ.u[1]
+      ui = ψ.u
     else
       li = ψ.l[i]
       ui = ψ.u[i]

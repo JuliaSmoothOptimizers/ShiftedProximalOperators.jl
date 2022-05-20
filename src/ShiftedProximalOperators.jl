@@ -59,8 +59,8 @@ function set_radius!(ψ::ShiftedProximableFunction, Δ::R) where {R <: Real}
 end
 
 function set_radius!(ψ::ShiftedProximableFunction, l::AbstractVector{R}, u::AbstractVector{R}) where {R <: Real}
-  ψ.l = l
-  ψ.u = u
+  ψ.l .= l
+  ψ.u .= u
   return ψ
 end
 
