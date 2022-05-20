@@ -5,8 +5,8 @@ mutable struct ShiftedNormL1BInf{
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
-  V3 <: Union{R, AbstractVector{R}},
-  V4 <: Union{R, AbstractVector{R}}
+  V3 <: AbstractVector{R},
+  V4 <: AbstractVector{R}
 } <: ShiftedProximableFunction
   h::NormL1{R}
   xk::V0
@@ -20,16 +20,15 @@ mutable struct ShiftedNormL1BInf{
     h::NormL1{R},
     xk::AbstractVector{R},
     sj::AbstractVector{R},
-    l::Union{R, AbstractVector{R}},
-    u::Union{R, AbstractVector{R}},
+    l::AbstractVector{R},
+    u::AbstractVector{R},
     shifted_twice::Bool,
   ) where {R <: Real}
     sol = similar(xk)
     if sum(l .> u) > 0 
       error("Error on the trust region bounds, at least one lower bound is greater than the upper bound.")
-    else
-      new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u)}(h, xk, sj, sol, l, u, shifted_twice)
     end
+    new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u)}(h, xk, sj, sol, l, u, shifted_twice)
   end
 end
 
@@ -38,12 +37,12 @@ end
 (ψ::ShiftedNormL1BInf)(y) = ψ.h(ψ.xk + ψ.sj + y) + IndBallLinf(ψ.Δ)(ψ.sj + y)
 =#
 
-shifted(h::NormL1{R}, xk::AbstractVector{R}, l::Union{R, AbstractVector{R}}, u::Union{R, AbstractVector{R}}) where {R <: Real} =
+shifted(h::NormL1{R}, xk::AbstractVector{R}, l::AbstractVector{R}, u::AbstractVector{R}) where {R <: Real} =
   ShiftedNormL1BInf(h, xk, zero(xk), l, u, false)
 shifted(
   ψ::ShiftedNormL1BInf{R, V0, V1, V2, V3, V4},
   sj::AbstractVector{R},
-) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: Union{R, AbstractVector{R}}, V4 <: Union{R, AbstractVector{R}}} =
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}} =
   ShiftedNormL1BInf(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true)
 
 fun_name(ψ::ShiftedNormL1BInf) = "shifted L1 norm with generalized trust region indicator"
@@ -57,26 +56,26 @@ function prox!(
   ψ::ShiftedNormL1BInf{R, V0, V1, V2, V3, V4},
   q::AbstractVector{R},
   σ::R,
-) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: Union{R, AbstractVector{R}}, V4 <: Union{R, AbstractVector{R}}}
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
   
   c = σ * ψ.λ
 
   for i ∈ eachindex(y)
 
-    if isa(ψ.l, Real) & isa(ψ.u, Real)
-      li = ψ.l
-      ui = ψ.u
-    elseif isa(ψ.l, Real)
-      li = ψ.l
+    if length(ψ.l) == 1 && length(ψ.u) == 1
+      li = ψ.l[1]
+      ui = ψ.u[1]
+    elseif length(ψ.l) == 1
+      li = ψ.l[1]
       ui = ψ.u[i]
-    elseif isa(ψ.u, Real) 
+    elseif length(ψ.u) == 1
       li = ψ.l[i]
-      ui = ψ.u
+      ui = ψ.u[1]
     else
       li = ψ.l[i]
       ui = ψ.u[i]
     end 
-    
+
     opt_left = q[i] + c
     opt_right = q[i] - c
     xs = ψ.xk[i] + ψ.sj[i]
