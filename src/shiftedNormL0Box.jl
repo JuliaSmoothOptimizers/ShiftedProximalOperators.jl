@@ -26,7 +26,7 @@ mutable struct ShiftedNormL0BInf{
   ) where {R <: Real}
     sol = similar(xk)
     if sum(l .> u) > 0
-      error("Error on the trust region bounds, at least one lower bound is greater than the upper bound.")
+      error("Error: at least one lower bound is greater than the upper bound.")
     end
     new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u)}(h, xk, sj, sol, l, u, shifted_twice)
   end
@@ -49,7 +49,7 @@ shifted(
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3, V4} =
   ShiftedNormL0BInf(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true)
 
-fun_name(ψ::ShiftedNormL0BInf) = "shifted L0 pseudo-norm with generalized trust region indicator"
+fun_name(ψ::ShiftedNormL0BInf) = "shifted L0 pseudo-norm with box indicator"
 fun_expr(ψ::ShiftedNormL0BInf) = "t ↦ λ ‖xk + sj + t‖₀ + χ({sj + t .∈ [l,u]})"
 fun_params(ψ::ShiftedNormL0BInf) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "lb = $(ψ.l)\n" * " "^14 * "ub = $(ψ.u)"

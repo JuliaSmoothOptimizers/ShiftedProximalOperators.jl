@@ -14,15 +14,13 @@ abstract type ShiftedProximableFunction <: ProximableFunction end
 
 include("rootNormLhalf.jl")
 
-include("IndGenTR.jl")
-
 include("shiftedNormL0.jl")
-include("shiftedNormL0BInf.jl")
+include("shiftedNormL0Box.jl")
 include("shiftedRootNormLhalf.jl")
 
 include("shiftedNormL1.jl")
 include("shiftedNormL1B2.jl")
-include("shiftedNormL1Binf.jl")
+include("shiftedNormL1Box.jl")
 include("shiftedIndBallL0.jl")
 include("shiftedIndBallL0BInf.jl")
 include("shiftedRootNormLhalfBinf.jl")
@@ -49,7 +47,7 @@ end
 Set the trust-region radius of a shifted proximable function to Δ.
 This method updates the indicator of the trust region that is part of ψ.
 
-    set_radius!(ψ, l, u)
+    set_bounds!(ψ, l, u)
 
 Set the trust-region l and u parameters if it is defined as a box [l,u].
 """
@@ -58,7 +56,7 @@ function set_radius!(ψ::ShiftedProximableFunction, Δ::R) where {R <: Real}
   return ψ
 end
 
-function set_radius!(ψ::ShiftedProximableFunction, l::AbstractVector{R}, u::AbstractVector{R}) where {R <: Real}
+function set_bounds!(ψ::ShiftedProximableFunction, l::AbstractVector{R}, u::AbstractVector{R}) where {R <: Real}
   ψ.l .= l
   ψ.u .= u
   return ψ
