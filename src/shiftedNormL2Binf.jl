@@ -48,29 +48,30 @@ function prox!(
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  
+
   ψ.sol .= q + ψ.xk + ψ.sj
   ## case 1
   w = zeros(y)
   for i = 1:numel(w)
     if abs(ψ.xk[i]) < ψ.Δ || ψ.xk[i]*ψ.sol[i] > 0
       w[i] = 0
-    elseif (-ψ.xk[i] = ψ.Δ && ψ.sol[i] > 0) || (ψ.xk[i] = ψ.Δ && ψ.sol[i] < 0)
+    elseif (- ψ.xk[i] == ψ.Δ && ψ.sol[i] > 0) || (ψ.xk[i] == ψ.Δ && ψ.sol[i] < 0)
       w[i] = ψ.sol[i] / σ
     end
   end
   ## check to see if satisfied
-  if norm(w - ψ.sol./σ) < 1 && ψ.X(ψ.xk) <= ψ.Δ
-    y .= max(0, σ/norm(ψ.sol - σ .* w)) .* (ψ.sol - σ .* w) - (ψ.xk + ψ.sj)
+  if sqrt(sum((w - ψ.sol./σ).^2)) < 1 && ψ.X(ψ.xk) <= ψ.Δ
+    snorm = sqrt(sum((ψ.sol - σ .* w).^2))
+    y .= max(0, σ/snorm) .* (ψ.sol - σ .* w) - (ψ.xk + ψ.sj)
     return y
   end
-  
+
   ## case 2
   softthres(x, a) = sign(x) .* max(0, abs.(x) .- a)
-  froot(n) = n - norm(σ .* softthres((ψ.sol - (n/(n - σ)) .* ψ.xk)./σ, (ψ.Δ/σ*(n/(n - σ))) - ψ.sol ))
+  froot(n) = n - sqrt(sum((σ .* softthres((ψ.sol - (n/(n - σ)) .* ψ.xk)./σ, (ψ.Δ/σ*(n/(n - σ))) - ψ.sol )).^2))
   n = find_zero(froot, ψ.Δ)
   w .= softthres((ψ.sol - n/(n - σ) .* ψ.xk)./σ, ψ.Δ/σ*(n/(n - σ)))
-  y .= max(0, σ/norm(ψ.sol - σ .* w)) .* (ψ.sol - σ .* w)  - (ψ.xk + ψ.sj)
-  
+  y .= max(0, σ/sqrt(sum((ψ.sol - σ .* w).^2))) .* (ψ.sol - σ .* w)  - (ψ.xk + ψ.sj)
+
   return y
 end

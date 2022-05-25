@@ -13,10 +13,13 @@ import ProximalOperators.prox, ProximalOperators.prox!
 abstract type ShiftedProximableFunction <: ProximableFunction end
 
 include("rootNormLhalf.jl")
+include("groupNormL2.jl")
 
 include("shiftedNormL0.jl")
 include("shiftedNormL0BInf.jl")
 include("shiftedRootNormLhalf.jl")
+include("shiftedNormL2.jl")
+include("ShiftedNormL2Group.jl")
 
 include("shiftedNormL1.jl")
 include("shiftedNormL1B2.jl")

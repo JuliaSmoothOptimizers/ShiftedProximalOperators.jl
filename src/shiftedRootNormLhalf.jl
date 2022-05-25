@@ -45,14 +45,14 @@ function prox!(
   ϕ(z) = acos(γλ / 4 * (abs(z) / 3)^(-3 / 2))
   p = 54^(1 / 3) * (2γλ)^(2 / 3) / 4
 
-  q .+= (ψ.xk .+ ψ.sj)
+  ψ.sol .= (q + ψ.xk .+ ψ.sj)
 
   for i ∈ eachindex(y)
-    aqi = abs(q[i])
+    aqi = abs(ψ.sol[i])
     if aqi ≤ p
       y[i] = 0
     else
-      y[i] = 2 * sign(q[i]) / 3 * aqi * (1 + cos(2 * π / 3 - 2 * ϕ(q[i]) / 3))
+      y[i] = 2 * sign(ψ.sol[i]) / 3 * aqi * (1 + cos(2 * π / 3 - 2 * ϕ(ψ.sol[i]) / 3))
     end
     y[i] -= (ψ.xk[i] + ψ.sj[i])
   end

@@ -4,61 +4,78 @@ export GroupNormL2
 
 """
 **``L_2`` Group - norm**
-    GroupNormL2(λ=1)
+    GroupNormL2(λ=1, g = 1, idx = [1,end])
 Returns the function
 ```math
-f(x) = λ\\cdot \\sum\\_{i} ||x\\_{[i]}||\\_2)^{1/2}
+f(x) =  \\sum\\_{i} \\lambda\\_{i}||x\\_{[i]}||\\_2)^{1/2}
 ```
 for a nonnegative parameter `λ`.
+  Defaults to NormL2() in ProximalOperators if only 1 group is defined.
 """
-struct GroupNormL2{R <: Real, I <: Integer, V0 <: AbstractVector{I}} <: ProximableFunction
-  lambda::R
-  g::I
-  idx::V0
-  function GroupNormL2{R}(lambda::R, g::I, idx::AbstractVector{I}) where {R <: Real, I <: Integer}
-    if lambda < 0
-      error("parameter λ must be nonnegative")
-    elseif Groups < 1
-      error("Must have more than one group")
-    elseif mod(size(idx,2),2)~=0
-      error("Must provide indices as 2 x i")
-    elseif Groups ~= size(idx,2)
-      error("Number of groups must be the same as length of indices provided")
+struct GroupNormL2{
+  R <: Real,
+  RR <: AbstractVector{R},
+  I <: Vector{Vector{Int}}
+  } <: ProximableFunction
+  lambda::RR
+  idx::I
+
+  function GroupNormL2{R, RR,I}(
+    lambda::RR,
+    idx::I
+    ) where {R <: Real, RR <: AbstractVector{R}, I <: Vector{Vector{Int}}}
+    if sum(lambda .< 0) > 1
+      error("weights λ must be nonnegative")
+    elseif length(lambda) != size(idx,1)
+      error("number of weights and indices must be the same")
     else
-      new{R,I,typeof(idx)}(lambda, g, idx)
+      new{R, RR, I}(lambda, idx)
     end
   end
 end
 
-GroupNormL2(lambda::R = 1, g::I = 1, idx::AbstractVector{I} = [1,end]) where {R <: Real, I <: IntegerV0 <: AbstractVector{I}} = GroupNormL2(lambda, g, idx)
+GroupNormL2(
+  lambda::RR = [1.],
+  idx::I = [Int[]],
+) where {R <: Real, RR <: AbstractVector{R}, I <: Vector{Vector{Int}}} =
+GroupNormL2{R, RR, I}(lambda, idx) ## throwing error with idx initialization
 
 function (f::GroupNormL2)(x::AbstractArray{T}) where {T <: Real}
   sum_c = 0
-  for i = 1:f.g
-    sum_c += sqrt(sum(x[idx[1,i]:idx[2,i]].^2))
+  if length(f.idx) == 1
+    return f.lambda * sqrt(sum(x.^2))
+  else
+    for i = 1:length(f.idx)
+      sum_c += f.lambda[i]*sqrt(sum(x[f.idx[i]].^2))
+    end
+    return T(sum_c)
   end
-  return f.lambda * T(sum)
 end
 
 function prox!(
   y::AbstractArray{T},
-  f::RootNormLhalf,
+  f::GroupNormL2{T, R, I},
   x::AbstractArray{T},
-  gamma::Real = 1,
-) where {T <: Real}
- 
-  ysum = 0
-  for i = 1:f.g
-    ysum += sqrt(sum(x[idx[1,i]:idx[2,i]].^2))
-    y[idx[1,i]:idx[2,i]] .= max(1 - γ/norm(x[idx[1,i]:idx[2,i]]), 0) .* x[idx[1,i]:idx[2,i]]
-  end
+  γ::T = 1,
+) where {T <: Real, R <: AbstractVector{T}, I <: Vector{Vector{Int}}}
 
-  
-  return f.lambda * ysum
+  ysum = 0
+  yt = 0
+  if length(f.idx) == 1
+    ysum = f.lambda*sqrt(sum(x.^2))
+    y .= max(1 .- γ * f.lambda^2 / ysum, 0) .* x
+  else
+    for i = 1:length(f.idx)
+      yt = sqrt(sum(x[f.idx[i]].^2))
+      ysum += f.lambda[i]*yt
+      y[f.idx[i]] .= max(1 .- γ*f.lambda[i]/yt, 0) .* x[f.idx[i]]
+    end
+  end
+  return ysum
 end
 
-fun_name(f::GroupNormL2) = "Group L^2-norm"
-fun_dom(f::GroupNormL2) = "AbstractArray{Real}, AbstractArray{Complex}"
-fun_expr(f::GroupNormL2{T}) where {T <: Real} = "x ↦ ½ λ \sum_i ‖x_[i]‖_(2)^(½)"
-fun_params(f::GroupNormL2{T}) where {T <: Real} = "λ = $(f.lambda)"
+fun_name(f::GroupNormL2) = "Group L₂-norm"
+fun_dom(f::GroupNormL2) = "AbstractArray{Float64}, AbstractArray{Complex}"
+fun_expr(f::GroupNormL2) = "x ↦ λ Σᵢ ‖xᵢ‖₂"
+fun_params(f::GroupNormL2) = "λ = $(f.lambda), g = $(f.g)"
 
