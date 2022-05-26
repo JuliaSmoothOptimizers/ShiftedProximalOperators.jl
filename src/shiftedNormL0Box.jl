@@ -1,6 +1,6 @@
-export ShiftedNormL0BInf
+export ShiftedNormL0Box
 
-mutable struct ShiftedNormL0BInf{
+mutable struct ShiftedNormL0Box{
   R <: Real,
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
@@ -16,7 +16,7 @@ mutable struct ShiftedNormL0BInf{
   u::V4
   shifted_twice::Bool
 
-  function ShiftedNormL0BInf(
+  function ShiftedNormL0Box(
     h::NormL0{R},
     xk::AbstractVector{R},
     sj::AbstractVector{R},
@@ -33,31 +33,24 @@ mutable struct ShiftedNormL0BInf{
 
 end
 
-# We cannot use this function anymore with [l,u] trust region 
-#=
-function (ψ::ShiftedNormL0BInf)(y)
-  return ψ.h(ψ.xk + ψ.sj + y) + IndGenTR(ψ.l, ψ.u)(ψ.sj + y)
-end 
-=#
-
 shifted(h::NormL0{R}, xk::AbstractVector{R}, l, u) where {R <: Real} =
-  ShiftedNormL0BInf(h, xk, zero(xk), l, u, false)
+  ShiftedNormL0Box(h, xk, zero(xk), l, u, false)
 
 shifted(
-  ψ::ShiftedNormL0BInf{R, V0, V1, V2, V3, V4},
+  ψ::ShiftedNormL0Box{R, V0, V1, V2, V3, V4},
   sj::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3, V4} =
-  ShiftedNormL0BInf(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true)
+  ShiftedNormL0Box(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true)
 
-fun_name(ψ::ShiftedNormL0BInf) = "shifted L0 pseudo-norm with box indicator"
-fun_expr(ψ::ShiftedNormL0BInf) = "t ↦ λ ‖xk + sj + t‖₀ + χ({sj + t .∈ [l,u]})"
-fun_params(ψ::ShiftedNormL0BInf) =
+fun_name(ψ::ShiftedNormL0Box) = "shifted L0 pseudo-norm with box indicator"
+fun_expr(ψ::ShiftedNormL0Box) = "t ↦ λ ‖xk + sj + t‖₀ + χ({sj + t .∈ [l,u]})"
+fun_params(ψ::ShiftedNormL0Box) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "lb = $(ψ.l)\n" * " "^14 * "ub = $(ψ.u)"
 
 
 function prox!(
   y::AbstractVector{R},
-  ψ::ShiftedNormL0BInf{R, V0, V1, V2, V3, V4},
+  ψ::ShiftedNormL0Box{R, V0, V1, V2, V3, V4},
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3, V4}
