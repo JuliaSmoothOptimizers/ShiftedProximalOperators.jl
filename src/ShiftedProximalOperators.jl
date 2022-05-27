@@ -57,13 +57,13 @@ function set_radius!(ψ::ShiftedProximableFunction, Δ::R) where {R <: Real}
 end
 
 function set_bounds!(ψ::ShiftedProximableFunction, l, u)
-  if isa(ψ.l, Real) && isa(ψ.u, Real)
+  if isa(l, Real) && isa(u, Real)
     ψ.l = l
     ψ.u = u
-  elseif isa(ψ.l, Real)
+  elseif isa(l, Real)
     ψ.l = l
     ψ.u .= u
-  elseif isa(ψ.u, Real)
+  elseif isa(u, Real)
     ψ.l .= l
     ψ.u = u
   else
