@@ -18,7 +18,7 @@ ShiftedProximalOperators.prox(ψ, q, ν)
 # TEST 
 
 
-include("ShiftedProximalOperators.jl")
+#include("ShiftedProximalOperators.jl")
 #using Plots
 
 
@@ -31,6 +31,8 @@ q = 20*(rand(n).-0.5)
 # shift once
 xk = rand(n) .- 0.5
 ψ = shifted(h, xk, l, u)
+
+
 
 # check prox
 p = prox(ψ, q, ν)

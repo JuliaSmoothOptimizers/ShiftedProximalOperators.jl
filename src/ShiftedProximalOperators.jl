@@ -56,7 +56,7 @@ function set_radius!(ψ::ShiftedProximableFunction, Δ::R) where {R <: Real}
   return ψ
 end
 
-function set_bounds!(ψ::ShiftedProximableFunction, l::AbstractVector{R}, u::AbstractVector{R}) where {R <: Real}
+function set_bounds!(ψ::ShiftedProximableFunction, l, u)
   ψ.l .= l
   ψ.u .= u
   return ψ
