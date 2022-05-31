@@ -25,7 +25,7 @@ mutable struct ShiftedNormL1Box{
     shifted_twice::Bool,
   ) where {R <: Real}
     sol = similar(xk)
-    if sum(l .> u) > 0 
+    if any(l .> u) 
       error("Error: at least one lower bound is greater than the upper bound.")
     end
     new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u)}(h, xk, sj, sol, l, u, shifted_twice)
@@ -45,7 +45,6 @@ fun_expr(ψ::ShiftedNormL1Box) = "t ↦ ‖xk + sj + t‖₁ + χ({sj + t .∈ [
 fun_params(ψ::ShiftedNormL1Box) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "l = $(ψ.l)\n" * " "^14 * "u = $(ψ.u)"
 
-
 function prox!(
   y::AbstractVector{R},
   ψ::ShiftedNormL1Box{R, V0, V1, V2, V3, V4},
@@ -57,19 +56,8 @@ function prox!(
 
   for i ∈ eachindex(y)
 
-    if isa(ψ.l, Real) && isa(ψ.u, Real)
-      li = ψ.l
-      ui = ψ.u
-    elseif isa(ψ.l, Real)
-      li = ψ.l
-      ui = ψ.u[i]
-    elseif isa(ψ.u, Real)
-      li = ψ.l[i]
-      ui = ψ.u
-    else
-      li = ψ.l[i]
-      ui = ψ.u[i]
-    end 
+    li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
+    ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i] 
 
     opt_left = q[i] + c
     opt_right = q[i] - c

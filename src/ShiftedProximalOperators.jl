@@ -49,7 +49,7 @@ This method updates the indicator of the trust region that is part of ψ.
 
     set_bounds!(ψ, l, u)
 
-Set the trust-region l and u parameters if it is defined as a box [l,u].
+Set the lower and upper bound of the box to l and u, respectively.
 """
 function set_radius!(ψ::ShiftedProximableFunction, Δ::R) where {R <: Real}
   ψ.Δ = Δ
@@ -57,19 +57,8 @@ function set_radius!(ψ::ShiftedProximableFunction, Δ::R) where {R <: Real}
 end
 
 function set_bounds!(ψ::ShiftedProximableFunction, l, u)
-  if isa(l, Real) && isa(u, Real)
-    ψ.l = l
-    ψ.u = u
-  elseif isa(l, Real)
-    ψ.l = l
-    ψ.u .= u
-  elseif isa(u, Real)
-    ψ.l .= l
-    ψ.u = u
-  else
-    ψ.l .= l
-    ψ.u .= u
-  end
+  isa(l,Real) ? ψ.l=l : (isa(ψ.l,Real) ? ψ.l=l : ψ.l.=l)
+  isa(u,Real) ? ψ.u=u : (isa(ψ.u,Real) ? ψ.u=u : ψ.u.=u)
   return ψ
 end
 

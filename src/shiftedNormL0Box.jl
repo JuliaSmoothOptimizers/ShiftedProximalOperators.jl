@@ -25,7 +25,7 @@ mutable struct ShiftedNormL0Box{
     shifted_twice::Bool
   ) where {R <: Real}
     sol = similar(xk)
-    if sum(l .> u) > 0
+    if any(l .> u)
       error("Error: at least one lower bound is greater than the upper bound.")
     end
     new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u)}(h, xk, sj, sol, l, u, shifted_twice)
@@ -47,7 +47,6 @@ fun_expr(ψ::ShiftedNormL0Box) = "t ↦ λ ‖xk + sj + t‖₀ + χ({sj + t .�
 fun_params(ψ::ShiftedNormL0Box) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "lb = $(ψ.l)\n" * " "^14 * "ub = $(ψ.u)"
 
-
 function prox!(
   y::AbstractVector{R},
   ψ::ShiftedNormL0Box{R, V0, V1, V2, V3, V4},
@@ -59,19 +58,8 @@ function prox!(
 
   for i ∈ eachindex(q)
 
-    if isa(ψ.l, Real) && isa(ψ.u, Real)
-      li = ψ.l
-      ui = ψ.u
-    elseif isa(ψ.l, Real)
-      li = ψ.l
-      ui = ψ.u[i]
-    elseif isa(ψ.u, Real)
-      li = ψ.l[i]
-      ui = ψ.u
-    else
-      li = ψ.l[i]
-      ui = ψ.u[i]
-    end 
+    li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
+    ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
 
     qi = q[i]
     xs = ψ.xk[i] + ψ.sj[i]
