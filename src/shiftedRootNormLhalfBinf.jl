@@ -55,7 +55,7 @@ function prox!(
   νλ = 2 * σ * ψ.λ
   ϕ(z) = acos(νλ / 8 * (abs(z) / 3)^(-3 / 2) + 0im)
 
-  ψ.sol = q + (ψ.xk .+ ψ.sj)
+  ψ.sol .= q .+ (ψ.xk .+ ψ.sj)
   RNorm(tt, l) = 0.5 / σ * (tt - q[l])^2 + ψ.λ * sqrt(abs(tt + ψ.sj[l] + ψ.xk[l]))
   t = zeros(4) #probably not smart to use arrays, but can change
   ft = similar(t)
