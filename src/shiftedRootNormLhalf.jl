@@ -45,7 +45,7 @@ function prox!(
   νλ = σ * ψ.λ
   ϕ(z) = acos(νλ / 4 * (abs(z) / 3)^(-3 / 2))
   p = 54^(1 / 3) * (2νλ)^(2 / 3) / 4
-  ψ.sol = q + (ψ.xk .+ ψ.sj)
+  ψ.sol .= q .+ (ψ.xk .+ ψ.sj)
 
   for i ∈ eachindex(y)
     aqi = abs(ψ.sol[i])
