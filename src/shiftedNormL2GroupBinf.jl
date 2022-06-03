@@ -1,46 +1,47 @@
 export ShiftedNormL2GroupBinf
 
 mutable struct ShiftedNormL2GroupBinf{
-  R <: Real,
-  I <: Vector{Vector{Int}},
+  R  <: Real,
+	RR <: AbstractVector{R},
+  I  <: Vector{Vector{Int}},
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
 } <: ShiftedProximableFunction
-  h::GroupNormL2{R, I}
+  h::GroupNormL2{R,RR,I}
   xk::V0
   sj::V1
   sol::V2
   Δ::R
-  X::Conjugate{IndBallL1{R}}
+  χ::Conjugate{IndBallL1{R}}
   shifted_twice::Bool
 
   function ShiftedNormL2GroupBinf(
-    h::GroupNormL2{R, I},
+    h::GroupNormL2{R,RR,I},
     xk::AbstractVector{R},
     sj::AbstractVector{R},
     Δ::R,
-    X::Conjugate{IndBallL1{R}},
+    χ::Conjugate{IndBallL1{R}},
     shifted_twice::Bool,
-  ) where {R <: Real, I <: Vector{Vector{Int}}}
+		) where {R <: Real, RR <: AbstractVector{R}, I <: Vector{Vector{Int}}}
     sol = similar(sj)
-    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Δ, X, shifted_twice)
+    new{R,RR,I,typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Δ, χ, shifted_twice)
   end
 end
 
 (ψ::ShiftedNormL2GroupBinf)(y) = ψ.h(ψ.xk + ψ.sj + y) + IndBallLinf(ψ.Δ)(ψ.sj + y)
 
 shifted(
-  h::GroupNormL2{R, I},
+  h::GroupNormL2{R,RR,I},
   xk::AbstractVector{R},
   Δ::R,
-  X::Conjugate{IndBallL1{R}}
-) where {R <: Real, I <: Vector{Vector{Int}}} = ShiftedNormL2GroupBinf(h, xk, zero(xk), Δ, X,  false)
+  χ::Conjugate{IndBallL1{R}}
+ ) where {R <: Real, RR <: AbstractVector{R}, I <: Vector{Vector{Int}}} = ShiftedNormL2GroupBinf(h, xk, zero(xk), Δ, χ,  false)
 shifted(
-  ψ::ShiftedNormL2GroupBinf{R, I, V0, V1, V2},
+  ψ::ShiftedNormL2GroupBinf{R, RR, I, V0, V1, V2},
   sj::AbstractVector{R},
-) where {R <: Real, I <: Vector{Vector{Int}}, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
-ShiftedNormL2GroupBinf(ψ.h, ψ.xk, sj, ψ.Δ, ψ.X, true)
+ ) where {R <: Real, RR <: AbstractVector{R}, I <: Vector{Vector{Int}}, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
+ShiftedNormL2GroupBinf(ψ.h, ψ.xk, sj, ψ.Δ, ψ.χ, true)
 
 fun_name(ψ::ShiftedNormL2GroupBinf) = "shifte ∑ᵢ||⋅||_2 norm with L∞-norm trust region indicator"
 fun_expr(ψ::ShiftedNormL2GroupBinf) = "t ↦ ‖xk + sj + t‖ₚᵖ, p = 2 +  X({‖sj + t‖∞ ≤ Δ})"
@@ -49,43 +50,15 @@ fun_params(ψ::ShiftedNormL2GroupBinf) =
 
 function prox!(
   y::AbstractVector{R},
-  ψ::ShiftedNormL2GroupBinf{R, I, V0, V1, V2},
+  ψ::ShiftedNormL2GroupBinf{R, RR,  I, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
-) where {R <: Real, I<: Vector{Vector{Int}}, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
+ ) where {R <: Real, RR <: AbstractVector{R}, I<: Vector{Vector{Int}}, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
 
   ψ.sol .= q + ψ.xk + ψ.sj
-  w = zeros(y)
-
-  c1true = 0
-  for i = 1:ψ.h.g
-    ## case 1
-    idx  = ψ.h.idx[i]
-    temp = w[idx]
-    xk   = ψ.xk[idx]
-    sol  = ψ.sol[idx]
-    for i = numel(temp)
-      if abs(temp[i]) < ψ.Δ || xk[i]*sol[i] > 0
-        w[i] = 0
-      else
-        w[i] = sol[i] / σ
-      end
-    end
-    w[idx] = temp
-
-    ## check condition
-    if sqrt(sum((w[idx] - sol ./ σ)).^2) < 1 && ψ.X(xk) <= ψ.Δ
-      wnorm = sqrt(sum(((sol - σ .* w[idx]))))
-      y[idx] = max(0, σ/wnorm) .* (sol - σ .* w[idx]) - (xk + sj)
-      c1true += 1
-    end
-  end
-
-  if c1true == ψ.h.g
-    return y
-  end
-
-  softthres(x, a) = sign(x) .* max(0, abs.(x) .- a)
+	w = zeros(size(y)) #### change eventually to preallocate
+	softthres(x, a) = sign.(x) .* max.(0, abs.(x) .- a)
+  l2prox(x,a) = max(0, 1- a/sqrt(sum(x.^2))).*x
 
   for i = 1:numel(ψ.h.idx)
     idx = ψ.h.idx[i]
@@ -93,20 +66,25 @@ function prox!(
     sj  = ψ.sj[idx]
     sol = ψ.sol[idx]
     ## find root for each block
-    froot(n) = n - sqrt(sum((σ .* softthres((sol - (n/(n - σ)) .* xk)./σ, (ψ.Δ/σ*(n/(n - σ))) - sol)).^2))
-    n = find_zero(froot, ψ.Δ)
-    temp = w[idx]
-    w[idx] .= softthres((sol - n/(n - σ) .* xk)./σ, ψ.Δ/σ*(n/(n - σ)))
-    y[idx] .= max(0, σ/sqrt(sum((sol - σ .* w).^2))) .* (sol - σ .* temp)  - (xk + sj)
+    froot(n) = n - sqrt(sum((σ .* softthres((sol./σ .- (n/(σ*(n - σ))) .* xk), ψ.Δ*(n/(σ*(n - σ)))) .- sol ).^2))
 
+		lmin = σ + 1e-10
+ 	 	lmax = maximum(abs.(sol))/σ + 1e4*maximum(abs.(xk))/min(σ,1) #do these once? 
+ 	 	fl = froot(lmin)
+ 	 	fm = froot(lmax)
 
-  #for i = 1:ψ.h.g
-  #  y[ψ.h.idx[1,i]:ψ.h.idx[2,i]] .= max(1 - σ/norm(ψ.sol[ψ.h.idx[1,i]:ψ.h.idx[2,i]]), 0) .* ψ.sol[ψ.h.idx[1,i]:ψ.h.idx[2,i]]
-  #end
-  #y .-= (ψ.xk + ψ.sj)
-  end
-
-  return y
+ 	 	if fl*fm > 0
+ 	 	  n  = 0
+			y[idx] .= 0
+ 	 	else
+ 	 	  n = fzero(froot, lmin, lmax)
+ 	 	  step = n / (σ*( n - σ))
+			w[idx] .= softthres((sol./σ .- step .* xk), ψ.Δ*step)
+			y[idx] .= l2prox(sol .- σ.*w[idx], σ)
+ 	 	end
+		y[idx] .-= (xk + sj)
+	end
+ 	return y
 end
 
 

@@ -19,7 +19,7 @@ include("shiftedNormL0.jl")
 include("shiftedNormL0BInf.jl")
 include("shiftedRootNormLhalf.jl")
 include("shiftedNormL2.jl")
-include("ShiftedNormL2Group.jl")
+include("shiftedNormL2Group.jl")
 
 include("shiftedNormL1.jl")
 include("shiftedNormL1B2.jl")
@@ -27,6 +27,8 @@ include("shiftedNormL1Binf.jl")
 include("shiftedIndBallL0.jl")
 include("shiftedIndBallL0BInf.jl")
 include("shiftedRootNormLhalfBinf.jl")
+include("shiftedNormL2Binf.jl")
+include("shiftedNormL2GroupBinf.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
 
