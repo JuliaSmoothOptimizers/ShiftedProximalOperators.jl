@@ -17,7 +17,26 @@ for op ∈ (:RootNormLhalf,)
     @test sum((y - ytrue) .^ 2) ≤ 1e-11
   end
 end
-
+for op ∈ (:GroupNormL2,)
+  @testset "$op" begin
+  Op = eval(op)
+  x = rand(6)
+  y = similar(x)
+  v = [collect(1:3), collect(4:6)]
+  yt = zeros(3)
+  ytrue = similar(x)
+  λ = rand(2,)
+  ν = rand()
+  h = Op(λ, v)
+  prox!(y, h, x, ν)
+  for i = 1:2
+    ht = NormL2(λ[i])
+    prox!(yt, ht, x[v[i]], ν)
+    ytrue[v[i]] .= yt
+  end
+  @test sum((y - ytrue) .^ 2) ≤ 1e-11
+  end
+end
 # loop over operators without a trust region
 for (op, shifted_op) ∈
     zip((:NormL0, :NormL1, :RootNormLhalf), (:ShiftedNormL0, :ShiftedNormL1, :ShiftedRootNormLhalf))
