@@ -76,6 +76,6 @@ end
 
 fun_name(f::GroupNormL2) = "Group L₂-norm"
 fun_dom(f::GroupNormL2) = "AbstractArray{Float64}, AbstractArray{Complex}"
-fun_expr(f::GroupNormL2) = "x ↦ λ Σᵢ ‖xᵢ‖₂"
+fun_expr(f::GroupNormL2) = "x ↦ Σᵢ λᵢ ‖xᵢ‖₂"
 fun_params(f::GroupNormL2) = "λ = $(f.lambda), g = $(f.g)"
 

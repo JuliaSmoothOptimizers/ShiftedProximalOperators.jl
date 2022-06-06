@@ -29,7 +29,7 @@ mutable struct ShiftedNormL2GroupBinf{
   end
 end
 
-(ψ::ShiftedNormL2GroupBinf)(y) = ψ.h(ψ.xk + ψ.sj + y) + IndBallLinf(ψ.Δ)(ψ.sj + y)
+(ψ::ShiftedNormL2GroupBinf)(y) = ψ.h(ψ.xk + ψ.sj + y) .+ IndBallLinf(1.1*ψ.Δ)(ψ.sj + y) # ".+" fixes Float32 error in runtests.
 
 shifted(
   h::GroupNormL2{R,RR,I},
@@ -59,31 +59,35 @@ function prox!(
 	w = zeros(size(y)) #### change eventually to preallocate
 	softthres(x, a) = sign.(x) .* max.(0, abs.(x) .- a)
   l2prox(x,a) = max(0, 1- a/sqrt(sum(x.^2))).*x
-
-  for i = 1:numel(ψ.h.idx)
+  for i = 1:length(ψ.h.idx)
     idx = ψ.h.idx[i]
     xk  = ψ.xk[idx]
     sj  = ψ.sj[idx]
     sol = ψ.sol[idx]
+    σλ  = ψ.h.lambda[i]*σ
     ## find root for each block
-    froot(n) = n - sqrt(sum((σ .* softthres((sol./σ .- (n/(σ*(n - σ))) .* xk), ψ.Δ*(n/(σ*(n - σ)))) .- sol ).^2))
+    froot(n) = n - sqrt(sum((σλ .* softthres((sol./σλ .- (n/(σλ*(n - σλ))) .* xk), ψ.Δ*(n/(σλ*(n - σλ)))) .- sol ).^2))
 
-		lmin = σ + 1e-10
- 	 	lmax = maximum(abs.(sol))/σ + 1e4*maximum(abs.(xk))/min(σ,1) #do these once? 
+		lmin = σλ + 1e-10
+ 	 	# lmax = maximum(abs.(sol))/σλ + 1e4*maximum(abs.(xk))/min(σλ,1) #do these once?
+    lmax = min(1, σλ)*1e4
  	 	fl = froot(lmin)
  	 	fm = froot(lmax)
-
  	 	if fl*fm > 0
- 	 	  n  = 0
 			y[idx] .= 0
  	 	else
  	 	  n = fzero(froot, lmin, lmax)
- 	 	  step = n / (σ*( n - σ))
-			w[idx] .= softthres((sol./σ .- step .* xk), ψ.Δ*step)
-			y[idx] .= l2prox(sol .- σ.*w[idx], σ)
+ 	 	  step = n / (σλ*(n - σλ))
+      if abs(n - σλ) ≈ 0
+        y[idx] .= 0
+      else
+        w[idx] .= softthres((sol./σλ .- step .* xk), ψ.Δ*step)
+        y[idx] .= l2prox(sol .- σλ.*w[idx], σλ)
+      end
  	 	end
 		y[idx] .-= (xk + sj)
 	end
+  # @show q, σ, ψ.h.idx
  	return y
 end
 
