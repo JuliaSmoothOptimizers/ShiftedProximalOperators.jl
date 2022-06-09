@@ -79,7 +79,7 @@ function prox!(
     elseif li - si > qi
       if li <= -xi <= ui
         if (xi + si + qi)^2 < (li - si - qi)^2 + c2
-          y[i] = -x(xi+si)
+          y[i] = -(xi+si)
         else 
           y[i] = li - si
         end
