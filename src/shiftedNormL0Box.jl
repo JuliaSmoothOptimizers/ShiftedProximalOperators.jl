@@ -62,34 +62,35 @@ function prox!(
     ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
 
     qi = q[i]
-    xs = ψ.xk[i] + ψ.sj[i]
+    xi = ψ.xk[i]
+    si = ψ.sj[i]
   
-    if ui < qi
-      if li <= -xs <= ui
-        if (xs + qi)^2 < (ui - qi)^2 + c2
-          y[i] = -xs
+    if ui - si < qi
+      if li <= -xi <= ui
+        if (xi + si + qi)^2 < (ui - si - qi)^2 + c2 ###### AU dessus c'est ok mais en dessous faut tout changer
+          y[i] = -(xi+si)
         else 
-          y[i] = ui
+          y[i] = ui - si
         end
       else
-        y[i] = ui
+        y[i] = ui - si
       end
   
-    elseif li > qi
-      if li <= -xs <= ui
-        if (xs + qi)^2 < (li - qi)^2 + c2
-          y[i] = -xs
+    elseif li - si > qi
+      if li <= -xi <= ui
+        if (xi + si + qi)^2 < (li - si - qi)^2 + c2
+          y[i] = -x(xi+si)
         else 
-          y[i] = li
+          y[i] = li - si
         end
       else
-        y[i] = li
+        y[i] = li - si
       end
   
     else 
       if li <= -xs <= ui
-        if (xs + qi)^2 < c2
-          y[i] = -xs
+        if (xi + si + qi)^2 < c2
+          y[i] = -(xi + si)
         else 
           y[i] = qi
         end
