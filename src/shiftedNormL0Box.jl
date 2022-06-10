@@ -101,4 +101,3 @@ function prox!(
   end
   return y
 end
-
