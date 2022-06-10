@@ -56,8 +56,6 @@ function prox!(
   
   c = 2 * ψ.λ * σ
 
-  println(ψ.shifted_twice)
-
   for i ∈ eachindex(q)
 
     li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
