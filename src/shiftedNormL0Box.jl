@@ -54,7 +54,7 @@ function prox!(
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3, V4}
   
-  c2 = 2 * ψ.λ * σ
+  c = 2 * ψ.λ * σ
 
   for i ∈ eachindex(q)
 
@@ -67,7 +67,7 @@ function prox!(
   
     if ui - si < qi
       if li <= -xi <= ui
-        if (xi + si + qi)^2 < (ui - si - qi)^2 + c2 ###### AU dessus c'est ok mais en dessous faut tout changer
+        if (xi + si + qi)^2 < (ui - si - qi)^2 + c
           y[i] = -(xi+si)
         else 
           y[i] = ui - si
@@ -78,7 +78,7 @@ function prox!(
   
     elseif li - si > qi
       if li <= -xi <= ui
-        if (xi + si + qi)^2 < (li - si - qi)^2 + c2
+        if (xi + si + qi)^2 < (li - si - qi)^2 + c
           y[i] = -(xi+si)
         else 
           y[i] = li - si
@@ -89,7 +89,7 @@ function prox!(
   
     else 
       if li <= -xi <= ui
-        if (xi + si + qi)^2 < c2
+        if (xi + si + qi)^2 < c
           y[i] = -(xi + si)
         else 
           y[i] = qi

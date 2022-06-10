@@ -52,7 +52,7 @@ function prox!(
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3, V4}
   
-  c = σ * ψ.λ
+  c = 2 * σ * ψ.λ
 
   for i ∈ eachindex(y)
 
@@ -61,33 +61,34 @@ function prox!(
 
     opt_left = q[i] + c
     opt_right = q[i] - c
-    xs = ψ.xk[i] + ψ.sj[i]
+    xi = ψ.xk[i]
+    si = ψ.sj[i]
 
-    if opt_left < -xs
-      if ui < opt_left
-        y[i] = ui
-      elseif opt_left < li
-        y[i] = li
+    if opt_left < -(xi + si)
+      if ui - si < opt_left
+        y[i] = ui - si
+      elseif opt_left < li - si
+        y[i] = li - si
       else
         y[i] = opt_left
       end
 
-    elseif -xs < opt_right
-      if ui < opt_right
-        y[i] = ui
-      elseif opt_right < li
-        y[i] = li
+    elseif -(xi + si) < opt_right
+      if ui - si < opt_right
+        y[i] = ui - si
+      elseif opt_right < li - si
+        y[i] = li - si
       else
         y[i] = opt_right
       end
 
     else
-      if ui < -xs
-        y[i] = ui
-      elseif -xs < li
-        y[i] = li
+      if ui - si < -(xi + si)
+        y[i] = ui - si
+      elseif -(xi + si) < li - si
+        y[i] = li - si
       else
-        y[i] = -xs
+        y[i] = -(xi + si)
       end
     end
 
