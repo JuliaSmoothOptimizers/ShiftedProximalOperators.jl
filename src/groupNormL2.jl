@@ -9,13 +9,13 @@ Returns the function
 ```math
 f(x) =  \\sum\\_{i} \\lambda\\_{i}||x\\_{[i]}||\\_2)^{1/2}
 ```
-for a nonnegative parameter `λ`.
+for groups `x\\_{[i]}` a nonnegative weights `λ\\_i`.
   Defaults to NormL2() in ProximalOperators if only 1 group is defined.
 """
 struct GroupNormL2{
   R <: Real,
   RR <: AbstractVector{R},
-  I <: Vector{Vector{Int}}
+  I
   } <: ProximableFunction
   lambda::RR
   idx::I
@@ -23,7 +23,7 @@ struct GroupNormL2{
   function GroupNormL2{R, RR,I}(
     lambda::RR,
     idx::I
-    ) where {R <: Real, RR <: AbstractVector{R}, I <: Vector{Vector{Int}}}
+    ) where {R <: Real, RR <: AbstractVector{R}, I}
     if any(lambda .< 0)
       error("weights λ must be nonnegative")
     elseif length(lambda) != length(idx)
@@ -37,8 +37,8 @@ end
 GroupNormL2(
   lambda::RR = [1.],
   idx::I = [Int[]],
-) where {R <: Real, RR <: AbstractVector{R}, I <: Vector{Vector{Int}}} =
-GroupNormL2{R, RR, I}(lambda, idx) ## throwing error with idx initialization
+) where {R <: Real, RR <: AbstractVector{R}, I} =
+GroupNormL2{R, RR, I}(lambda, idx)
 
 function (f::GroupNormL2)(x::AbstractArray{T}) where {T <: Real}
   sum_c = T(0)
@@ -57,13 +57,13 @@ function prox!(
   f::GroupNormL2{T, R, I},
   x::AbstractArray{T},
   γ::T = T(1),
-) where {T <: Real, R <: AbstractVector{T}, I <: Vector{Vector{Int}}}
+) where {T <: Real, R <: AbstractVector{T}, I}
 
-  ysum = 0
-  yt = 0
+  ysum = T(0)
+  yt = T(0)
   if length(f.idx) == 1
     ysum = f.lambda*sqrt(sum(x.^2))
-    y .= max(1 .- γ * f.lambda^2 / ysum, 0) .* x
+    y .= max(1 .- γ * f.lambda / ysum, 0) .* x
   else
     for i = 1:length(f.idx)
       yt = sqrt(sum(x[f.idx[i]].^2))
