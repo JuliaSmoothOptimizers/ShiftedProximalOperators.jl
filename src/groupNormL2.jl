@@ -41,7 +41,7 @@ GroupNormL2(
 GroupNormL2{R, RR, I}(lambda, idx) ## throwing error with idx initialization
 
 function (f::GroupNormL2)(x::AbstractArray{T}) where {T <: Real}
-  sum_c = 0
+  sum_c = T(0)
   if length(f.idx) == 1
     return f.lambda * sqrt(sum(x.^2))
   else
