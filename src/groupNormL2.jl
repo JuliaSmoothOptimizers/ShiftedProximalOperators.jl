@@ -56,7 +56,7 @@ function prox!(
   y::AbstractArray{T},
   f::GroupNormL2{T, R, I},
   x::AbstractArray{T},
-  γ::T = 1,
+  γ::T = T(1),
 ) where {T <: Real, R <: AbstractVector{T}, I <: Vector{Vector{Int}}}
 
   ysum = 0
