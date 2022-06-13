@@ -26,7 +26,7 @@ struct GroupNormL2{
     ) where {R <: Real, RR <: AbstractVector{R}, I <: Vector{Vector{Int}}}
     if any(lambda .< 0)
       error("weights λ must be nonnegative")
-    elseif length(lambda) != size(idx,1)
+    elseif length(lambda) != length(idx)
       error("number of weights and indices must be the same")
     else
       new{R, RR, I}(lambda, idx)
