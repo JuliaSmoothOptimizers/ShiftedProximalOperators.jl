@@ -48,7 +48,7 @@ function (f::GroupNormL2)(x::AbstractArray{T}) where {T <: Real}
     for i = 1:length(f.idx)
       sum_c += f.lambda[i]*sqrt(sum(x[f.idx[i]].^2))
     end
-    return T(sum_c)
+    return sum_c
   end
 end
 
