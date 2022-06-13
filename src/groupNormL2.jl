@@ -27,7 +27,7 @@ struct GroupNormL2{
     if any(lambda .< 0)
       error("weights λ must be nonnegative")
     elseif length(lambda) != length(idx)
-      error("number of weights and indices must be the same")
+      error("number of weights and groups must be the same")
     else
       new{R, RR, I}(lambda, idx)
     end
