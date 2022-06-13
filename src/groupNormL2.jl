@@ -4,7 +4,7 @@ export GroupNormL2
 
 """
 **``L_2`` Group - norm**
-    GroupNormL2(λ=1, g = 1, idx = [1,end])
+    GroupNormL2(λ = 1, g = 1, idx = [1, end])
 Returns the function
 ```math
 f(x) =  \\sum\\_{i} \\lambda\\_{i}||x\\_{[i]}||\\_2)^{1/2}
