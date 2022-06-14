@@ -9,7 +9,7 @@ Returns the function
 ```math
 f(x) =  \\sum\\_{i} \\lambda\\_{i}||x\\_{[i]}||\\_2)^{1/2}
 ```
-for groups `x\\_{[i]}` a nonnegative weights `λ\\_i`.
+for groups `x\\_{[i]}` and nonnegative weights `λ\\_i`.
   Defaults to NormL2() in ProximalOperators if only 1 group is defined.
 """
 struct GroupNormL2{
