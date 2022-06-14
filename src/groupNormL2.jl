@@ -62,11 +62,11 @@ function prox!(
   ysum = T(0)
   yt = T(0)
   if length(f.idx) == 1
-    ysum = f.lambda*sqrt(sum(x.^2))
+    ysum = f.lambda*norm(x)
     y .= max(1 .- γ * f.lambda / ysum, 0) .* x
   else
     for i = 1:length(f.idx)
-      yt = sqrt(sum(x[f.idx[i]].^2))
+      yt = norm(x[f.idx[i]])
       ysum += f.lambda[i]*yt
       y[f.idx[i]] .= max(1 .- γ*f.lambda[i]/yt, 0) .* x[f.idx[i]]
     end
