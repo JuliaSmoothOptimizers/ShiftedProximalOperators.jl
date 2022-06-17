@@ -10,7 +10,7 @@ Returns the function
 f(x) =  \\sum\\_{i} \\lambda\\_{i}||x\\_{[i]}||\\_2)^{1/2}
 ```
 for groups `x\\_{[i]}` and nonnegative weights `λ\\_i`.
-  This operator reduces to the two norm if only one group is defined.
+This operator reduces to the two norm if only one group is defined.
 """
 struct GroupNormL2{
   R <: Real,
