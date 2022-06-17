@@ -42,14 +42,10 @@ GroupNormL2{R, RR, I}(lambda, idx)
 
 function (f::GroupNormL2)(x::AbstractArray{R}) where {R <: Real}
   sum_c = R(0)
-  if length(f.idx) == 1
-    return f.lambda * norm(x)
-  else
-    for i = 1:length(f.idx)
-      sum_c += f.lambda[i]*norm(x[f.idx[i]])
-    end
-    return sum_c
+  for (idx, λ) ∈ zip(f.idx, f.lambda)
+    sum_c += λ*norm(x[idx])
   end
+  return sum_c
 end
 
 function prox!(
@@ -60,22 +56,13 @@ function prox!(
 ) where {R <: Real, RR <: AbstractVector{R}, I}
 
   ysum = R(0)
-  if length(f.idx) == 1
-    ysum = f.lambda*norm(x)
-    if ysum == 0
-      y .= 0
+  for (idx, λ) ∈ zip(f.idx, f.lambda)
+    yt = norm(x[idx])
+    if yt == 0
+      y[idx] .= 0
     else
-      y .= max(1 .- γ * f.lambda / ysum, 0) .* x
-    end
-  else
-    for i = 1:length(f.idx)
-      yt = norm(x[f.idx[i]])
-      if yt == 0
-        y[f.idx[i]] .= 0
-      else
-        y[f.idx[i]] .= max(1 .- γ*f.lambda[i]/yt, 0) .* x[f.idx[i]]
-        ysum += f.lambda[i]*yt
-      end
+      y[idx] .= max.(1 .- γ.*λ./yt, 0) .* x[idx]
+      ysum += λ*yt
     end
   end
   return ysum
