@@ -36,7 +36,7 @@ end
 
 GroupNormL2(
   lambda::RR = [1.],
-  idx::I = [[]],
+  idx::I = [:],
 ) where {R <: Real, RR <: AbstractVector{R}, I} =
 GroupNormL2{R, RR, I}(lambda, idx)
 
