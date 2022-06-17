@@ -6,6 +6,7 @@ version = "0.1.0"
 [deps]
 ProximalOperators = "a725b495-10eb-56fe-b38b-717eba820537"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
 ProximalOperators = "0.14"
