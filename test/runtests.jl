@@ -527,3 +527,86 @@ for (op, tr) ∈ zip((:NormL1,), (:NormLinf,))
     @test all(p1 .≈ p2)
   end
 end
+
+# loop over Rank function
+for (op, shifted_op) ∈ zip((:Rank,), (:ShiftedRank,))
+  @testset "$shifted_op" begin
+      ShiftedOp = eval(shifted_op)
+      Op = eval(op)
+      # test basic types and properties
+      h = Op(1. ,2 ,2)
+      x = ones(4)
+      ψ = shifted(h, x)
+      @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
+      @test all(ψ.sj .== 0)
+      @test all(ψ.xk .== x)
+      @test typeof(ψ.λ) == Float64
+      @test ψ.λ == h.lambda
+
+      # test values
+      @test ψ(zeros(4)) == h(x)
+      y = rand(4)
+      @test ψ(y) == h(x + y)
+
+      # test prox
+      # TODO
+
+      # test shift update
+      shift!(ψ, y)
+      @test all(ψ.sj .== 0)
+      @test all(ψ.xk .== y)
+
+      # shift a shifted operator
+      s = ones(4) / 2
+      φ = shifted(ψ, s)
+      @test all(φ.sj .== s)
+      @test all(φ.xk .== x)
+      @test φ(zeros(4)) == h(x + s)
+      y = rand(4)
+      @test φ(y) == h(x + s + y)
+
+      # test different types
+      h = Op(Float32(1.2), 2, 2)
+      y = rand(Float32, 8)
+      x = view(y, 1:2:8)
+      ψ = shifted(h, x)
+      @test typeof(ψ) == ShiftedOp{Float32, 
+      SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true}, 
+      Vector{Float32}, 
+      Vector{Float32}}
+      @test typeof(ψ.λ) == Float32
+      @test ψ.λ == h.lambda
+      @test ψ(zeros(Float32, 4)) == h(x)
+
+    # test more sophisticated examples
+      # Diagonal Matrix (n,n)
+      n = 10
+      λ = 10.
+      st1 = rand(n)
+      x = vec(reshape(Diagonal(st1),n^2,1))
+      q = x.^2
+      s = x/2
+      h = Op(λ,n,n)
+      f = shifted(shifted(h, x), s)
+      y = zeros(n^2)
+      k = NormL0(λ)
+      t = ProximalOperators.prox(k, st1 + st1.^2 + st1/2, λ)[1]
+      @test all(Diagonal(t - st1 - st1/2) .≈ reshape(prox!(y, f, q, λ),n,n))
+
+      # Rectangular Matrix (m,n)
+      m = 10
+      n = 11
+      λ = 1.
+      γ = 5.
+      x = vec(reshape(rand(m,n), m * n, 1))
+      q = vec(reshape(rand(m,n), m * n, 1))
+      s = vec(reshape(rand(m,n), m * n, 1))
+      h = Op(λ,m,n)
+      f = shifted(shifted(h, x), s)
+      y = zeros(m * n)
+      k = NormL0(λ)
+      Q = svd(reshape(q + s + x, m, n))
+      t = ProximalOperators.prox(k, Q.S, γ)[1]
+      @test all( Q.U * Diagonal(t) * Q.Vt - reshape(x+s, m, n) .≈ reshape(prox!(y, f, q, γ),m,n))
+  end
+end
