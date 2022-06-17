@@ -13,8 +13,12 @@ import ProximalOperators.prox, ProximalOperators.prox!
 "Abstract type for shifted proximable functions."
 abstract type ShiftedProximableFunction end
 
+include("utils.jl")
+include("psvd.jl")
+
 include("rootNormLhalf.jl")
 include("groupNormL2.jl")
+include("Rank.jl")
 
 include("shiftedNormL0.jl")
 include("shiftedNormL0BInf.jl")
@@ -28,9 +32,7 @@ include("shiftedIndBallL0.jl")
 include("shiftedIndBallL0BInf.jl")
 include("shiftedRootNormLhalfBinf.jl")
 include("shiftedGroupNormL2Binf.jl")
-
-include("utils.jl")
-include("psvd.jl")
+include("shiftedRank.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
 
