@@ -4,13 +4,13 @@ export GroupNormL2
 
 """
 **``L_2`` Group - norm**
-    GroupNormL2(λ = 1, g = 1, idx = [1, end])
+    GroupNormL2(λ = 1, g = 1, idx = [:])
 Returns the function
 ```math
 f(x) =  \\sum\\_{i} \\lambda\\_{i}||x\\_{[i]}||\\_2)^{1/2}
 ```
 for groups `x\\_{[i]}` and nonnegative weights `λ\\_i`.
-  Defaults to NormL2() in ProximalOperators if only 1 group is defined.
+  This operator reduces to the two norm if only one group is defined.
 """
 struct GroupNormL2{
   R <: Real,
