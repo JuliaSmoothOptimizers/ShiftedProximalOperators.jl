@@ -15,6 +15,7 @@ abstract type ShiftedProximableFunction end
 
 include("rootNormLhalf.jl")
 include("groupNormL2.jl")
+include("Rank.jl")
 
 include("shiftedNormL0.jl")
 include("shiftedNormL0BInf.jl")
@@ -27,6 +28,7 @@ include("shiftedNormL1Binf.jl")
 include("shiftedIndBallL0.jl")
 include("shiftedIndBallL0BInf.jl")
 include("shiftedRootNormLhalfBinf.jl")
+include("shiftedRank.jl")
 
 include("utils.jl")
 include("psvd.jl")
