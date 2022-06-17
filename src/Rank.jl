@@ -29,7 +29,7 @@ function (f::Rank)(x::AbstractVector{R}) where {R <: Real}
     return f.lambda * rank(reshape(x, f.nrow, f.ncol))
 end
 
-function prox!(y::AbstractVector{R}, f::Rank1{R}, x::AbstractVector{R}, gamma::R) where {R <: Real}
+function prox!(y::AbstractVector{R}, f::Rank{R}, x::AbstractVector{R}, gamma::R) where {R <: Real}
     A = reshape(x, f.nrow, f.ncol)
     F = svd(A)
     yvec = F.S
