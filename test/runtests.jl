@@ -19,33 +19,33 @@ for op ∈ (:RootNormLhalf,)
 end
 for op ∈ (:GroupNormL2,)
   @testset "$op" begin
-  Op = eval(op)
-  x = rand(6)
-  y = similar(x)
-  v = [1:3, collect(4:6)]
-  yt = zeros(3)
-  ytrue = similar(x)
-  λ = rand(2,)
-  ν = rand()
-  h = Op(λ, v)
-  ysum = prox!(y, h, x, ν)
-  ysumt = 0
-  for i = 1:2
-    ht = NormL2(λ[i])
-    tt = prox!(yt, ht, x[v[i]], ν)
-    ysumt += tt
-    ytrue[v[i]] .= yt
-  end
-  @test sum((y - ytrue) .^ 2) ≤ 1e-11
+    Op = eval(op)
+    x = rand(6)
+    y = similar(x)
+    v = [1:3, collect(4:6)]
+    yt = zeros(3)
+    ytrue = similar(x)
+    λ = rand(2)
+    ν = rand()
+    h = Op(λ, v)
+    ysum = prox!(y, h, x, ν)
+    ysumt = 0
+    for i = 1:2
+      ht = NormL2(λ[i])
+      tt = prox!(yt, ht, x[v[i]], ν)
+      ysumt += tt
+      ytrue[v[i]] .= yt
+    end
+    @test sum((y - ytrue) .^ 2) ≤ 1e-11
 
-  #test norm value
-  lg2 = h(x)
-  lg2_temp = 0
-  for i = 1:2
-    ht = NormL2(λ[i])
-    lg2_temp += ht(x[v[i]])
-  end
-  @test abs(lg2 - lg2_temp) ≤ 1e-11
+    #test norm value
+    lg2 = h(x)
+    lg2_temp = 0
+    for i = 1:2
+      ht = NormL2(λ[i])
+      lg2_temp += ht(x[v[i]])
+    end
+    @test abs(lg2 - lg2_temp) ≤ 1e-11
   end
 end
 # loop over operators without a trust region
