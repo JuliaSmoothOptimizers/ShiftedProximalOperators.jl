@@ -52,32 +52,34 @@ function prox!(
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  νλ = 2 * σ * ψ.λ
-  ϕ(z) = acos(νλ / 8 * (abs(z) / 3)^(-3 / 2) + 0im)
+  ϕ(z) = acos(σ * ψ.λ / 4 * (abs(z) / 3)^(-3 / 2) + 0im)
 
-  ψ.sol .= q .+ (ψ.xk .+ ψ.sj)
-  RNorm(tt, l) = 0.5 / σ * (tt - q[l])^2 + ψ.λ * sqrt(abs(tt + ψ.sj[l] + ψ.xk[l]))
+  ψ.sol .= (ψ.xk .+ ψ.sj)
+  RNorm(tt, l) = 0.5 / σ * (tt - q[l])^2 + ψ.λ * sqrt(abs(tt + ψ.sol[l]))
   t = zeros(4) #probably not smart to use arrays, but can change
   ft = similar(t)
   for i ∈ eachindex(q)
-    aqi = abs(ψ.sol[i])
-    t[1] = -ψ.sj[i] - ψ.Δ
-    t[2] = -ψ.sj[i] + ψ.Δ
-    t[3] = 0 - ψ.xk[i] - ψ.sj[i]
-    t[4] =
-      real(2 * sign(ψ.sol[i]) / 3 * aqi * (1 + cos(2 * π / 3 - 2 * ϕ(ψ.sol[i]) / 3))) - ψ.xk[i] -
-      ψ.sj[i]
+    aqi = abs(ψ.sol[i] + q[i])
+    # t[1] = -ψ.sj[i] - ψ.Δ
+    # t[2] = -ψ.sj[i] + ψ.Δ
+    # t[3] = 0 - ψ.xk[i] - ψ.sj[i]
+    # t[4] =
+    val =  real(2 * sign(ψ.sol[i] + q[i]) / 3 * aqi * (1 + cos(2 * π / 3 - 2 * ϕ(ψ.sol[i] + q[i]) / 3))) #+ t[3]
 
-    for j = 1:4
-      if abs(t[j] + ψ.sj[i]) ≤ ψ.Δ + eps(R)
-        ft[j] = RNorm(t[j], i)
-      else
-        ft[j] = Inf
-      end
-    end
-    (_, a) = findmin(ft)
+    (_, a) = findmin([RNorm(-ψ.sj[i] - ψ.Δ, i), RNorm(-ψ.sj[i] + ψ.Δ, i), abs(-ψ.xk[i]) ≤ ψ.Δ + eps(R) ? RNorm(- ψ.sol[i], i) : Inf,
+      abs(val - ψ.xk[i]) + eps(R) ≤ ψ.Δ ? RNorm(val - ψ.sol[i], i) : Inf ])
 
-    y[i] = t[a]
+    # for j = 1:4
+    #   if abs(t[j] + ψ.sj[i]) ≤ ψ.Δ + eps(R)
+    #     ft[j] = RNorm(t[j], i)
+    #   else
+    #     ft[j] = Inf
+    #   end
+    # end
+    # (_, a) = findmin(ft)
+
+    # y[i] = t[a]
+    y[i] = a == 1 ? (-ψ.sj[i] - ψ.Δ) : a == 2 ? -ψ.sj[i] + ψ.Δ : a == 3 ? - ψ.sol[i] : val - ψ.sol[i]
   end
 
   return y
