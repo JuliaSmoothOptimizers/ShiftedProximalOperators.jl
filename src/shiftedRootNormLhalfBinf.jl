@@ -58,11 +58,16 @@ function prox!(
   RNorm(tt, l) = 0.5 / σ * (tt - q[l])^2 + ψ.λ * sqrt(abs(tt + ψ.sol[l]))
   for i ∈ eachindex(q)
     aqi = abs(ψ.sol[i] + q[i])
-    val =  real(2 * sign(ψ.sol[i] + q[i]) / 3 * aqi * (1 + cos(2 * π / 3 - 2 * ϕ(ψ.sol[i] + q[i]) / 3))) #+ t[3]
+    val =
+      real(2 * sign(ψ.sol[i] + q[i]) / 3 * aqi * (1 + cos(2 * π / 3 - 2 * ϕ(ψ.sol[i] + q[i]) / 3))) #+ t[3]
 
-    (_, a) = findmin((RNorm(-ψ.sj[i] - ψ.Δ, i), RNorm(-ψ.sj[i] + ψ.Δ, i), abs(-ψ.xk[i]) ≤ ψ.Δ + eps(R) ? RNorm(- ψ.sol[i], i) : Inf,
-      abs(val - ψ.xk[i]) + eps(R) ≤ ψ.Δ ? RNorm(val - ψ.sol[i], i) : Inf ))
-    y[i] = a == 1 ? (-ψ.sj[i] - ψ.Δ) : a == 2 ? -ψ.sj[i] + ψ.Δ : a == 3 ? - ψ.sol[i] : val - ψ.sol[i]
+    (_, a) = findmin((
+      RNorm(-ψ.sj[i] - ψ.Δ, i),
+      RNorm(-ψ.sj[i] + ψ.Δ, i),
+      abs(-ψ.xk[i]) ≤ ψ.Δ + eps(R) ? RNorm(-ψ.sol[i], i) : Inf,
+      abs(val - ψ.xk[i]) + eps(R) ≤ ψ.Δ ? RNorm(val - ψ.sol[i], i) : Inf,
+    ))
+    y[i] = a == 1 ? (-ψ.sj[i] - ψ.Δ) : a == 2 ? -ψ.sj[i] + ψ.Δ : a == 3 ? -ψ.sol[i] : val - ψ.sol[i]
   end
 
   return y
