@@ -1,12 +1,8 @@
 module ShiftedProximalOperators
 
 using ProximalOperators
-<<<<<<< HEAD
 using Roots
 using LinearAlgebra
-=======
-using Roots, LinearAlgebra
->>>>>>> 8ac199b (updates to Lhalf norms, float errors)
 
 export ShiftedProximableFunction
 export prox, prox!, set_radius!, shift!, shifted
