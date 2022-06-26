@@ -50,7 +50,7 @@ for op ∈ (:GroupNormL2,)
 end
 # loop over operators without a trust region
 for (op, shifted_op) ∈
-    zip((:NormL0, :NormL1, :RootNormLhalf), (:ShiftedNormL0, :ShiftedNormL1, :ShiftedRootNormLhalf))
+    zip((:NormL0, :NormL1, :RootNormLhalf, :NormL2), (:ShiftedNormL0, :ShiftedNormL1, :ShiftedRootNormLhalf, :ShiftedNormL2))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     Op = eval(op)
@@ -70,7 +70,13 @@ for (op, shifted_op) ∈
     @test ψ(y) == h(x + y)
 
     # test prox
-    # TODO
+    ν = rand()
+    yψ = similar(x)
+    yp = similar(x)
+    q = 100 .*randn(size(x))
+    prox!(yψ, ψ, q, ν)
+    prox!(yp, h, q + x, ν)
+    @test sqrt(sum((yψ - (yp - x)).^2)) ≤ 1e-11
 
     # test shift update
     shift!(ψ, y)
