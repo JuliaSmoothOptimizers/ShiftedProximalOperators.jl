@@ -2,7 +2,7 @@
 
 export GroupNormL2
 
-@doc raw """
+@doc raw"""
     GroupNormL2(λ = 1, idx = [:])
 
 Returns the group ``\ell_2``-norm operator
