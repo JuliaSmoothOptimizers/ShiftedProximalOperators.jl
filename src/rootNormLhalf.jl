@@ -11,7 +11,7 @@ f(x) = λ \sum |x|^{1/2}
 ```
 where ``\lambda > 0``.
 """
-struct RootNormLhalf{R <: Real} <: ProximableFunction
+struct RootNormLhalf{R <: Real}
   lambda::R
   function RootNormLhalf{R}(lambda::R) where {R <: Real}
     if lambda < 0
