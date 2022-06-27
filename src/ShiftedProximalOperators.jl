@@ -11,7 +11,7 @@ export prox, prox!, set_radius!, shift!, shifted
 import ProximalOperators.prox, ProximalOperators.prox!
 
 "Abstract type for shifted proximable functions."
-abstract type ShiftedProximableFunction <: ProximableFunction end
+abstract type ShiftedProximableFunction end
 
 include("rootNormLhalf.jl")
 include("groupNormL2.jl")
