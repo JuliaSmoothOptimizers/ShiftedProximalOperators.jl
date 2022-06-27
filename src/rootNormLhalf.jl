@@ -5,7 +5,7 @@ export RootNormLhalf
 @doc raw"""
     RootNormLhalf(λ=1)
 
-Returns the ``\ell_{1/2}^(1/2)`` pseudo-norm operator
+Returns the ``\ell_{1/2}^{1/2}`` pseudo-norm operator
 ```math
 f(x) = λ \sum |x|^{1/2}
 ```
