@@ -20,7 +20,7 @@ include("shiftedNormL0.jl")
 include("shiftedNormL0BInf.jl")
 include("shiftedRootNormLhalf.jl")
 include("shiftedNormL1.jl")
-include("shiftedNormL2.jl")
+include("shiftedGroupNormL2.jl")
 
 include("shiftedNormL1B2.jl")
 include("shiftedNormL1Binf.jl")
