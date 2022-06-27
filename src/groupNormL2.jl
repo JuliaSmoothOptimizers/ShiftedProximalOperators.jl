@@ -2,15 +2,15 @@
 
 export GroupNormL2
 
-"""
-**``L_2`` Group - norm**
-    GroupNormL2(λ = 1, g = 1, idx = [:])
-Returns the function
+@doc raw """
+    GroupNormL2(λ = 1, idx = [:])
+
+Returns the group ``\ell_2``-norm operator
 ```math
-f(x) =  \\sum\\_{i} \\lambda\\_{i}||x\\_{[i]}||\\_2)^{1/2}
+f(x) =  \sum_i \\ambda_i \|x_{[i]}\|_2^{1/2}
 ```
-for groups `x\\_{[i]}` and nonnegative weights `λ\\_i`.
-This operator reduces to the two norm if only one group is defined.
+for groups ``x_{[i]}`` and nonnegative weights ``\lambda_i``.
+The group ``\ell_2``-norm operator reduces to the ``\ell_2``-norm if only one group is defined (the default).
 """
 struct GroupNormL2{R <: Real, RR <: AbstractVector{R}, I} <: ProximableFunction
   lambda::RR
