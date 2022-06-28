@@ -4,7 +4,7 @@ using ProximalOperators
 using Roots
 
 export ShiftedProximableFunction
-export prox, prox!, set_radius!, shift!, shifted
+export prox, prox!, set_radius!, shift!, shifted, set_bounds!
 
 # import methods we override
 import ProximalOperators.prox, ProximalOperators.prox!
