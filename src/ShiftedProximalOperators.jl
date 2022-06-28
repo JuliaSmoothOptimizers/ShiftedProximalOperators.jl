@@ -28,6 +28,7 @@ include("shiftedIndBallL0BInf.jl")
 include("shiftedRootNormLhalfBinf.jl")
 
 include("utils.jl")
+include("psvd.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
 
