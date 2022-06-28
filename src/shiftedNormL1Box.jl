@@ -59,8 +59,8 @@ function prox!(
     li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
     ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i] 
 
-    opt_left = q[i] + c
-    opt_right = q[i] - c
+    opt_left = q[i] + c/2
+    opt_right = q[i] - c/2
     xi = ψ.xk[i]
     si = ψ.sj[i]
 
