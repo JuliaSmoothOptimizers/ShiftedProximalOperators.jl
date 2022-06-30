@@ -53,18 +53,18 @@ s = [-1.0]
 λ = 1.0 
 
 # variable parameters (to cover the 9 different cases)
-q = [[1.0], [5.0], [3.0], [-2.0], [3.0], [1.0], [1.0], [7.0], [4.0]]
+q = [[0.5], [5.0], [3.0], [-2.0], [4.0], [1.0], [1.0], [7.0], [4.0]]
 x = [[1.0], [-4.0], [-2.0], [-1.0], [-5.0], [-3.0], [3.0], [-2.0], [1.0]]
-sol = [[1.0], [4.0], [3.0], [1.0], [4.0], [3.0], [1.0], [4.0], [2.0]]
-# Case 1 : q-2σλ < -(x+s) < q+2σλ ; -x < l -> solution : l-s
-# Case 2 : q-2σλ < -(x+s) < q+2σλ ; -x > u -> solution : u-s
-# Case 3 : q-2σλ < -(x+s) < q+2σλ ; l < -x < u -> solution : -(x+s)
-# Case 4 : q+2σλ < -(x+s) ; q+2σλ < l-s -> solution : l-s
-# Case 5 : q+2σλ < -(x+s) ; q+2σλ > u-s -> solution : u-s
-# Case 6 : q+2σλ < -(x+s) ; l-s < q+2σλ < u-s -> solution : q+2σλ
-# Case 7 : q-2σλ > -(x+s) ; q-2σλ < l-s -> solution : l-s
-# Case 8 : q-2σλ > -(x+s) ; q-2σλ > u-s -> solution : u-s
-# Case 9 : q-2σλ > -(x+s) ; l-s < q-2σλ < u-s -> solution : q-2σλ
+sol = [[1.0], [4.0], [3.0], [1.0], [4.0], [2.0], [1.0], [4.0], [3.0]]
+# Case 1 : q-σλ < -(x+s) < q+σλ ; -x < l -> solution : l-s
+# Case 2 : q-σλ < -(x+s) < q+σλ ; -x > u -> solution : u-s
+# Case 3 : q-σλ < -(x+s) < q+σλ ; l < -x < u -> solution : -(x+s)
+# Case 4 : q+σλ < -(x+s) ; q+σλ < l-s -> solution : l-s
+# Case 5 : q+σλ < -(x+s) ; q+σλ > u-s -> solution : u-s
+# Case 6 : q+σλ < -(x+s) ; l-s < q+σλ < u-s -> solution : q+σλ
+# Case 7 : q-σλ > -(x+s) ; q-σλ < l-s -> solution : l-s
+# Case 8 : q-σλ > -(x+s) ; q-σλ > u-s -> solution : u-s
+# Case 9 : q-σλ > -(x+s) ; l-s < q-σλ < u-s -> solution : q-σλ
 
 
 for i in 1:9
