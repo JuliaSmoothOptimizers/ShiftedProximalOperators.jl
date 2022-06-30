@@ -39,7 +39,7 @@ shifted(
 ) where {R <: Real, RR <:  AbstractVector{R}, I, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
 ShiftedGroupNormL2(ψ.h, ψ.xk, sj, true)
 
-fun_name(ψ::ShiftedGroupNormL2) = "shifted ∑ᵢ||⋅||₂ norm"
+fun_name(ψ::ShiftedGroupNormL2) = "shifted ∑ᵢ‖⋅‖₂ norm"
 fun_expr(ψ::ShiftedGroupNormL2) = "t ↦ ∑ᵢ ‖xk + sj + t‖₂"
 fun_params(ψ::ShiftedGroupNormL2) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14
