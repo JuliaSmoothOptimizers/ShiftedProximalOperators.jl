@@ -49,8 +49,8 @@ shifted(
  ) where {R <: Real, RR <: AbstractVector{R}, I, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
 ShiftedGroupNormL2Binf(ψ.h, ψ.xk, sj, ψ.Δ, ψ.χ, true)
 
-fun_name(ψ::ShiftedGroupNormL2Binf) = "shifte ∑ᵢ||⋅||_2 norm with L∞-norm trust region indicator"
-fun_expr(ψ::ShiftedGroupNormL2Binf) = "t ↦ ‖xk + sj + t‖ₚᵖ, p = 2 +  X({‖sj + t‖∞ ≤ Δ})"
+fun_name(ψ::ShiftedGroupNormL2Binf) = "shifted ∑ᵢ‖⋅‖₂ norm with L∞-norm trust region indicator"
+fun_expr(ψ::ShiftedGroupNormL2Binf) = "t ↦ ∑ᵢ ‖xk + sj + t‖₂ +  X({‖sj + t‖∞ ≤ Δ})"
 fun_params(ψ::ShiftedGroupNormL2Binf) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "Δ = $(ψ.Δ)"
 
