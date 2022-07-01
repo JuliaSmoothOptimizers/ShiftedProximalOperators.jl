@@ -429,6 +429,192 @@ for (op, tr, shifted_op) ∈ zip(
 end
 
 # loop over operators with a trust region
+for (op, tr, shifted_op) ∈ zip(
+  (:NormL2,),
+  (:NormLinf,),
+  (:ShiftedGroupNormL2Binf,),
+)
+  @testset "$shifted_op" begin
+    ShiftedOp = eval(shifted_op)
+    Op = eval(op)
+    χ = eval(tr)(1.0)
+    # test basic types and properties
+    n = 5
+    h = Op(1.0)
+    x = ones(n)
+    Δ = 0.01
+    ψ = shifted(h, x, Δ, χ)
+    @test typeof(ψ) == ShiftedOp{
+      Float64,
+      Vector{Float64},
+      Vector{Colon},
+      Vector{Float64},
+      Vector{Float64},
+      Vector{Float64},
+    }
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== x)
+    @test typeof(ψ.λ) == Vector{Float64}
+    @test ψ.λ == [h.lambda]
+    @test ψ.Δ == Δ
+
+    # test values
+    @test ψ(zeros(n)) == h(x)
+    y = rand(n)
+    y .*= ψ.Δ / ψ.χ(y) / 2
+    @test ψ(y) == h(x + y)  # y inside the trust region
+    @test ψ(3 * y) == Inf   # y outside the trust region
+
+    # test prox
+    ν = 1 / (9.1e+04)
+    q =
+      -ν .* [
+        2631.441298528196,
+        -533.9101219466443,
+        466.56156501426733,
+        1770.8953574224836,
+        -2554.7769423950244,
+      ]
+    s_correct = [-0.010000000000000,
+    0.005862191941930,
+    -0.005131948291800,
+    -0.010000000000000,
+    0.010000000000000,
+    ]
+    s = ShiftedProximalOperators.prox(ψ, q, ν)
+    @test all(s .≈ s_correct)
+    @test ψ.χ(s) ≤ ψ.Δ || ψ.χ(s) ≈ ψ.Δ
+
+    # test shift update
+    shift!(ψ, y)
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== y)
+
+    # test radius update
+    set_radius!(ψ, 1.1)
+    @test ψ.Δ == 1.1
+
+    # shift a shifted operator
+    s = ones(n)
+    s /= 2 * ψ.χ(s)
+    φ = shifted(ψ, s)
+    @test all(φ.sj .== s)
+    @test all(φ.xk .== x)
+    @test φ(zeros(n)) == h(y + s)
+    t = rand(n)
+    t .*= ψ.Δ / ψ.χ(t) / 2
+    @test φ(t) == h(y + s + t)  # y inside the trust region
+    @test φ(3 * t) == Inf       # y outside the trust region
+
+    # test different types
+    h = Op(Float32(1.2))
+    χ = eval(tr)(Float32(1.0))
+    y = rand(Float32, 10)
+    x = view(y, 1:2:10)
+    ψ = shifted(h, x, Float32(0.5), χ)
+    @test typeof(ψ) == ShiftedOp{
+      Float32,
+      Vector{Float32},
+      Vector{Colon},
+      SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+      Vector{Float32},
+      Vector{Float32},
+    }
+    @test typeof(ψ.λ) == Vector{Float32}
+    @test ψ.λ == [h.lambda]
+    @test ψ(zeros(Float32, 5)) == h(x)
+  end
+end
+for (op, tr, shifted_op) ∈
+	zip((:GroupNormL2,), (:NormLinf,), (:ShiftedGroupNormL2Binf,))
+@testset "$shifted_op" begin
+  ShiftedOp = eval(shifted_op)
+  Op = eval(op)
+	χ = eval(tr)(1.0)
+  # test basic types and properties
+  n = 6
+  x = ones(n)
+  Δ = 0.01
+  v = [collect(1:3), collect(4:6)]
+  λ = [0.396767474230670, 0.538816734003357]
+
+	h = Op(λ, v)
+  x = ones(6)
+  ν = 0.419194514403295
+  q = [-0.649013765191241, 1.181166041965532, -0.758453297283692, -1.109613038501522, -0.845551240007797, -0.572664866457950]
+	ψ = shifted(h, x, Δ, χ)
+  @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Vector{Int64}}, Vector{Float64}, Vector{Float64}, Vector{Float64}}
+  @test all(ψ.sj .== 0)
+  @test all(ψ.xk .== x)
+  @test typeof(ψ.λ) == Vector{Float64}
+  @test sum(ψ.λ .== h.lambda) == length(h.lambda)
+
+  # test values
+  @test ψ(zeros(6)) .== h(x)
+  y = rand(6)
+  y .*= ψ.Δ / ψ.χ(y) / 2
+  @test ψ(y) == h(x + y)  # y inside the trust region
+  @test ψ(3 * y) == Inf   # y outside the trust region
+  yψ = similar(x)
+  yp = similar(x)
+
+
+  # test prox
+  s_correct = [-0.010000000000000,
+   0.010000000000000,
+  -0.010000000000000,
+  -0.010000000000000,
+  -0.010000000000000,
+  -0.010000000000000
+  ]
+  s = ShiftedProximalOperators.prox(ψ, q, ν)
+  @test all(s .≈ s_correct)
+  @test ψ.χ(s) ≤ ψ.Δ || ψ.χ(s) ≈ ψ.Δ
+
+  # test shift update
+  shift!(ψ, y)
+  @test all(ψ.sj .== 0)
+  @test all(ψ.xk .== y)
+
+  # test radius update
+  set_radius!(ψ, 1.1)
+  @test ψ.Δ == 1.1
+
+  # shift a shifted operator
+  s = ones(n)
+  s /= 2 * ψ.χ(s)
+  φ = shifted(ψ, s)
+  @test all(φ.sj .== s)
+  @test all(φ.xk .== x)
+  @test φ(zeros(n)) == h(y + s)
+  t = rand(n)
+  t .*= ψ.Δ / ψ.χ(t) / 2
+  @test φ(t) == h(y + s + t)  # y inside the trust region
+  @test φ(3 * t) == Inf       # y outside the trust region
+
+
+  # test different types
+  h = Op([Float32(1.2)])
+  χ = eval(tr)(Float32(1.0))
+  y = rand(Float32, 10)
+  x = view(y, 1:2:10)
+  ψ = shifted(h, x, Float32(0.5), χ)
+  @test typeof(ψ) == ShiftedOp{
+    Float32,
+    Vector{Float32},
+    Vector{Colon},
+    SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+    Vector{Float32},
+    Vector{Float32},
+  }
+  @test typeof(ψ.λ) == Vector{Float32}
+  @test ψ.λ == h.lambda
+  @test ψ(zeros(Float32, 5)) == h(x) # throws error because IndBallLinf(ψ.Δ)(ψ.sj + zeros(x)) == 0.0f0 -> julia does not want to add it to Float32[...]
+end
+end
+
+
+# loop over operators with a trust region
 for (op, tr, shifted_op) ∈ zip((:IndBallL0,), (:NormLinf,), (:ShiftedIndBallL0BInf,))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
