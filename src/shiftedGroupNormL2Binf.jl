@@ -62,7 +62,7 @@ function prox!(
  ) where {R <: Real, RR <: AbstractVector{R}, I, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
 
   ψ.sol .= q + ψ.xk + ψ.sj
-	w = zeros(size(y)) #### change eventually to preallocate
+  ϵ = 1 ## sasha's initial guess
 	softthres(x, a) = sign.(x) .* max.(0, abs.(x) .- a)
   l2prox(x,a) = max(0, 1 - a/norm(x)).*x
   for (idx, λ) ∈ zip(ψ.h.idx, ψ.h.lambda)
@@ -70,12 +70,13 @@ function prox!(
     ## find root for each block
     froot(n) = n - norm(σ .* softthres((ψ.sol[idx]./σ .- (n/(σ*(n - σλ))) .* ψ.xk[idx]), ψ.Δ*(n/(σ*(n - σλ)))) .- ψ.sol[idx] )
 
-		lmin = σλ + 1
-    step = lmin / (σ*(lmin - σλ))
-    zlmax = norm(softthres((ψ.sol[idx]./σ .- step .* ψ.xk[idx]), ψ.Δ*step))
-    lmax = norm(ψ.sol[idx]) + σ*(zlmax + λ*norm(ψ.xk[idx]))
+		lmin = σλ*(1+eps()) #lower bound
+    fl = froot(lmin)
 
- 	 	fl = froot(lmin)
+    ansatz = lmin + ϵ #ansatz for upper bound
+    step = ansatz / (σ*(ansatz - σλ))
+    zlmax = norm(softthres((ψ.sol[idx]./σ .- step .* ψ.xk[idx]), ψ.Δ*step))
+    lmax = norm(ψ.sol[idx]) + σ*(zlmax + abs((ϵ - 1)/ϵ+1)*λ*norm(ψ.xk[idx]))
  	 	fm = froot(lmax)
  	 	if fl*fm > 0
 			y[idx] .= 0
