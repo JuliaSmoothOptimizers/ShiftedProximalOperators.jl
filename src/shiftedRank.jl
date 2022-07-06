@@ -1,56 +1,62 @@
 export ShiftedRank
 
+reshape2(a, dims) = invoke(Base._reshape, Tuple{AbstractArray,typeof(dims)}, a, dims)
+
 mutable struct ShiftedRank{
-    R <: Real,
-    V0 <: AbstractVector{R},
-    V1 <: AbstractVector{R},
-    V2 <: AbstractVector{R},
-  } <: ShiftedProximableFunction
-    h::Rank{R}
-    xk::V0  # base shift (nonzero when shifting an already shifted function)
-    sj::V1  # current shift
-    sol::V2   # internal storage
-    shifted_twice::Bool
-
-    function ShiftedRank(
-      h::Rank{R},
-      xk::AbstractVector{R},
-      sj::AbstractVector{R},
-      shifted_twice::Bool,
-      ) where {R <: Real}
-      sol = similar(xk)
-      new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, shifted_twice)
-    end
-end
-
-shifted(h::Rank{R}, xk::AbstractVector{R}) where {R <: Real} =
-ShiftedRank(h, xk, zero(xk), false)
-shifted(
-    ψ::ShiftedRank{R, V0, V1, V2},
+  R <: Real,
+  S <:AbstractArray, T, Tr, M<:AbstractArray{T},
+  V0 <: AbstractVector{R},
+  V1 <: AbstractVector{R},
+  V2 <: AbstractVector{R},
+} <: ShiftedProximableFunction
+  h::Rank{R,S,T,Tr,M}
+  xk::V0  # base shift (nonzero when shifting an already shifted function)
+  sj::V1  # current shift
+  sol::V2   # internal storage
+  shifted_twice::Bool
+  function ShiftedRank(
+    h::Rank{R,S,T,Tr,M},
+    xk::AbstractVector{R},
     sj::AbstractVector{R},
-) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
-ShiftedRank(ψ.h, ψ.xk, sj, true)
+    shifted_twice::Bool,
+    ) where {R <: Real, S <:AbstractArray, T, Tr, M<:AbstractArray{T}}
+    sol = similar(xk)
+    new{R, S, T, Tr, M, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, shifted_twice)
+  end
+end
 
 fun_name(ψ::ShiftedRank) = "shifted Rank" 
 fun_expr(ψ::ShiftedRank) = "t ↦ rank(xk + sj + t)"
-fun_params(ψ::ShiftedRank) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)"
+
+shifted(h::Rank{R, S, T, Tr, M}, xk::AbstractVector{R}) where {R <: Real, S<:AbstractArray, T, Tr, M<:AbstractArray{T}} =
+  ShiftedRank(h, xk, zero(xk), false)
+shifted(
+  ψ::ShiftedRank{R, S, T, Tr, M, V0, V1, V2},
+  sj::AbstractVector{R},
+) where {R <: Real,  S <:AbstractArray, T, Tr, M<:AbstractArray{T}, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
+  ShiftedRank(ψ.h, ψ.xk, sj, true)
+
 
 function prox!(
-    y::AbstractVector{R},
-    ψ::ShiftedRank{R, V0, V1, V2},
-    q::AbstractVector{R},
-    σ::R,
-) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-    Q = reshape(q + ψ.xk + ψ.sj, ψ.h.nrow, ψ.h.ncol)
-    SQ = svd(Q)
-    yvec = SQ.S
+  y::AbstractVector{R},
+  ψ::ShiftedRank{R, S, T, Tr, M, V0, V1, V2},
+  q::AbstractVector{R},
+  σ::R,
+) where {R <: Real, S <:AbstractArray, T, Tr, M<:AbstractArray{T}, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
+    ψ.sol .= q .+ ψ.xk .+ ψ.sj
+    ψ.h.A .= reshape2(ψ.sol, (size(ψ.h.A,1),size(ψ.h.A,2))) 
+    psvd_dd!(ψ.h.F, ψ.h.A, full=false) 
+   
     c = sqrt(2 * ψ.λ * σ)
-
-    for i ∈ eachindex(SQ.S)
-        if abs(yvec[i]) <= c
-            yvec[i] = 0
-        end
+    for i ∈ eachindex( ψ.h.F.S)
+      if  ψ.h.F.S[i] <= c
+        ψ.h.F.U[:,i] .= 0
+      else for j in 1:size(ψ.h.A,1)
+              ψ.h.F.U[j,i] = ψ.h.F.U[j,i] .* ψ.h.F.S[i]
+          end
+      end
     end
-    
-    return vec(reshape(SQ.U * Diagonal(yvec) * SQ.Vt - reshape(ψ.xk + ψ.sj, ψ.h.nrow, ψ.h.ncol), ψ.h.nrow * ψ.h.ncol, 1))
+    mul!(ψ.h.A, ψ.h.F.U, ψ.h.F.Vt)
+    y .= reshape2(ψ.h.A, (size(y,1),1)) .- ψ.xk .- ψ.sj
+    return y
 end

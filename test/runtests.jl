@@ -529,15 +529,19 @@ for (op, tr) ∈ zip((:NormL1,), (:NormLinf,))
 end
 
 # loop over Rank function
+
 for (op, shifted_op) ∈ zip((:Rank,), (:ShiftedRank,))
   @testset "$shifted_op" begin
       ShiftedOp = eval(shifted_op)
       Op = eval(op)
       # test basic types and properties
-      h = Op(1. ,2 ,2)
+      F = psvd_workspace_dd(zeros(2,2), full=false)
+      h = Op(1., ones(2,2), F)
       x = ones(4)
       ψ = shifted(h, x)
-      @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
+      @test typeof(ψ) == ShiftedOp{Float64, Matrix{Float64}, 
+      Float64, Float64, Matrix{Float64}, Vector{Float64}, 
+      Vector{Float64}, Vector{Float64}}
       @test all(ψ.sj .== 0)
       @test all(ψ.xk .== x)
       @test typeof(ψ.λ) == Float64
@@ -566,14 +570,15 @@ for (op, shifted_op) ∈ zip((:Rank,), (:ShiftedRank,))
       @test φ(y) == h(x + s + y)
 
       # test different types
-      h = Op(Float32(1.2), 2, 2)
+      F = psvd_workspace_dd(zeros(2,2), full=false)
+      h = Op(Float32(1.2), ones(2,2),F)
       y = rand(Float32, 8)
       x = view(y, 1:2:8)
       ψ = shifted(h, x)
-      @test typeof(ψ) == ShiftedOp{Float32, 
-      SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true}, 
-      Vector{Float32}, 
-      Vector{Float32}}
+      @test typeof(ψ) == ShiftedOp{Float32, Matrix{Float64},
+      Float64, Float64, Matrix{Float64}, 
+      SubArray{Float32, 1, Vector{Float32}, 
+      Tuple{StepRange{Int64, Int64}}, true}, Vector{Float32}, Vector{Float32}}
       @test typeof(ψ.λ) == Float32
       @test ψ.λ == h.lambda
       @test ψ(zeros(Float32, 4)) == h(x)
@@ -586,7 +591,8 @@ for (op, shifted_op) ∈ zip((:Rank,), (:ShiftedRank,))
       x = vec(reshape(Diagonal(st1),n^2,1))
       q = x.^2
       s = x/2
-      h = Op(λ,n,n)
+      F = psvd_workspace_dd(zeros(n,n), full=false)
+      h = Op(λ,ones(n,n),F)
       f = shifted(shifted(h, x), s)
       y = zeros(n^2)
       k = NormL0(λ)
@@ -601,8 +607,9 @@ for (op, shifted_op) ∈ zip((:Rank,), (:ShiftedRank,))
       x = vec(reshape(rand(m,n), m * n, 1))
       q = vec(reshape(rand(m,n), m * n, 1))
       s = vec(reshape(rand(m,n), m * n, 1))
-      h = Op(λ,m,n)
-      f = shifted(shifted(h, x), s)
+      F = psvd_workspace_dd(zeros(m,n), full=false)
+      h = Op(λ,ones(m,n),F)
+      f = ShiftedOp(h, x, s, true)
       y = zeros(m * n)
       k = NormL0(λ)
       Q = svd(reshape(q + s + x, m, n))
