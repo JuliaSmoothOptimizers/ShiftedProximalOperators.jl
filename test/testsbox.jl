@@ -2,14 +2,14 @@ using ProximalOperators
 using ShiftedProximalOperators
 using Test
 
-
-## Testing ShiftedNormL0Box
-# We want to find argmin_t obj(t) = 1/2 * 1/σ * (t-q)^2 + λ * ||x+s+t||_0 + χ{s+t ∈ [l,u]} 
-# Parameters σ, l , u and s are fixed for sake of simplicity, only q, x and λ vary.
-
 for (op, shifted_op) ∈ zip((:NormL0, :NormL1),(:ShiftedNormL0Box, :ShiftedNormL1Box))
   @testset "$shifted_op" begin
     if "$shifted_op" == "ShiftedNormL0Box"
+
+      ## Testing ShiftedNormL0Box
+      # We want to find argmin_t obj(t) = 1/2 * 1/σ * (t-q)^2 + λ * ||x+s+t||_0 + χ{s+t ∈ [l,u]} 
+      # Parameters σ, l , u and s are fixed for sake of simplicity, only q, x and λ vary.
+
       # fixed parameters
       σ = 1.0 
       l = [0.0]
@@ -32,6 +32,11 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1),(:ShiftedNormL0Box, :ShiftedNorm
       # Case 9 : q ∈ [l-s,u-s], -(x+s) ∈ [l-s,u-s], obj(-(x+s)) >= obj(q) -> solution : q
 
     elseif "$shifted_op" == "ShiftedNormL1Box"
+
+      ## Testing ShiftedNormL1Box
+      # We want to find argmin obj(t) = (t-q)^2 + 2σλ||x+s+t||_1 + χ{s+t ∈ [l,u]} 
+      # Parameters σ, l , u, λ and s are fixed for sake of simplicity, only q and x vary.
+
       # fixed parameters
       σ = 1.0
       l = [0.0]
@@ -63,7 +68,6 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1),(:ShiftedNormL0Box, :ShiftedNorm
       ω = shifted(ψ,s)
       ShiftedProximalOperators.prox(ω, qi, σ)
       @test ω.sol == sol[i]
-      
     end
   end
 end
