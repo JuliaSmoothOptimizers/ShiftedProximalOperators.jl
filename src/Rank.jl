@@ -2,16 +2,15 @@
 
 export Rank
 
-"""
-**``Rank`` lsc and subadditive **
+@doc raw"""
     Rank(λ)
-Returns the function
-```math
-f(x) = λ\\cdot rank(matrix(x))
-```
-for a nonnegative parameter `λ` and a vector `x`.
-"""
 
+Returns the rank
+```math
+f(x) =  \lambda \\cdot rank(matrix(x))
+```
+for a nonnegative parameter ``\lambda`` and a vector ``x``.
+"""
 mutable struct Rank{R <: Real, S <: AbstractArray, T, Tr, M <: AbstractArray{T}}
   lambda::R
   A::S
