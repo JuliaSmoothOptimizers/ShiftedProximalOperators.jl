@@ -2,16 +2,16 @@
 
 export RootNormLhalf
 
-"""
-**``L_1/2^(1/2)`` pseudo-norm**
+@doc raw"""
     RootNormLhalf(λ=1)
-Returns the function
+
+Returns the ``\ell_{1/2}^{1/2}`` pseudo-norm operator
 ```math
-f(x) = λ\\cdot \\sum |x|\\^{1/2}
+f(x) = λ \sum |x|^{1/2}
 ```
-for a nonnegative parameter `λ`.
+where ``\lambda > 0``.
 """
-struct RootNormLhalf{R <: Real} <: ProximableFunction
+struct RootNormLhalf{R <: Real}
   lambda::R
   function RootNormLhalf{R}(lambda::R) where {R <: Real}
     if lambda < 0

@@ -2,6 +2,7 @@ module ShiftedProximalOperators
 
 using ProximalOperators
 using Roots
+using LinearAlgebra
 
 export ShiftedProximableFunction
 export prox, prox!, set_radius!, shift!, shifted, set_bounds!
@@ -10,20 +11,25 @@ export prox, prox!, set_radius!, shift!, shifted, set_bounds!
 import ProximalOperators.prox, ProximalOperators.prox!
 
 "Abstract type for shifted proximable functions."
-abstract type ShiftedProximableFunction <: ProximableFunction end
+abstract type ShiftedProximableFunction end
 
 include("rootNormLhalf.jl")
+include("groupNormL2.jl")
 
 include("shiftedNormL0.jl")
 include("shiftedNormL0Box.jl")
 include("shiftedRootNormLhalf.jl")
-
 include("shiftedNormL1.jl")
+include("shiftedGroupNormL2.jl")
+
 include("shiftedNormL1B2.jl")
 include("shiftedNormL1Box.jl")
 include("shiftedIndBallL0.jl")
 include("shiftedIndBallL0BInf.jl")
 include("shiftedRootNormLhalfBinf.jl")
+
+include("utils.jl")
+include("psvd.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
 
