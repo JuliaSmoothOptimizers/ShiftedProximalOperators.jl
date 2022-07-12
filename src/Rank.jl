@@ -31,7 +31,7 @@ Rank(lambda::R, A::S, F::PSVD{T, Tr, M}) where {R, S, T, Tr, M <: AbstractArray{
   Rank{R, S, eltype(A), real(eltype(A)), M}(lambda, A, F)
 
 function (f::Rank)(x::AbstractVector{R}) where {R <: Real}
-  return f.lambda * rank(reshape_array(x, (size(f.A, 1), size(f.A, 2))))
+  return f.lambda * rank(reshape_array(x, size(f.A)))
 end
 
 fun_name(f::Rank) = "Rank"
