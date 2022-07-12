@@ -64,7 +64,7 @@ function prox!(
   V2 <: AbstractVector{R},
 }
   ψ.sol .= q .+ ψ.xk .+ ψ.sj
-  ψ.h.A .= reshape_array(ψ.sol, (size(ψ.h.A, 1), size(ψ.h.A, 2)))
+  ψ.h.A .= reshape_array(ψ.sol, size(ψ.h.A))
   psvd_dd!(ψ.h.F, ψ.h.A, full = false)
   c = sqrt(2 * ψ.λ * σ)
   for i ∈ eachindex(ψ.h.F.S)
@@ -77,6 +77,6 @@ function prox!(
     end
   end
   mul!(ψ.h.A, ψ.h.F.U, ψ.h.F.Vt)
-  y .= reshape_array(ψ.h.A, (size(y, 1), 1)) .- ψ.xk .- ψ.sj
+  y .= reshape_array(ψ.h.A, size(y)) .- ψ.xk .- ψ.sj
   return y
 end

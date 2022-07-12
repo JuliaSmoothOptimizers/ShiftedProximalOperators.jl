@@ -45,7 +45,7 @@ function prox!(
   x::AbstractVector{R},
   gamma::R,
 ) where {R <: Real, S <: AbstractArray, T, Tr, M <: AbstractArray{T}}
-  f.A .= reshape_array(x, (size(f.A, 1), size(f.A, 2)))
+  f.A .= reshape_array(x, size(f.A))
   psvd_dd!(f.F, f.A, full = false)
   c = sqrt(2 * f.lambda * gamma)
   for i ∈ eachindex(f.F.S)
