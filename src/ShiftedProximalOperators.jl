@@ -5,7 +5,7 @@ using Roots
 using LinearAlgebra
 
 export ShiftedProximableFunction
-export prox, prox!, set_radius!, shift!, shifted, set_bounds!
+export prox, prox!, set_radius!, shift!, shifted, set_bounds!, reshape_array
 
 # import methods we override
 import ProximalOperators.prox, ProximalOperators.prox!
