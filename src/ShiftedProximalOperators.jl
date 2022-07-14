@@ -5,7 +5,7 @@ using Roots
 using LinearAlgebra
 
 export ShiftedProximableFunction
-export prox, prox!, set_radius!, shift!, shifted
+export prox, prox!, set_radius!, shift!, shifted, set_bounds!, reshape_array
 
 # import methods we override
 import ProximalOperators.prox, ProximalOperators.prox!
@@ -17,13 +17,13 @@ include("rootNormLhalf.jl")
 include("groupNormL2.jl")
 
 include("shiftedNormL0.jl")
-include("shiftedNormL0BInf.jl")
+include("shiftedNormL0Box.jl")
 include("shiftedRootNormLhalf.jl")
 include("shiftedNormL1.jl")
 include("shiftedGroupNormL2.jl")
 
 include("shiftedNormL1B2.jl")
-include("shiftedNormL1Binf.jl")
+include("shiftedNormL1Box.jl")
 include("shiftedIndBallL0.jl")
 include("shiftedIndBallL0BInf.jl")
 include("shiftedRootNormLhalfBinf.jl")
@@ -52,9 +52,19 @@ end
 
 Set the trust-region radius of a shifted proximable function to Δ.
 This method updates the indicator of the trust region that is part of ψ.
+
+    set_bounds!(ψ, l, u)
+
+Set the lower and upper bound of the box to l and u, respectively.
 """
 function set_radius!(ψ::ShiftedProximableFunction, Δ::R) where {R <: Real}
   ψ.Δ = Δ
+  return ψ
+end
+
+function set_bounds!(ψ::ShiftedProximableFunction, l, u)
+  isa(l,Real) ? ψ.l=l : (isa(ψ.l,Real) ? ψ.l=l : ψ.l.=l)
+  isa(u,Real) ? ψ.u=u : (isa(ψ.u,Real) ? ψ.u=u : ψ.u.=u)
   return ψ
 end
 
