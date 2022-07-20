@@ -2,7 +2,7 @@ export ShiftedGroupNormL2Binf
 
 mutable struct ShiftedGroupNormL2Binf{
   R  <: Real,
-	RR <: AbstractVector{R},
+  RR <: AbstractVector{R},
   I,
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
