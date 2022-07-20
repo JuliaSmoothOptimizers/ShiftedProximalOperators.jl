@@ -61,7 +61,7 @@ function prox!(
   σ::R,
  ) where {R <: Real, RR <: AbstractVector{R}, I, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
 
-  ψ.sol .= q + ψ.xk + ψ.sj
+  ψ.sol .= q .+ ψ.xk .+ ψ.sj
   ϵ = 1 ## sasha's initial guess
 	softthres(x, a) = sign.(x) .* max.(0, abs.(x) .- a)
   l2prox(x,a) = max(0, 1 - a/norm(x)).*x
