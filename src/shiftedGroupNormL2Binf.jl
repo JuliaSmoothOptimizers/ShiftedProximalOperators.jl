@@ -23,7 +23,7 @@ mutable struct ShiftedGroupNormL2Binf{
     Δ::R,
     χ::Conjugate{IndBallL1{R}},
     shifted_twice::Bool,
-		) where {R <: Real, RR <: AbstractVector{R}, I}
+  ) where {R <: Real, RR <: AbstractVector{R}, I}
     sol = similar(sj)
     new{R,RR,I,typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Δ, χ, shifted_twice)
   end
