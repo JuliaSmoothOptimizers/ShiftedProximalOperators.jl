@@ -69,7 +69,7 @@ function prox!(
     σλ  = λ*σ
     ## find root for each block
     froot(n) = n - norm(σ .* softthres((ψ.sol[idx]./σ .- (n/(σ*(n - σλ))) .* ψ.xk[idx]), ψ.Δ*(n/(σ*(n - σλ)))) .- ψ.sol[idx])
-		lmin = σλ*(1+eps()) #lower bound
+  lmin = σλ*(1+eps(R)) # lower bound
     fl = froot(lmin)
 
     ansatz = lmin + ϵ #ansatz for upper bound
