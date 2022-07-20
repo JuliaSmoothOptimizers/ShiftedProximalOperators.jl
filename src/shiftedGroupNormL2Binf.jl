@@ -63,7 +63,7 @@ function prox!(
 
   ψ.sol .= q .+ ψ.xk .+ ψ.sj
   ϵ = 1 ## sasha's initial guess
-	softthres(x, a) = sign.(x) .* max.(0, abs.(x) .- a)
+  softthres(x, a) = sign.(x) .* max.(0, abs.(x) .- a)
   l2prox(x,a) = max(0, 1 - a/norm(x)).*x
   for (idx, λ) ∈ zip(ψ.h.idx, ψ.h.lambda)
     σλ  = λ*σ
