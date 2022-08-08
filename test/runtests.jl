@@ -548,6 +548,25 @@ for (op, shifted_op) ∈ zip((:Rank,), (:ShiftedRank,))
     @test typeof(ψ.λ) == Float64
     @test ψ.λ == h.lambda
 
+    # test basic types and properties for the new constructor
+    h = Op(1.0, ones(2, 2))
+    x = ones(4)
+    ψ = shifted(h, x)
+    @test typeof(ψ) == ShiftedOp{
+      Float64,
+      Matrix{Float64},
+      Float64,
+      Float64,
+      Matrix{Float64},
+      Vector{Float64},
+      Vector{Float64},
+      Vector{Float64},
+    }
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== x)
+    @test typeof(ψ.λ) == Float64
+    @test ψ.λ == h.lambda
+
     # test values
     @test ψ(zeros(4)) == h(x)
     y = rand(4)
