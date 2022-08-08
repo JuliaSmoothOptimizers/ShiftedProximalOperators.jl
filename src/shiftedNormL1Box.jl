@@ -37,6 +37,8 @@ mutable struct ShiftedNormL1Box{
   end
 end
 
+shifted(h::NormL1{R}, xk::AbstractVector{R}, l, u, Δ::R) where {R <: Real} =
+  ShiftedNormL1Box(h, xk, zero(xk), l, u, Δ, false, 1:length(xk))
 shifted(h::NormL1{R}, xk::AbstractVector{R}, l, u, Δ::R, selected::UnitRange{T}) where {R <: Real, T <: Integer} =
   ShiftedNormL1Box(h, xk, zero(xk), l, u, Δ, false, selected)
 shifted(
