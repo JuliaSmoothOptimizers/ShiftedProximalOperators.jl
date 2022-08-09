@@ -33,7 +33,7 @@ mutable struct ShiftedNormL1Box{
     if any(l .> u) 
       error("Error: at least one lower bound is greater than the upper bound.")
     end
-    new{R, T, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u), typeof(selected)}(h, xk, sj, sol, l, u, Δ, shifted_twice, selected)
+    new{R, T, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u)}(h, xk, sj, sol, l, u, Δ, shifted_twice, selected)
   end
 end
 
