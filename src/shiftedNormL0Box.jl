@@ -28,7 +28,7 @@ mutable struct ShiftedNormL0Box{
     Δ::R,
     shifted_twice::Bool,
     selected::UnitRange{T}
-  ) where {R <: Real}
+  ) where {R <: Real, T <: Integer}
     sol = similar(xk)
     if any(l .> u)
       error("Error: at least one lower bound is greater than the upper bound.")
