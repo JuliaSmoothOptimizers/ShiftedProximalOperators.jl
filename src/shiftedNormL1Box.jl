@@ -47,6 +47,8 @@ shifted(
 ) where {R <: Real, T <: Integer, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3, V4} =
   ShiftedNormL1Box(ψ.h, ψ.xk, sj, ψ.l, ψ.u, ψ.Δ, true, ψ.selected)
 
+(ψ::ShiftedNormL1Box{R, T, V0, V1, V2, V3, V4})(y) where {R <: Real, T <: Integer, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3, V4} = ψ.h((ψ.xk + ψ.sj + y)[ψ.selected])
+
 fun_name(ψ::ShiftedNormL1Box) = "shifted L1 norm with box indicator"
 fun_expr(ψ::ShiftedNormL1Box) = "t ↦ ‖xk + sj + t‖₁ + χ({sj + t .∈ [l,u]})"
 fun_params(ψ::ShiftedNormL1Box) =
