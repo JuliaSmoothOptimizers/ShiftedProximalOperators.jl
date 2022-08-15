@@ -27,7 +27,9 @@ mutable struct ShiftedRootNormLhalfBinf{
   end
 end
 
-(ψ::ShiftedRootNormLhalfBinf)(y) = ψ.h(ψ.xk + ψ.sj + y) + IndBallLinf(ψ.Δ)(ψ.sj + y)
+(ψ::ShiftedRootNormLhalfBinf)(y) =
+  ψ.h(ψ.xk + ψ.sj + y) +
+  (ψ.χ(ψ.sj + y) ≈ ψ.Δ ? IndBallLinf(ψ.Δ)([ψ.Δ]) : IndBallLinf(ψ.Δ)(ψ.sj + y))
 
 shifted(
   h::RootNormLhalf{R},

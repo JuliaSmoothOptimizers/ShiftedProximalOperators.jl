@@ -27,6 +27,7 @@ include("shiftedNormL1Box.jl")
 include("shiftedIndBallL0.jl")
 include("shiftedIndBallL0BInf.jl")
 include("shiftedRootNormLhalfBinf.jl")
+include("shiftedGroupNormL2Binf.jl")
 
 include("utils.jl")
 include("psvd.jl")
