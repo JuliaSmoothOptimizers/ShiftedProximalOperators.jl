@@ -717,7 +717,7 @@ for (op, tr) ∈ zip((:NormL1,), (:NormLinf,))
 
     # shift once
     xk = rand(n) .- 0.5
-    ψ = shifted(h, xk, Δ, χ)
+    ψ = shifted(h, xk, -Δ, Δ, Δ)
 
     # check prox
     p1 = ProximalOperators.prox(h, xk + q, ν)[1]
