@@ -319,7 +319,8 @@ end
 for (op, tr, shifted_op) ∈ zip(
   (:NormL0, :NormL1, :NormL1, :RootNormLhalf),
   (:NormLinf, :NormLinf, :NormL2, :NormLinf),
-  (:ShiftedNormL0BInf, :ShiftedNormL1BInf, :ShiftedNormL1B2, :ShiftedRootNormLhalfBinf),
+  #(:ShiftedNormL0BInf, :ShiftedNormL1BInf, :ShiftedNormL1B2, :ShiftedRootNormLhalfBinf),
+  (:ShiftedNormL0Box, :ShiftedNormL1Box, :ShiftedNormL1B2, :ShiftedRootNormLhalfBinf),
 )
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
@@ -330,18 +331,21 @@ for (op, tr, shifted_op) ∈ zip(
     h = Op(1.0)
     x = ones(n)
     Δ = 0.01
-    ψ = shifted(h, x, Δ, χ)
-    @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
+    if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box")
+      ψ =  shifted(h, x, -Δ, Δ, Δ)
+    else 
+      ψ = shifted(h, x, Δ, χ)
+      @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
+    end
     @test all(ψ.sj .== 0)
     @test all(ψ.xk .== x)
     @test typeof(ψ.λ) == Float64
     @test ψ.λ == h.lambda
     @test ψ.Δ == Δ
-
     # test values
     @test ψ(zeros(n)) == h(x)
     y = rand(n)
-    y .*= ψ.Δ / ψ.χ(y) / 2
+    y .*= ψ.Δ / χ(y) / 2
     @test ψ(y) == h(x + y)  # y inside the trust region
     @test ψ(3 * y) == Inf   # y outside the trust region
 
@@ -355,7 +359,7 @@ for (op, tr, shifted_op) ∈ zip(
         1770.8953574224836,
         -2554.7769423950244,
       ]
-    if "$shifted_op" == "ShiftedNormL0BInf"
+    if "$shifted_op" == "ShiftedNormL0Box"
       s_correct = [
         -0.010000000000000,
         0.005867144197216,
@@ -371,7 +375,7 @@ for (op, tr, shifted_op) ∈ zip(
         -0.004285677352167,
         0.006176811716709,
       ]
-    elseif "$shifted_op" == "ShiftedNormL1BInf"
+    elseif "$shifted_op" == "ShiftedNormL1Box"
       s_correct = [
         -0.010000000000000,
         0.005856155186227,
@@ -390,7 +394,7 @@ for (op, tr, shifted_op) ∈ zip(
     end
     s = ShiftedProximalOperators.prox(ψ, q, ν)
     @test all(s .≈ s_correct)
-    @test ψ.χ(s) ≤ ψ.Δ
+    @test χ(s) ≤ ψ.Δ
 
     # test shift update
     shift!(ψ, y)
@@ -399,17 +403,22 @@ for (op, tr, shifted_op) ∈ zip(
 
     # test radius update
     set_radius!(ψ, 1.1)
+    if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box")
+      set_bounds!(ψ, -1.1, 1.1)
+      @test ψ.l == -1.1
+      @test ψ.u == 1.1
+    end
     @test ψ.Δ == 1.1
 
     # shift a shifted operator
     s = ones(n)
-    s /= 2 * ψ.χ(s)
+    s /= 2 * χ(s)
     φ = shifted(ψ, s)
     @test all(φ.sj .== s)
     @test all(φ.xk .== x)
     @test φ(zeros(n)) == h(y + s)
     t = rand(n)
-    t .*= ψ.Δ / ψ.χ(t) / 2
+    t .*= ψ.Δ / χ(t) / 2
     @test φ(t) == h(y + s + t)  # y inside the trust region
     @test φ(3 * t) == Inf       # y outside the trust region
 
@@ -418,13 +427,19 @@ for (op, tr, shifted_op) ∈ zip(
     χ = eval(tr)(Float32(1.0))
     y = rand(Float32, 10)
     x = view(y, 1:2:10)
-    ψ = shifted(h, x, Float32(0.5), χ)
-    @test typeof(ψ) == ShiftedOp{
-      Float32,
-      SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
-      Vector{Float32},
-      Vector{Float32},
-    }
+    if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box")
+      ψ =  shifted(h, x, Float32(-0.5), Float32(0.5), Float32(0.5))
+    else 
+      ψ = shifted(h, x, Float32(0.5), χ)
+    end
+    if "$shifted_op" ∉ ("ShiftedNormL0Box", "ShiftedNormL1Box")
+      @test typeof(ψ) == ShiftedOp{
+        Float32,
+        SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+        Vector{Float32},
+        Vector{Float32},
+      }
+    end
     @test typeof(ψ.λ) == Float32
     @test ψ.λ == h.lambda
     @test ψ(zeros(Float32, 5)) == h(x)

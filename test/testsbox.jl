@@ -64,7 +64,7 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1),(:ShiftedNormL0Box, :ShiftedNorm
       xi = x[i]
       "$shifted_op" == "ShiftedNormL0Box" ? λi = λ[i] : λi = λ
       h = eval(op)(λi)
-      ψ = shifted(h,xi,l,u)
+      ψ = shifted(h,xi,l,u,1.0)
       ω = shifted(ψ,s)
       ShiftedProximalOperators.prox(ω, qi, σ)
       @test ω.sol == sol[i]

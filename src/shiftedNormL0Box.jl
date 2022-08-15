@@ -48,7 +48,7 @@ shifted(
 ) where {R <: Real, T <: Integer, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3, V4} =
   ShiftedNormL0Box(ψ.h, ψ.xk, sj, ψ.l, ψ.u, ψ.Δ, true, ψ.selected)
 
-(ψ::ShiftedNormL0Box{R, T, V0, V1, V2, V3, V4})(y) where {R <: Real, T <: Integer, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}, V3, V4} = ψ.h((ψ.xk + ψ.sj + y)[ψ.selected])
+(ψ::ShiftedNormL0Box)(y) = ψ.h((ψ.xk + ψ.sj + y)[ψ.selected]) + (all(ψ.l .<= ψ.sj + y .<= ψ.u) ? 0 : Inf)
 
 fun_name(ψ::ShiftedNormL0Box) = "shifted L0 pseudo-norm with box indicator"
 fun_expr(ψ::ShiftedNormL0Box) = "t ↦ λ ‖xk + sj + t‖₀ + χ({sj + t .∈ [l,u]})"
