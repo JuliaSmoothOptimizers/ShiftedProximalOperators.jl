@@ -1,8 +1,21 @@
 module ShiftedProximalOperators
 
+using LinearAlgebra
+
+using libblastrampoline_jll
+using OpenBLAS32_jll
 using ProximalOperators
 using Roots
-using LinearAlgebra
+
+function __init__()
+  # Ensure LBT points to a valid BLAS for psvd()
+  if VERSION ≥ v"1.7"
+    config = LinearAlgebra.BLAS.lbt_get_config()
+    if !any(lib -> lib.interface == :lp64, config.loaded_libs)
+      LinearAlgebra.BLAS.lbt_forward(OpenBLAS32_jll.libopenblas_path)
+    end
+  end
+end
 
 export ShiftedProximableFunction
 export prox, prox!, set_radius!, shift!, shifted
