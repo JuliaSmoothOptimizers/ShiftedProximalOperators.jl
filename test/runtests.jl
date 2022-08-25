@@ -3,7 +3,7 @@ using ProximalOperators
 using ShiftedProximalOperators
 using Test
 
-VERSION ≥ v"1.7" && include("test_psvd.jl")
+include("test_psvd.jl")
 
 #test Created norms/standard proxes - TODO: come up with more robust test
 for op ∈ (:RootNormLhalf,)

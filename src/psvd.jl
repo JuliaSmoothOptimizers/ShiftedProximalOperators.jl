@@ -24,7 +24,6 @@ import LinearAlgebra.chkstride1
 import LinearAlgebra.default_svd_alg
 import LinearAlgebra.Factorization
 import LinearAlgebra.LAPACK.chklapackerror
-const libblastrampoline = "libblastrampoline"
 
 export psvd_workspace_qr, psvd_workspace_dd, psvd_qr!, psvd_dd!, psvd
 
