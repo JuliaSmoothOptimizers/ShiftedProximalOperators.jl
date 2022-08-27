@@ -34,7 +34,7 @@ Rank(lambda::R, A::S) where {R, S} = begin
   F = psvd_workspace_dd(A, full = false)
   Rank(lambda, A, F)
 end
-  
+
 function (f::Rank)(x::AbstractVector{R}) where {R <: Real}
   return f.lambda * rank(reshape_array(x, size(f.A)))
 end
