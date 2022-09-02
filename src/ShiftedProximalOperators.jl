@@ -33,6 +33,7 @@ include("rootNormLhalf.jl")
 include("groupNormL2.jl")
 include("Rank.jl")
 include("cappedl1.jl")
+include("Nuclearnorm.jl")
 
 include("shiftedNormL0.jl")
 include("shiftedNormL0BInf.jl")
@@ -48,6 +49,7 @@ include("shiftedRootNormLhalfBinf.jl")
 include("shiftedGroupNormL2Binf.jl")
 include("shiftedRank.jl")
 include("shiftedCappedl1.jl")
+include("shiftedNuclearnorm.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
 
