@@ -7,7 +7,7 @@ export Cappedl1
 
 Returns the rank
 ```math
-f(x) =  \lambda \\cdot rank(matrix(x))
+f(x) =  \lambda \times \min(θ, σ(matrix(x)))
 ```
 for a nonnegative parameter ``\lambda``, ``\theta`` and a vector ``x``.
 """

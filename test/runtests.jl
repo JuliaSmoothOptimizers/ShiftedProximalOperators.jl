@@ -942,22 +942,5 @@ for (op, shifted_op) ∈ zip((:Cappedl1,), (:ShiftedCappedl1,))
     k = NormL0(λ)
     t = ProximalOperators.prox(k, st1 + st1 .^ 2 + st1 / 2, λ)[1]
     @test all(Diagonal(t - st1 - st1 / 2) .≈ reshape(prox!(y, f, q, λ), n, n))
-
-    # Rectangular Matrix (m,n)
-    # m = 10
-    # n = 11
-    # λ = 1.0
-    # γ = 5.0
-    # x = vec(reshape(rand(m, n), m * n, 1))
-    # q = vec(reshape(rand(m, n), m * n, 1))
-    # s = vec(reshape(rand(m, n), m * n, 1))
-    # F = psvd_workspace_dd(zeros(m, n), full = false)
-    # h = Op(λ, ones(m, n), F)
-    # f = ShiftedOp(h, x, s, true)
-    # y = zeros(m * n)
-    # k = NormL0(λ)
-    # Q = svd(reshape(q + s + x, m, n))
-    # t = ProximalOperators.prox(k, Q.S, γ)[1]
-    # @test all(Q.U * Diagonal(t) * Q.Vt - reshape(x + s, m, n) .≈ reshape(prox!(y, f, q, γ), m, n))
   end
 end
