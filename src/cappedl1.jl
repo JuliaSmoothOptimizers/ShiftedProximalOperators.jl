@@ -11,7 +11,6 @@ f(x) =  \lambda \times \min(θ, σ(matrix(x)))
 ```
 for a nonnegative parameter ``\lambda``, ``\theta`` and a vector ``x``.
 """
-
 mutable struct Cappedl1{R <: Real, S <: AbstractArray, T, Tr, M <: AbstractArray{T}}
   lambda::R
   theta::R
@@ -60,7 +59,7 @@ function prox!(
   for i ∈ eachindex(f.F.S)
     x1 = max(f.theta, f.F.S[i])
     x2 = min(f.theta, max(0, f.F.S[i] - f.lambda * gamma))
-    if 0.5*(x1 - f.F.S[i])^2 + f.lambda * gamma * f.theta < 0.5*(x2 - f.F.S[i])^2 + f.lambda * gamma * x2
+    if (x1 - f.F.S[i])^2 / 2 + f.lambda * gamma * f.theta < (x2 - f.F.S[i])^2 / 2 + f.lambda * gamma * x2
         f.F.S[i] = x1
     else
         f.F.S[i] = x2

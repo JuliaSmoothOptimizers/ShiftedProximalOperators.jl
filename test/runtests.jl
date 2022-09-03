@@ -838,8 +838,6 @@ for (op, shifted_op) ∈ zip((:Rank,), (:ShiftedRank,))
   end
 end
 
-# loop over Cappedl1 function
-
 for (op, shifted_op) ∈ zip((:Cappedl1,), (:ShiftedCappedl1,))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)

@@ -69,7 +69,7 @@ function prox!(
   for i ∈ eachindex(ψ.h.F.S)
     x1 = max(ψ.h.theta, ψ.h.F.S[i])
     x2 = min(ψ.h.theta, max(0, ψ.h.F.S[i] - ψ.λ * σ))
-    if 0.5*(x1 - ψ.h.F.S[i])^2 + ψ.λ * σ * ψ.h.theta < 0.5*(x2 - ψ.h.F.S[i])^2 + ψ.λ * σ * x2
+    if (x1 - ψ.h.F.S[i])^2 / 2 + ψ.λ * σ * ψ.h.theta < (x2 - ψ.h.F.S[i])^2 / 2 + ψ.λ * σ * x2
         ψ.h.F.S[i] = x1
     else
         ψ.h.F.S[i] = x2
