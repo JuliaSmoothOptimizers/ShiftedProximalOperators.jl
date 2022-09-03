@@ -70,12 +70,12 @@ function prox!(
     x1 = max(ψ.h.theta, ψ.h.F.S[i])
     x2 = min(ψ.h.theta, max(0, ψ.h.F.S[i] - ψ.λ * σ))
     if (x1 - ψ.h.F.S[i])^2 / 2 + ψ.λ * σ * ψ.h.theta < (x2 - ψ.h.F.S[i])^2 / 2 + ψ.λ * σ * x2
-        ψ.h.F.S[i] = x1
+      ψ.h.F.S[i] = x1
     else
-        ψ.h.F.S[i] = x2
+      ψ.h.F.S[i] = x2
     end
     for j = 1:size(ψ.h.A, 1)
-        ψ.h.F.U[j, i] = ψ.h.F.U[j, i] * ψ.h.F.S[i]
+      ψ.h.F.U[j, i] = ψ.h.F.U[j, i] * ψ.h.F.S[i]
     end
   end
   mul!(ψ.h.A, ψ.h.F.U, ψ.h.F.Vt)

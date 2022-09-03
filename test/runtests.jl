@@ -843,7 +843,7 @@ for (op, shifted_op) ∈ zip((:Cappedl1,), (:ShiftedCappedl1,))
     ShiftedOp = eval(shifted_op)
     Op = eval(op)
     # test basic types and properties
-    θ = 1.
+    θ = 1.0
     F = psvd_workspace_dd(zeros(2, 2), full = false)
     h = Op(1.0, θ, ones(2, 2), F)
     x = ones(4)
@@ -927,7 +927,7 @@ for (op, shifted_op) ∈ zip((:Cappedl1,), (:ShiftedCappedl1,))
     # test more sophisticated examples
     # Diagonal Matrix (n,n)
     n = 10
-    θ = 1.
+    θ = 1.0
     λ = 10.0
     st1 = rand(n)
     x = vec(reshape(Diagonal(st1), n^2, 1))
