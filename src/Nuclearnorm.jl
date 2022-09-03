@@ -34,11 +34,11 @@ Nuclearnorm(lambda::R, A::S) where {R, S} = begin
   F = psvd_workspace_dd(A, full = false)
   Nuclearnorm(lambda, A, F)
 end
-  
+
 function (f::Nuclearnorm)(x::AbstractVector{R}) where {R <: Real}
-    f.A .= reshape_array(x, size(f.A))
-    psvd_dd!(f.F, f.A, full = false)
-    return f.lambda * sum(f.F.S)
+  f.A .= reshape_array(x, size(f.A))
+  psvd_dd!(f.F, f.A, full = false)
+  return f.lambda * sum(f.F.S)
 end
 
 fun_name(f::Nuclearnorm) = "Nuclearnorm"
@@ -55,10 +55,10 @@ function prox!(
   f.A .= reshape_array(x, size(f.A))
   psvd_dd!(f.F, f.A, full = false)
   c = sqrt(2 * f.lambda * gamma)
-  f.F.S .= max.(0, f.F.S .- f.lambda*gamma)
+  f.F.S .= max.(0, f.F.S .- f.lambda * gamma)
   for i ∈ eachindex(f.F.S)
     for j = 1:size(f.A, 1)
-        f.F.U[j, i] = f.F.U[j, i] * f.F.S[i]
+      f.F.U[j, i] = f.F.U[j, i] * f.F.S[i]
     end
   end
   mul!(f.A, f.F.U, f.F.Vt)

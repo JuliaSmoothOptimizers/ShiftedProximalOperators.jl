@@ -70,7 +70,7 @@ function prox!(
   ψ.h.F.S .= max.(0, ψ.h.F.S .- ψ.λ * σ)
   for i ∈ eachindex(ψ.h.F.S)
     for j = 1:size(ψ.h.A, 1)
-        ψ.h.F.U[j, i] = ψ.h.F.U[j, i] .* ψ.h.F.S[i]
+      ψ.h.F.U[j, i] = ψ.h.F.U[j, i] .* ψ.h.F.S[i]
     end
   end
   mul!(ψ.h.A, ψ.h.F.U, ψ.h.F.Vt)
