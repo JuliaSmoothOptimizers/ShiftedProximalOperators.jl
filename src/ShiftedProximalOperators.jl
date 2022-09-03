@@ -32,6 +32,7 @@ include("psvd.jl")
 include("rootNormLhalf.jl")
 include("groupNormL2.jl")
 include("Rank.jl")
+include("cappedl1.jl")
 
 include("shiftedNormL0.jl")
 include("shiftedNormL0BInf.jl")
@@ -46,6 +47,7 @@ include("shiftedIndBallL0BInf.jl")
 include("shiftedRootNormLhalfBinf.jl")
 include("shiftedGroupNormL2Binf.jl")
 include("shiftedRank.jl")
+include("shiftedCappedl1.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
 
