@@ -36,11 +36,11 @@ Cappedl1(lambda::R, theta::R, A::S) where {R, S} = begin
   F = psvd_workspace_dd(A, full = false)
   Cappedl1(lambda, theta, A, F)
 end
-  
+
 function (f::Cappedl1)(x::AbstractVector{R}) where {R <: Real}
-    f.A .= ShiftedProximalOperators.reshape_array(x, size(f.A))
-    psvd_dd!(f.F, f.A, full = false)
-    return f.lambda * sum(min.(f.F.S, f.theta))
+  f.A .= ShiftedProximalOperators.reshape_array(x, size(f.A))
+  psvd_dd!(f.F, f.A, full = false)
+  return f.lambda * sum(min.(f.F.S, f.theta))
 end
 
 fun_name(f::Cappedl1) = "Cappedl1"
@@ -59,13 +59,14 @@ function prox!(
   for i ∈ eachindex(f.F.S)
     x1 = max(f.theta, f.F.S[i])
     x2 = min(f.theta, max(0, f.F.S[i] - f.lambda * gamma))
-    if (x1 - f.F.S[i])^2 / 2 + f.lambda * gamma * f.theta < (x2 - f.F.S[i])^2 / 2 + f.lambda * gamma * x2
-        f.F.S[i] = x1
+    if (x1 - f.F.S[i])^2 / 2 + f.lambda * gamma * f.theta <
+       (x2 - f.F.S[i])^2 / 2 + f.lambda * gamma * x2
+      f.F.S[i] = x1
     else
-        f.F.S[i] = x2
+      f.F.S[i] = x2
     end
     for j = 1:size(f.A, 1)
-        f.F.U[j, i] = f.F.U[j, i] * f.F.S[i]
+      f.F.U[j, i] = f.F.U[j, i] * f.F.S[i]
     end
   end
   mul!(f.A, f.F.U, f.F.Vt)
