@@ -79,6 +79,6 @@ function prox!(
     end
   end
   mul!(ψ.h.A, ψ.h.F.U, ψ.h.F.Vt)
-  y .= ShiftedProximalOperators.reshape_array(ψ.h.A, size(y)) .- ψ.xk .- ψ.sj
+  y .= ShiftedProximalOperators.reshape_array(ψ.h.A, size(y)) .- (ψ.xk .+ ψ.sj)
   return y
 end
