@@ -5,11 +5,12 @@ export Cappedl1
 @doc raw"""
     Cappedl1(λ, θ)
 
-Returns the rank
+Returns the capped L1 approximation to the rank function
 ```math
-f(x) =  \lambda \times \min(θ, σ(matrix(x)))
+f(x) =  \lambda \min(θ, σ(X))
 ```
-for a nonnegative parameter ``\lambda``, ``\theta`` and a vector ``x``.
+for nonnegative parameters ``\lambda`` and ``\theta``, and a vector ``x``, where
+``x = \text{vec}(X)``.
 """
 mutable struct Cappedl1{R <: Real, S <: AbstractArray, T, Tr, M <: AbstractArray{T}}
   lambda::R

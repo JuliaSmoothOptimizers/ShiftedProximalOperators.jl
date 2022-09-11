@@ -7,9 +7,10 @@ export Rank
 
 Returns the rank
 ```math
-f(x) =  \lambda \\cdot rank(matrix(x))
+f(x) =  \lambda \text{rank}(X)
 ```
-for a nonnegative parameter ``\lambda`` and a vector ``x``.
+for a nonnegative parameter ``\lambda`` and a vector ``x``, where
+``x = \text{vec}(X)``.
 """
 mutable struct Rank{R <: Real, S <: AbstractArray, T, Tr, M <: AbstractArray{T}}
   lambda::R

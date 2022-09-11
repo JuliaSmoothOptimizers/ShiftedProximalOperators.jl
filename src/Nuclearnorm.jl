@@ -5,11 +5,12 @@ export Nuclearnorm
 @doc raw"""
     Nuclearnorm(λ)
 
-Returns the rank
+Returns the nuclear norm
 ```math
-f(x) =  \lambda \times \|matrix(x)\|_*
+f(x) =  \lambda \|X\|_*
 ```
-for a nonnegative parameter ``\lambda`` and a vector ``x``.
+for a nonnegative parameter ``\lambda`` and a vector ``x``, where
+``x = \text{vec}(X)``.
 """
 mutable struct Nuclearnorm{R <: Real, S <: AbstractArray, T, Tr, M <: AbstractArray{T}}
   lambda::R
