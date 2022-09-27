@@ -1,8 +1,21 @@
 module ShiftedProximalOperators
 
+using LinearAlgebra
+
+using libblastrampoline_jll
+using OpenBLAS32_jll
 using ProximalOperators
 using Roots
-using LinearAlgebra
+
+function __init__()
+  # Ensure LBT points to a valid BLAS for psvd()
+  if VERSION ≥ v"1.7"
+    config = LinearAlgebra.BLAS.lbt_get_config()
+    if !any(lib -> lib.interface == :lp64, config.loaded_libs)
+      LinearAlgebra.BLAS.lbt_forward(OpenBLAS32_jll.libopenblas_path)
+    end
+  end
+end
 
 export ShiftedProximableFunction
 export prox, prox!, set_radius!, shift!, shifted, set_bounds!, reshape_array
@@ -13,8 +26,14 @@ import ProximalOperators.prox, ProximalOperators.prox!
 "Abstract type for shifted proximable functions."
 abstract type ShiftedProximableFunction end
 
+include("utils.jl")
+include("psvd.jl")
+
 include("rootNormLhalf.jl")
 include("groupNormL2.jl")
+include("Rank.jl")
+include("cappedl1.jl")
+include("Nuclearnorm.jl")
 
 include("shiftedNormL0.jl")
 include("shiftedNormL0Box.jl")
@@ -28,9 +47,9 @@ include("shiftedIndBallL0.jl")
 include("shiftedIndBallL0BInf.jl")
 include("shiftedRootNormLhalfBinf.jl")
 include("shiftedGroupNormL2Binf.jl")
-
-include("utils.jl")
-include("psvd.jl")
+include("shiftedRank.jl")
+include("shiftedCappedl1.jl")
+include("shiftedNuclearnorm.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
 
@@ -122,7 +141,7 @@ prox(ψ::ShiftedProximableFunction, q::V, σ::R) where {R <: Real, V <: Abstract
 
 """
     shifted(h, x)
-    shifted(h, x, Δ, χ)
+    shifted(h, x, Δ, ρ)
 
 Construct a shifted proximable function from a proximable function or from
 another shifted proximable function.
@@ -133,28 +152,24 @@ form `shifted(h, x)` returns a `ShiftedProximableFunction` `ψ` such that `ψ(s)
 when `h` is a `ShiftedProximableFunction` and can be used to shift an
 already-shifted proximable function.
 
-The form `shifted(h, x, Δ, χ)` returns a `ShiftedProximableFunction` `ψ` such
+The form `shifted(h, x, Δ, ρ)` returns a `ShiftedProximableFunction` `ψ` such
 that `ψ(s) == h(x + s) + Ind({‖s‖ ≤ Δ})`, where `Ind(.)` represents the
 indicator of a set, in this case the indicator of a ball of radius `Δ`, in
-which the norm is defined by `χ`.
+which the norm is defined by `ρ`.
 
 ### Arguments
 
 * `h::ProximableFunction` (including a `ShiftedProximableFunction`)
 * `x::AbstractVector`
 * `Δ::Real`
-* `χ::ProximableFunction`.
+* `ρ::ProximableFunction`.
 
-The currently supported combinations are:
-
-* `h::IndBallL0` and `χ::Conjugate{IndBallL1}` (i.e., `χ` is the Inf-norm)
-* `h::NormL0` and `χ::Conjugate{IndBallL1}` (i.e., `χ` is the Inf-norm)
-* `h::NormL1` and `χ::Conjugate{IndBallL1}` (i.e., `χ` is the Inf-norm)
-* `h::NormL1` and `χ::NormL2`.
+Only certain combinations of `h` and `ρ` are supported; those for which the
+analytical form of the proximal operator is known.
 
 If `h` is a shifted proximable function obtained from a previous call to
 `shifted()`, only the form `shifted(h, x)` is supported. If applicable, the
-resulting shifted proximable function is associated with the same `Δ` and `χ`
+resulting shifted proximable function is associated with the same `Δ` and `ρ`
 as `h`.
 
 See the documentation of ProximalOperators.jl for more information.
