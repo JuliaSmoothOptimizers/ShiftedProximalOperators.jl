@@ -55,7 +55,11 @@ fun_dom(f::RootNormLhalf) = "AbstractArray{Real}, AbstractArray{Complex}"
 fun_expr(f::RootNormLhalf{T}) where {T <: Real} = "x ↦ ½ λ ‖x‖_(½)^(½)"
 fun_params(f::RootNormLhalf{T}) where {T <: Real} = "λ = $(f.lambda)"
 
-function prox_naive(f::RootNormLhalf, x::AbstractArray{T}, gamma::Real = 1) where {R, T <: Real}
+function prox_naive(
+  f::RootNormLhalf{R},
+  x::AbstractArray{T},
+  gamma::R = 1.0,
+) where {R <: Real, T <: Real}
   γλ = gamma * f.lambda
   over = abs.(x) .> 3 * (2γλ)^(2 / 3) / 4
   y =
