@@ -47,15 +47,13 @@ mutable struct ShiftedNormL1Box{
   end
 end
 
-shifted(h::NormL1{R}, xk::AbstractVector{R}, l, u, Δ::R) where {R <: Real} =
-  ShiftedNormL1Box(h, xk, zero(xk), l, u, Δ, false, 1:length(xk))
 shifted(
   h::NormL1{R},
   xk::AbstractVector{R},
   l,
   u,
   Δ::R,
-  selected::AbstractArray{T},
+  selected::AbstractArray{T} = 1:length(xk),
 ) where {R <: Real, T <: Integer} = ShiftedNormL1Box(h, xk, zero(xk), l, u, Δ, false, selected)
 shifted(
   ψ::ShiftedNormL1Box{R, T, V0, V1, V2, V3, V4},
@@ -103,7 +101,6 @@ function prox!(
   V4,
 }
   σλ = σ * ψ.λ
-  selected = ψ.selected
 
   for i ∈ eachindex(y)
     li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
@@ -113,7 +110,7 @@ function prox!(
     si = ψ.sj[i]
     sq = si + qi
 
-    if i ∈ selected
+    if i ∈ ψ.selected
       xi = ψ.xk[i]
       xs = xi + si
       xsq = xs + qi
