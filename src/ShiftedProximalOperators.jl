@@ -142,6 +142,19 @@ prox(ψ::ShiftedProximableFunction, q::V, σ::R) where {R <: Real, V <: Abstract
   prox!(ψ.sol, ψ, q, σ)
 
 """
+    prox_zero(q, l, u)
+
+Return the solution of
+
+    min ½ σ⁻¹ (y - q)² subject to l ≤ y ≤ u
+
+for any σ > 0. This problem occurs when computing the prox with respect to a
+separable nonsmooth term along a variable that is not part of those to which
+the nonsmooth term is applied.
+"""
+@inline prox_zero(q::R, l::R, u::R) where {R <: Real} = min(max(q, l), u)
+
+"""
     shifted(h, x)
     shifted(h, x, Δ, ρ)
 
