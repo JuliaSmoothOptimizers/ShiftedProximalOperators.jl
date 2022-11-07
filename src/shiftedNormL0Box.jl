@@ -17,7 +17,7 @@ mutable struct ShiftedNormL0Box{
   u::V4
   Δ::R
   shifted_twice::Bool
-  selected::UnitRange{T}
+  selected::AbstractArray{T}
 
   function ShiftedNormL0Box(
     h::NormL0{R},
@@ -27,7 +27,7 @@ mutable struct ShiftedNormL0Box{
     u,
     Δ::R,
     shifted_twice::Bool,
-    selected::UnitRange{T},
+    selected::AbstractArray{T},
   ) where {R <: Real, T <: Integer}
     sol = similar(xk)
     if any(l .> u)
@@ -55,7 +55,7 @@ shifted(
   l,
   u,
   Δ::R,
-  selected::UnitRange{T},
+  selected::AbstractArray{T},
 ) where {R <: Real, T <: Integer} = ShiftedNormL0Box(h, xk, zero(xk), l, u, Δ, false, selected)
 shifted(
   ψ::ShiftedNormL0Box{R, T, V0, V1, V2, V3, V4},
@@ -134,7 +134,7 @@ function prox!(
       end
 
     else # min ½ σ⁻¹ (y - qi)² subject to li - si ≤ y ≤ ui - si
-      y[i] = min(max(q[i], li - si), ui - si)
+      y[i] = prox_zero(qi, li - si, ui - si)
     end
   end
   return y
