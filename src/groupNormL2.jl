@@ -27,8 +27,8 @@ struct GroupNormL2{R <: Real, RR <: AbstractVector{R}, I}
   end
 end
 
-GroupNormL2(lambda::RR = [1.0], idx::I = [:]) where {R <: Real, RR <: AbstractVector{R}, I} =
-  GroupNormL2{R, RR, I}(lambda, idx)
+GroupNormL2(lambda::AbstractVector{R} = [one(R)], idx::I = [:]) where {R <: Real, I} =
+  GroupNormL2{R, typeof(lambda), I}(lambda, idx)
 
 function (f::GroupNormL2)(x::AbstractArray{R}) where {R <: Real}
   sum_c = R(0)
