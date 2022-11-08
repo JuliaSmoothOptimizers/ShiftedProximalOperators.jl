@@ -326,6 +326,9 @@ for (op, tr, shifted_op) ∈ zip(
     Δ = 0.01
     if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box")
       ψ = shifted(h, x, -Δ, Δ, Δ)
+    elseif "$shifted_op" ∈ ("ShiftedRootNormLhalfBinf",)
+      ψ = shifted(h, x, Δ, χ)
+      @test typeof(ψ) == ShiftedOp{Float64, Int, Vector{Float64}, Vector{Float64}, Vector{Float64}}
     else
       ψ = shifted(h, x, Δ, χ)
       @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
@@ -422,10 +425,26 @@ for (op, tr, shifted_op) ∈ zip(
     x = view(y, 1:2:10)
     if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box")
       ψ = shifted(h, x, Float32(-0.5), Float32(0.5), Float32(0.5))
+      @test typeof(ψ) == ShiftedOp{
+        Float32,
+        Int,
+        SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+        Vector{Float32},
+        Vector{Float32},
+        Float32,
+        Float32,
+      }
+    elseif "$shifted_op" ∈ ("ShiftedRootNormLhalfBinf",)
+      ψ = shifted(h, x, Float32(0.5), χ)
+      @test typeof(ψ) == ShiftedOp{
+        Float32,
+        Int,
+        SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+        Vector{Float32},
+        Vector{Float32},
+      }
     else
       ψ = shifted(h, x, Float32(0.5), χ)
-    end
-    if "$shifted_op" ∉ ("ShiftedNormL0Box", "ShiftedNormL1Box")
       @test typeof(ψ) == ShiftedOp{
         Float32,
         SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
@@ -1078,3 +1097,4 @@ for (op, shifted_op) ∈ zip((:Nuclearnorm,), (:ShiftedNuclearnorm,))
 end
 
 include("testsbox.jl")
+include("partial_prox.jl")
