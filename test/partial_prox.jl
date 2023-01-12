@@ -12,7 +12,7 @@ for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
     χ = NormLinf(1.0)
 
     # compute the prox wrt all variables
-    ψ = op == :RootNormLhalf ? shifted(h, x, Δ, χ) : shifted(h, x, l, u, Δ)
+    ψ = op == :RootNormLhalf ? shifted(h, x, Δ, χ) : shifted(h, x, l, u)
     if op == :RootNormLhalf
       # redefine l and u temporarily until this operator supports bound constraints
       l .= -Δ
@@ -24,7 +24,7 @@ for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
 
     # compute a partial prox
     selected = 1:2:n
-    ψ = op == :RootNormLhalf ? shifted(h, x, Δ, χ, selected) : shifted(h, x, l, u, Δ, selected)
+    ψ = op == :RootNormLhalf ? shifted(h, x, Δ, χ, selected) : shifted(h, x, l, u, selected)
     ω = shifted(ψ, s)
     σ = 1.0
     z = prox(ω, q, σ)
