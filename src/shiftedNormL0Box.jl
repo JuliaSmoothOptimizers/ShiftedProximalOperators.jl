@@ -15,7 +15,6 @@ mutable struct ShiftedNormL0Box{
   sol::V2
   l::V3
   u::V4
-  Δ::R
   shifted_twice::Bool
   selected::AbstractArray{T}
 
@@ -25,7 +24,6 @@ mutable struct ShiftedNormL0Box{
     sj::AbstractVector{R},
     l,
     u,
-    Δ::R,
     shifted_twice::Bool,
     selected::AbstractArray{T},
   ) where {R <: Real, T <: Integer}
@@ -40,7 +38,6 @@ mutable struct ShiftedNormL0Box{
       sol,
       l,
       u,
-      Δ,
       shifted_twice,
       selected,
     )
@@ -52,9 +49,8 @@ shifted(
   xk::AbstractVector{R},
   l,
   u,
-  Δ::R,
   selected::AbstractArray{T} = 1:length(xk),
-) where {R <: Real, T <: Integer} = ShiftedNormL0Box(h, xk, zero(xk), l, u, Δ, false, selected)
+) where {R <: Real, T <: Integer} = ShiftedNormL0Box(h, xk, zero(xk), l, u, false, selected)
 shifted(
   ψ::ShiftedNormL0Box{R, T, V0, V1, V2, V3, V4},
   sj::AbstractVector{R},
@@ -66,7 +62,7 @@ shifted(
   V2 <: AbstractVector{R},
   V3,
   V4,
-} = ShiftedNormL0Box(ψ.h, ψ.xk, sj, ψ.l, ψ.u, ψ.Δ, true, ψ.selected)
+} = ShiftedNormL0Box(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true, ψ.selected)
 
 function (ψ::ShiftedNormL0Box)(y)
   val = ψ.h((ψ.xk + ψ.sj + y)[ψ.selected])

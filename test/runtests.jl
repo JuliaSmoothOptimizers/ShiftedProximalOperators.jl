@@ -325,23 +325,24 @@ for (op, tr, shifted_op) ∈ zip(
     x = ones(n)
     Δ = 0.01
     if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box")
-      ψ = shifted(h, x, -Δ, Δ, Δ)
+      ψ = shifted(h, x, -Δ, Δ)
     elseif "$shifted_op" ∈ ("ShiftedRootNormLhalfBinf",)
       ψ = shifted(h, x, Δ, χ)
       @test typeof(ψ) == ShiftedOp{Float64, Int, Vector{Float64}, Vector{Float64}, Vector{Float64}}
+      @test ψ.Δ == Δ
     else
       ψ = shifted(h, x, Δ, χ)
       @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
+      @test ψ.Δ == Δ
     end
     @test all(ψ.sj .== 0)
     @test all(ψ.xk .== x)
     @test typeof(ψ.λ) == Float64
     @test ψ.λ == h.lambda
-    @test ψ.Δ == Δ
     # test values
     @test ψ(zeros(n)) == h(x)
     y = rand(n)
-    y .*= ψ.Δ / χ(y) / 2
+    y .*= Δ / χ(y) / 2
     @test ψ(y) == h(x + y)  # y inside the trust region
     @test ψ(3 * y) == Inf   # y outside the trust region
 
@@ -390,21 +391,23 @@ for (op, tr, shifted_op) ∈ zip(
     end
     s = ShiftedProximalOperators.prox(ψ, q, ν)
     @test all(s .≈ s_correct)
-    @test χ(s) ≤ ψ.Δ
+    @test χ(s) ≤ Δ
 
     # test shift update
     shift!(ψ, y)
     @test all(ψ.sj .== 0)
     @test all(ψ.xk .== y)
 
-    # test radius update
-    set_radius!(ψ, 1.1)
+    # test radius / bounds update
+    Δ2 = 1.1
     if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box")
-      set_bounds!(ψ, -1.1, 1.1)
-      @test ψ.l == -1.1
-      @test ψ.u == 1.1
+      set_bounds!(ψ, -Δ2, Δ2)
+      @test ψ.l == -Δ2
+      @test ψ.u == Δ2
+    else
+      set_radius!(ψ, Δ2)
+      @test ψ.Δ == Δ2
     end
-    @test ψ.Δ == 1.1
 
     # shift a shifted operator
     s = ones(n)
@@ -414,7 +417,7 @@ for (op, tr, shifted_op) ∈ zip(
     @test all(φ.xk .== x)
     @test φ(zeros(n)) == h(y + s)
     t = rand(n)
-    t .*= ψ.Δ / χ(t) / 2
+    t .*= Δ2 / χ(t) / 2
     @test φ(t) == h(y + s + t)  # y inside the trust region
     @test φ(3 * t) == Inf       # y outside the trust region
 
@@ -424,7 +427,7 @@ for (op, tr, shifted_op) ∈ zip(
     y = rand(Float32, 10)
     x = view(y, 1:2:10)
     if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box")
-      ψ = shifted(h, x, Float32(-0.5), Float32(0.5), Float32(0.5))
+      ψ = shifted(h, x, Float32(-0.5), Float32(0.5))
       @test typeof(ψ) == ShiftedOp{
         Float32,
         Int,
@@ -729,7 +732,7 @@ for (op, tr) ∈ zip((:NormL1,), (:NormLinf,))
 
     # shift once
     xk = rand(n) .- 0.5
-    ψ = shifted(h, xk, -Δ, Δ, Δ)
+    ψ = shifted(h, xk, -Δ, Δ)
 
     # check prox
     p1 = ProximalOperators.prox(h, xk + q, ν)[1]
