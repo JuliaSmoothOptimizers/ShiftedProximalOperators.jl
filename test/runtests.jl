@@ -311,9 +311,9 @@ end
 
 # loop over operators with a trust region
 for (op, tr, shifted_op) ∈ zip(
-  (:NormL0, :NormL1, :NormL1, :RootNormLhalf),
-  (:NormLinf, :NormLinf, :NormL2, :NormLinf),
-  (:ShiftedNormL0Box, :ShiftedNormL1Box, :ShiftedNormL1B2, :ShiftedRootNormLhalfBinf),
+  (:NormL0, :NormL0, :NormL1, :NormL1, :NormL1, :RootNormLhalf),
+  (:NormLinf, :NormLinf, :NormLinf, :NormLinf, :NormL2, :NormLinf),
+  (:ShiftedNormL0BInf, :ShiftedNormL0Box, :ShiftedNormL1BInf, :ShiftedNormL1Box, :ShiftedNormL1B2, :ShiftedRootNormLhalfBinf),
 )
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
@@ -356,7 +356,7 @@ for (op, tr, shifted_op) ∈ zip(
         1770.8953574224836,
         -2554.7769423950244,
       ]
-    if "$shifted_op" == "ShiftedNormL0Box"
+    if "$shifted_op" == "ShiftedNormL0BInf" || "$shifted_op" == "ShiftedNormL0Box"
       s_correct = [
         -0.010000000000000,
         0.005867144197216,
@@ -372,7 +372,7 @@ for (op, tr, shifted_op) ∈ zip(
         -0.004285677352167,
         0.006176811716709,
       ]
-    elseif "$shifted_op" == "ShiftedNormL1Box"
+    elseif "$shifted_op" == "ShiftedNormL1BInf" || "$shifted_op" == "ShiftedNormL1Box"
       s_correct = [
         -0.010000000000000,
         0.005856155186227,
