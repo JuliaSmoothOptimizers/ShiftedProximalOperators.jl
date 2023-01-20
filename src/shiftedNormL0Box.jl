@@ -82,6 +82,42 @@ fun_expr(ψ::ShiftedNormL0Box) = "t ↦ λ ‖xk + sj + t‖₀ + χ({sj + t .�
 fun_params(ψ::ShiftedNormL0Box) =
   "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14 * "lb = $(ψ.l)\n" * " "^14 * "ub = $(ψ.u)"
 
+function solve_ith_subproblem_proxL0(
+  li::R,
+  ui::R,
+  xi::R,
+  si::R,
+  qi::R,
+  xs::R, # xi + si
+  sq::R, # xi + qi
+  xsq::R, # xi + si + qi
+  ci::R,
+) where {R <: Real}
+  # yi = arg min (yi - qi)^2 + ci * ||xi + si + yi||₀ + χ(si + yi | [li, ui])
+  # possible minima locations:
+  # yi = li - si
+  # yi = ui - si
+  # yi = -xi - si, if: li + xi ≤ 0 ≤ ui + xi, leads to h(xi + si + yi) = 0
+  # yi = qi, if: di > 0 and li + xi ≤ xi + si + qi ≤ ui + xi
+  val_left = (li - sq)^2 + (xi == -li ? 0 : ci) # left: yi = li - si
+  val_right = (ui - sq)^2 + (xi == -ui ? 0 : ci) # right: yi = ui - si
+  yi = val_left < val_right ? (li - si) : (ui - si)
+  val_min = min(val_left, val_right)
+  if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi
+    # compute (xi + si + qi)^2 with y = -xi - si so that h(xi + si + y) = 0
+    val_0 = xsq^2
+    val_0 < val_min && (yi = -xs)
+    val_min = min(val_0, val_min)
+  end
+  if li ≤ sq ≤ ui  # <=> li + xi ≤ xi + si + qi ≤ ui + xi
+    # if yi = qi then the val is λ,
+    # except if xi + si + qi = 0 because in this case h(xi + si + qi) = 0
+    val_xsq = xsq == 0 ? zero(R) : ci
+    val_xsq < val_min && (yi = qi)
+  end
+  return yi
+end
+
 function prox!(
   y::AbstractVector{R},
   ψ::ShiftedNormL0Box{R, T, V0, V1, V2, V3, V4},
@@ -110,22 +146,8 @@ function prox!(
       xi = ψ.xk[i]
       xs = xi + si
       xsq = xs + qi
-      val_left = (li - sq)^2 + (xi == -li ? 0 : c)
-      val_right = (ui - sq)^2 + (xi == -ui ? 0 : c)
-      # subtract x + s from solution explicitly here instead of doing it
-      # numerically at the end
-      y[i] = val_left < val_right ? (li - si) : (ui - si)
-      val_min = min(val_left, val_right)
-      if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi
-        val_0 = xsq^2
-        val_0 < val_min && (y[i] = -xs)
-        val_min = min(val_0, val_min)
-      end
-      if li ≤ sq ≤ ui  # <=> li + xi ≤ xsq ≤ ui + xi
-        val_xsq = xsq == 0 ? zero(R) : c
-        val_xsq < val_min && (y[i] = qi)
-      end
-
+      # yi = arg min (yi - qi)^2 + 2λ||xi + si + yi||₀ / di + χ(si + yi | [li, ui])
+      y[i] = solve_ith_subproblem_proxL0(li, ui, xi, si, qi, xs, sq, xsq, c)
     else # min ½ σ⁻¹ (y - qi)² subject to li - si ≤ y ≤ ui - si
       y[i] = prox_zero(qi, li - si, ui - si)
     end
@@ -147,13 +169,13 @@ function iprox!(
   V3,
   V4,
 }
-  λ = ψ.λ
+  λ2 = 2 * ψ.λ
 
   for i ∈ eachindex(q)
     li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
     ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
     di = d[i]
-    di2 = di / 2
+    ci = λ2 / di
 
     qi = q[i]
     si = ψ.sj[i]
@@ -169,29 +191,25 @@ function iprox!(
         # yi = arg min h(xi + si + yi) + χ(si + yi | [li, ui])
         y[i] = (li ≤ -xi ≤ ui) ? -xs : zero(R)
         # maybe set something else than 0
-      else # check changes if di < 0
-        # possible minima locations:
-        # yi = li - si
-        # yi = ui - si
-        # yi = -xi - si, if: li + xi ≤ 0 ≤ ui + xi, leads to h(xi + si + yi) = 0
-        # yi = qi, if: di > 0 and li + xi ≤ xi + si + qi ≤ ui + xi
-        val_left = di2 * (li - sq)^2 + (xi == -li ? 0 : λ) # left: yi = li - si
-        val_right = di2 * (ui - sq)^2 + (xi == -ui ? 0 : λ) # right: yi = ui - si
-        # subtract x + s from solution explicitly here instead of doing it
-        # numerically at the end
-        y[i] = val_left < val_right ? (li - si) : (ui - si)
-        val_min = min(val_left, val_right)
-        if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi
-          # compute di * (xi + si + qi)^2 / 2 with y = -xi - si so that h(xi + si + y) = 0
-          val_0 = di2 * xsq^2
-          val_0 < val_min && (y[i] = -xs)
-          val_min = min(val_0, val_min)
-        end
-        if di > zero(R) && li ≤ sq ≤ ui  # <=> li + xi ≤ xi + si + qi ≤ ui + xi
-          # if yi = qi then the val is λ,
-          # except if xi + si + qi = 0 because in this case h(xi + si + qi) = 0
-          val_xsq = xsq == 0 ? zero(R) : λ
-          val_xsq < val_min && (y[i] = qi)
+      else
+        if di > zero(R)
+          # yi = arg min (yi - qi)^2 + 2λ||xi + si + yi||₀ / di + χ(si + yi | [li, ui])
+          y[i] = solve_ith_subproblem_proxL0(li, ui, xi, si, qi, xs, sq, xsq, ci)
+        else # di < zero(R)
+          # yi = arg max (yi - qi)^2 + 2λ||xi + si + yi||₀ / di - χ(si + yi | [li, ui])
+          # possible maxima locations:
+          # yi = li - si
+          # yi = ui - si
+          # yi = -xi - si, if: li + xi ≤ 0 ≤ ui + xi, leads to h(xi + si + yi) = 0
+          val_left = (li - sq)^2 + (xi == -li ? 0 : ci) # left: yi = li - si
+          val_right = (ui - sq)^2 + (xi == -ui ? 0 : ci) # right: yi = ui - si
+          y[i] = val_left > val_right ? (li - si) : (ui - si)
+          val_max = max(val_left, val_right)
+          if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi
+            # compute (xi + si + qi)^2 with y = -xi - si so that h(xi + si + y) = 0
+            val_0 = xsq^2
+            val_0 > val_max && (y[i] = -xs)
+          end
         end
       end
     else # min ½ di⁻¹ (y - qi)² subject to li - si ≤ y ≤ ui - si
