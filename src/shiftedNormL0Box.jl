@@ -132,3 +132,77 @@ function prox!(
   end
   return y
 end
+
+function iprox!(
+  y::AbstractVector{R},
+  ψ::ShiftedNormL0Box{R, T, V0, V1, V2, V3, V4},
+  q::AbstractVector{R},
+  d::AbstractVector{R},
+) where {
+  R <: Real,
+  T <: Integer,
+  V0 <: AbstractVector{R},
+  V1 <: AbstractVector{R},
+  V2 <: AbstractVector{R},
+  V3,
+  V4,
+}
+  λ = ψ.λ
+
+  for i ∈ eachindex(q)
+    li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
+    ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
+    di = d[i]
+    di2 = di / 2
+
+    qi = q[i]
+    si = ψ.sj[i]
+    sq = si + qi
+
+    # yi = arg min di * (yi - qi)^2 /2 + h(xi + si + yi) + χ(si + yi | [li, ui])
+    if i ∈ ψ.selected
+      xi = ψ.xk[i]
+      xs = xi + si
+      xsq = xs + qi
+
+      if abs(di) < eps(R) # consider di = 0 in this case
+        # yi = arg min h(xi + si + yi) + χ(si + yi | [li, ui])
+        y[i] = (li ≤ -xi ≤ ui) ? -xs : zero(R)
+        # maybe set something else than 0
+      else # check changes if di < 0
+        # possible minima locations:
+        # yi = li - si
+        # yi = ui - si
+        # yi = -xi - si, if: li + xi ≤ 0 ≤ ui + xi, leads to h(xi + si + yi) = 0
+        # yi = qi, if: di > 0 and li + xi ≤ xi + si + qi ≤ ui + xi
+        val_left = di2 * (li - sq)^2 + (xi == -li ? 0 : λ) # left: yi = li - si
+        val_right = di2 * (ui - sq)^2 + (xi == -ui ? 0 : λ) # right: yi = ui - si
+        # subtract x + s from solution explicitly here instead of doing it
+        # numerically at the end
+        y[i] = val_left < val_right ? (li - si) : (ui - si)
+        val_min = min(val_left, val_right)
+        if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi
+          # compute di * (xi + si + qi)^2 / 2 with y = -xi - si so that h(xi + si + y) = 0
+          val_0 = di2 * xsq^2
+          val_0 < val_min && (y[i] = -xs)
+          val_min = min(val_0, val_min)
+        end
+        if di > zero(R) && li ≤ sq ≤ ui  # <=> li + xi ≤ xi + si + qi ≤ ui + xi
+          # if yi = qi then the val is λ,
+          # except if xi + si + qi = 0 because in this case h(xi + si + qi) = 0
+          val_xsq = xsq == 0 ? zero(R) : λ
+          val_xsq < val_min && (y[i] = qi)
+        end
+      end
+    else # min ½ di⁻¹ (y - qi)² subject to li - si ≤ y ≤ ui - si
+      if di > eps(R)
+        y[i] = prox_zero(qi, li - si, ui - si)
+      elseif di < -eps(R)
+        y[i] = negative_prox_zero(qi, li - si, ui - si)
+      else
+        y[i] = zero(R)
+      end
+    end
+  end
+  return y
+end

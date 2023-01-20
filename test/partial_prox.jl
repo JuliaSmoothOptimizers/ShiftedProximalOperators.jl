@@ -37,5 +37,49 @@ for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
         @test z[i] == p[i]
       end
     end
+
+    if op == :NormL0
+      d = ones(n) # d = e
+      y = iprox(ω, q, d)
+      ω = shifted(ψ, s)
+      σ = 1.0
+      z = iprox(ω, q, d)
+      p = min.(max.(q, l - s), u - s)
+      for i = 1:n
+        if i ∈ selected
+          @test z[i] == y[i]
+        else
+          @test z[i] == p[i]
+        end
+      end
+
+      d = -ones(n) # d = -e
+      y = iprox(ω, q, d)
+      ω = shifted(ψ, s)
+      z = iprox(ω, q, d)
+      p = zeros(n)
+      for i=1:n
+        p[i] = (abs(u[i] - s[i] - q[i]) < abs(l[i] - s[i] - q[i])) ? (l[i] - s[i]) : (u[i] - s[i])
+      end
+      for i = 1:n
+        if i ∈ selected
+          @test z[i] == y[i]
+        else
+          @test z[i] == p[i]
+        end
+      end
+
+      d = zeros(n) # d = 0*e
+      y = iprox(ω, q, d)
+      ω = shifted(ψ, s)
+      z = iprox(ω, q, d)
+      for i = 1:n
+        if i ∈ selected
+          @test z[i] == y[i]
+        else
+          @test z[i] == 0.0
+        end
+      end
+    end
   end
 end

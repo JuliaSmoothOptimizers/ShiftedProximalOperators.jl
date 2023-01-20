@@ -18,7 +18,7 @@ function __init__()
 end
 
 export ShiftedProximableFunction
-export prox, prox!, set_radius!, shift!, shifted, set_bounds!
+export prox, prox!, iprox, iprox!, set_radius!, shift!, shifted, set_bounds!
 
 # import methods we override
 import ProximalOperators.prox, ProximalOperators.prox!
@@ -132,6 +132,25 @@ The solution is stored in the input vector `y` an `y` is returned.
 prox!
 
 """
+    iprox!(y, ψ, q, d)
+
+Evaluate the indefinite proximal operator of a separable box shifted regularizer, i.e, return
+a solution y of
+
+    minimize{yᵢ}  ½ dᵢ ‖yᵢ - qᵢ‖₂² + ψ(yᵢ), i ∈ {1, ..., length(q)}
+
+where
+
+* ψ is a `ShiftedProximableFunction` representing a model of the sum of a separable function h(x + s) and
+  the indicator of a trust region;
+* q is the vector where the shifted proximal operator should be evaluated;
+* d is a vector.
+
+The solution is stored in the input vector `y` an `y` is returned.
+"""
+iprox!
+
+"""
     prox(ψ, q, σ)
 
 See the documentation of `prox!`.
@@ -140,6 +159,16 @@ is returned.
 """
 prox(ψ::ShiftedProximableFunction, q::V, σ::R) where {R <: Real, V <: AbstractVector{R}} =
   prox!(ψ.sol, ψ, q, σ)
+
+"""
+    iprox(ψ, q, d)
+
+See the documentation of `iprox!`.
+In this form, the solution is stored in ψ's internal storage and a reference
+is returned.
+"""
+iprox(ψ::ShiftedProximableFunction, q::V, d::AbstractVector{R}) where {R <: Real, V <: AbstractVector{R}} =
+  iprox!(ψ.sol, ψ, q, d)
 
 """
     prox_zero(q, l, u)
@@ -153,6 +182,19 @@ separable nonsmooth term along a variable that is not part of those to which
 the nonsmooth term is applied.
 """
 @inline prox_zero(q::R, l::R, u::R) where {R <: Real} = min(max(q, l), u)
+
+"""
+    negative_prox_zero(q, l, u)
+
+Return the solution of
+
+    min ½ σ⁻¹ (y - q)² subject to l ≤ y ≤ u
+
+for any σ < 0. This problem occurs when computing the iprox with respect to a
+separable nonsmooth term along a variable that is not part of those to which
+the nonsmooth term is applied.
+"""
+negative_prox_zero(q::R, l::R, u::R) where {R <: Real} = (abs(u - q) < abs(l - q)) ? l : u
 
 """
     shifted(h, x)

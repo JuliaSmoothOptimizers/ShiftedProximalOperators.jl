@@ -8,6 +8,9 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0Box, :ShiftedNor
 
       # fixed parameters
       σ = 1.0
+      d = [1.0]
+      d2 = [-1.0]
+      d3 = [0.0]
       l = [0.0]
       u = [3.0]
       s = [-1.0]
@@ -26,6 +29,29 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0Box, :ShiftedNor
       # Case 7 : q ∈ [l-s,u-s], -(x+s) ∉ [l-s,u-s] -> solution : q
       # Case 8 : q ∈ [l-s,u-s], -(x+s) ∈ [l-s,u-s], obj(-(x+s)) < obj(q) -> solution : -(x+s)
       # Case 9 : q ∈ [l-s,u-s], -(x+s) ∈ [l-s,u-s], obj(-(x+s)) >= obj(q) -> solution : q
+
+      # Cases where d = [-1.0] for iprox
+      q2 = [[5.0], [5.0], [5.0], [0.0], [0.0], [0.0], [3.0], [3.0], [2.0]]
+      x2 = [[1.0], [-1.0], [-1.0], [1.0], [-1.0], [-1.0], [-1.0], [-1.0], [-1.0]]
+      λ2 = [1.0, 5.0, 3.0, 1.0, 7.0, 1.0, 2.0, 1.0, 1.0]
+      sol2 = [[1.0], [2.0], [1.0], [4.0], [2.0], [4.0], [2.0], [1.0], [4.0]]
+      # Case 1 : q > u-s ; -(x+s) ∉ [l-s,u-s] -> solution : l-s
+      # Case 2 : q > u-s , -(x+s) ∈ [l-s,u-s], obj(-(x+s)) < obj(l-s) -> solution : -(x+s)
+      # Case 3 : q > u-s, -(x+s) ∈ [l-s,u-s], obj(-(x+s)) >= obj(l-s) -> solution : l-s
+      # Case 4 : q < l-s, -(x+s) ∉ [l-s,u-s] -> solution : u-s
+      # Case 5 : q < l-s, -(x+s) ∈ [l-s,u-s], obj(-(x+s)) < obj(u-s) -> solution : -(x+s)
+      # Case 6 : q < l-s, -(x+s) ∈ [l-s,u-s], obj(-(x+s)) >= obj(u-s) -> solution : u-s
+      # Case 7 : q ∈ [l-s,u-s], -(x+s) ∈ [l-s,u-s], obj(-(x+s)) < min(obj(l-s), obj(u-s)) -> solution : -(x+s)
+      # Case 8 : q ∈ [l-s,u-s], -(x+s) ∈ [l-s,u-s], min(obj(-(x+s)), obj(u-s)) >= obj(l-s) -> solution : l-s
+      # Case 9 : q ∈ [l-s,u-s], -(x+s) ∈ [l-s,u-s], min(obj(-(x+s)), obj(l-s)) >= obj(u-s) -> solution : u-s
+
+      # Cases where d = [0.0] for iprox
+      q3 = [[5.0], [3.0]]
+      x3 = [[1.0], [-1.0]]
+      λ3 = [1.0, 1.0]
+      sol3 = [[0.0], [2.0]]
+      # Case 1 : -(x+s) ∉ [l-s,u-s] -> solution : 0
+      # Case 1 : -(x+s) ∈ [l-s,u-s] -> solution : -(x+s)
 
     elseif "$shifted_op" == "ShiftedNormL1Box"
 
@@ -65,5 +91,45 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0Box, :ShiftedNor
       ShiftedProximalOperators.prox(ω, qi, σ)
       @test ω.sol == sol[i]
     end
+    if "$shifted_op" == "ShiftedNormL0Box" # iprox
+      for i = 1:9
+        # d = 1.0
+        qi = q[i]
+        xi = x[i]
+        λi = λ[i]
+        h = eval(op)(λi)
+        ψ = shifted(h, xi, l, u)
+        ω = shifted(ψ, s)
+        ShiftedProximalOperators.iprox(ω, qi, d)
+        @test ω.sol == sol[i]
+
+        # d = -1.0
+        qi2 = q2[i]
+        xi2 = x2[i]
+        λi2 = λ2[i]
+        h = eval(op)(λi2)
+        ψ = shifted(h, xi2, l, u)
+        ω = shifted(ψ, s)
+        ShiftedProximalOperators.iprox(ω, qi2, d2)
+        @test ω.sol == sol2[i]
+
+        # d = 0.0
+        i ≤ 2 || continue
+        qi3 = q3[i]
+        xi3 = x3[i]
+        λi3 = λ3[i]
+        h = eval(op)(λi3)
+        ψ = shifted(h, xi3, l, u)
+        ω = shifted(ψ, s)
+        ShiftedProximalOperators.iprox(ω, qi3, d3)
+        @test ω.sol == sol3[i]
+      end
+    end
   end
+end
+
+function obj(y, q, x, λ)
+  h = (x - 1.0 + y == 0.0) ? 0.0 : λ
+  val = (1.0 ≤ y ≤ 4.0) ? (-1.0 * (y - q)^2 / 2 + h) : +Inf
+  return val
 end
