@@ -187,30 +187,28 @@ function iprox!(
       xs = xi + si
       xsq = xs + qi
 
-      if abs(di) < eps(R) # consider di = 0 in this case
+      if di > eps(R)
+        # yi = arg min (yi - qi)^2 + 2λ||xi + si + yi||₀ / di + χ(si + yi | [li, ui])
+        y[i] = solve_ith_subproblem_proxL0(li, ui, xi, si, qi, xs, sq, xsq, ci)
+      elseif di < -eps(R)
+        # yi = arg max (yi - qi)^2 + 2λ||xi + si + yi||₀ / di - χ(si + yi | [li, ui])
+        # possible maxima locations:
+        # yi = li - si
+        # yi = ui - si
+        # yi = -xi - si, if: li + xi ≤ 0 ≤ ui + xi, leads to h(xi + si + yi) = 0
+        val_left = (li - sq)^2 + (xi == -li ? 0 : ci) # left: yi = li - si
+        val_right = (ui - sq)^2 + (xi == -ui ? 0 : ci) # right: yi = ui - si
+        y[i] = val_left > val_right ? (li - si) : (ui - si)
+        val_max = max(val_left, val_right)
+        if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi
+          # compute (xi + si + qi)^2 with y = -xi - si so that h(xi + si + y) = 0
+          val_0 = xsq^2
+          val_0 > val_max && (y[i] = -xs)
+        end
+      else # abs(di) < eps(R) (consider di = 0 in this case)
         # yi = arg min h(xi + si + yi) + χ(si + yi | [li, ui])
         y[i] = (li ≤ -xi ≤ ui) ? -xs : zero(R)
         # maybe set something else than 0
-      else
-        if di > zero(R)
-          # yi = arg min (yi - qi)^2 + 2λ||xi + si + yi||₀ / di + χ(si + yi | [li, ui])
-          y[i] = solve_ith_subproblem_proxL0(li, ui, xi, si, qi, xs, sq, xsq, ci)
-        else # di < zero(R)
-          # yi = arg max (yi - qi)^2 + 2λ||xi + si + yi||₀ / di - χ(si + yi | [li, ui])
-          # possible maxima locations:
-          # yi = li - si
-          # yi = ui - si
-          # yi = -xi - si, if: li + xi ≤ 0 ≤ ui + xi, leads to h(xi + si + yi) = 0
-          val_left = (li - sq)^2 + (xi == -li ? 0 : ci) # left: yi = li - si
-          val_right = (ui - sq)^2 + (xi == -ui ? 0 : ci) # right: yi = ui - si
-          y[i] = val_left > val_right ? (li - si) : (ui - si)
-          val_max = max(val_left, val_right)
-          if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi
-            # compute (xi + si + qi)^2 with y = -xi - si so that h(xi + si + y) = 0
-            val_0 = xsq^2
-            val_0 > val_max && (y[i] = -xs)
-          end
-        end
       end
     else # min ½ di⁻¹ (y - qi)² subject to li - si ≤ y ≤ ui - si
       if di > eps(R)

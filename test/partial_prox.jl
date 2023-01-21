@@ -38,7 +38,7 @@ for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
       end
     end
 
-    if op == :NormL0
+    if op == :NormL0 || op == :NormL1
       d = ones(n) # d = e
       y = iprox(ω, q, d)
       ω = shifted(ψ, s)

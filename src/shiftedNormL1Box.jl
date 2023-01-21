@@ -126,3 +126,77 @@ function prox!(
   end
   return y
 end
+
+function iprox!(
+  y::AbstractVector{R},
+  ψ::ShiftedNormL1Box{R, T, V0, V1, V2, V3, V4},
+  q::AbstractVector{R},
+  d::AbstractVector{R},
+) where {
+  R <: Real,
+  T <: Integer,
+  V0 <: AbstractVector{R},
+  V1 <: AbstractVector{R},
+  V2 <: AbstractVector{R},
+  V3,
+  V4,
+}
+
+  λ = ψ.λ
+  λ2 = 2 * λ
+
+  for i ∈ eachindex(y)
+    li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
+    ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
+
+    qi = q[i]
+    si = ψ.sj[i]
+    di = d[i]
+    sq = si + qi
+
+    if i ∈ ψ.selected
+      xi = ψ.xk[i]
+      xs = xi + si
+      xsq = xs + qi
+
+      if di > eps(R)
+        ci = λ / di
+        y[i] = if xsq ≤ -ci
+          qi + ci
+        elseif xsq ≥ ci
+          qi - ci
+        else
+          -xs
+        end
+        y[i] = min(max(y[i], li - si), ui - si)
+      elseif di < -eps(R)
+        # yi = arg max (yi - qi)^2 + 2λ|xi + si + yi| / di - χ(si + yi | [li, ui])
+        # possible maxima locations:
+        # yi = li - si
+        # yi = ui - si
+        # yi = -xi - si, if: li + xi ≤ 0 ≤ ui + xi, leads to h(xi + si + yi) = 0
+        ci = λ2 / di
+        val_left = (li - sq)^2 + ci * abs(xi + li) # left: yi = li - si
+        val_right = (ui - sq)^2 + ci * abs(xi + ui) # right: yi = ui - si
+        y[i] = val_left > val_right ? (li - si) : (ui - si)
+        val_max = max(val_left, val_right)
+        if (li ≤ -xi ≤ ui)
+          val_0 = xsq^2
+          (val_0 > val_max) && (y[i] = -xs)
+        end
+      else # abs(di) < eps(R) , (we consider di = 0)
+        y[i] = prox_zero(-xs, li - si, ui - si)
+      end 
+
+    else # min ½ di (y - qi)² subject to li-si ≤ y ≤ ui-si
+      if di > eps(R)
+        y[i] = prox_zero(qi, li - si, ui - si)
+      elseif di < -eps(R)
+        y[i] = negative_prox_zero(qi, li - si, ui - si)
+      else
+        y[i] = zero(R)
+      end
+    end
+  end
+  return y
+end
