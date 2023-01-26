@@ -400,12 +400,11 @@ for (op, tr, shifted_op) ∈ zip(
 
     # test radius / bounds update
     Δ2 = 1.1
+    set_radius!(ψ, Δ2)
     if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box")
-      set_bounds!(ψ, -Δ2, Δ2)
       @test ψ.l == -Δ2
       @test ψ.u == Δ2
     else
-      set_radius!(ψ, Δ2)
       @test ψ.Δ == Δ2
     end
 
