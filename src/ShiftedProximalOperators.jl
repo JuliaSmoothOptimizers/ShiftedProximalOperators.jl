@@ -150,7 +150,9 @@ The solution is stored in the input vector `y` an `y` is returned.
 
     iprox!(y, ψ, q, σ)
 
-where `σ` is a positive regularization parameter returns `prox!(y, ψ, q, σ)` and an error if `σ ≤ 0`.
+where `σ` is a regularization parameter returns `prox!(y, ψ, q, σ)`.
+If `σ > 0`, redirects to the `prox!` implementation.
+If `σ ≤ 0` and the indefinite proximal operator is not implemented for `ψ`, returns an error. 
 """
 iprox!
 
@@ -160,7 +162,7 @@ function iprox!(
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real}
-  @assert σ > zero(R)
+  σ > zero(R) || error("iprox not implemented for this operator")
   prox!(y, ψ, q, σ)
 end
 
@@ -212,6 +214,20 @@ separable nonsmooth term along a variable that is not part of those to which
 the nonsmooth term is applied.
 """
 negative_prox_zero(q::R, l::R, u::R) where {R <: Real} = (abs(u - q) < abs(l - q)) ? l : u
+
+# min ½ d⁻¹ (y - q)² subject to l - s ≤ y ≤ u - s, useful when computing the iprox
+# with respect to a separable nonsmooth term along a variable that is not part of those to which
+# the nonsmooth term is applied.
+function iprox_zero(q::R, l::R, u::R, s::R, d::R) where {R <: Real}
+  if d > eps(R)
+    y = prox_zero(q, l - s, u - s)
+  elseif d < -eps(R)
+    y = negative_prox_zero(q, l - s, u - s)
+  else
+    y = zero(R)
+  end
+  return y
+end
 
 """
     shifted(h, x)
