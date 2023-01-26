@@ -389,7 +389,13 @@ for (op, tr, shifted_op) ∈ zip(
         0.010000000000000,
       ]
     end
+    
     s = ShiftedProximalOperators.prox(ψ, q, ν)
+    @test all(s .≈ s_correct)
+    @test χ(s) ≤ Δ
+
+    # test iprox redirection to prox if ν > 0
+    s = ShiftedProximalOperators.iprox(ψ, q, ν)
     @test all(s .≈ s_correct)
     @test χ(s) ≤ Δ
 
