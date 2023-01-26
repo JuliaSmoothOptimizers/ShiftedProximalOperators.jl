@@ -113,6 +113,8 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0Box, :ShiftedNor
       ω = shifted(ψ, s)
       ShiftedProximalOperators.prox(ω, qi, σ)
       @test ω.sol == sol[i]
+      ShiftedProximalOperators.iprox(ω, qi, σ)
+      @test ω.sol == sol[i]
     end
     # iprox, d = 1.0
     for i = 1:9

@@ -147,8 +147,22 @@ where
 * d is a vector.
 
 The solution is stored in the input vector `y` an `y` is returned.
+
+    iprox!(y, ψ, q, σ)
+
+where `σ` is a positive regularization parameter returns `prox!(y, ψ, q, σ)` and an error if `σ ≤ 0`.
 """
 iprox!
+
+function iprox!(
+  y::AbstractVector{R},
+  ψ::ShiftedProximableFunction,
+  q::AbstractVector{R},
+  σ::R,
+) where {R <: Real}
+  @assert σ > zero(R)
+  prox!(y, ψ, q, σ)
+end
 
 """
     prox(ψ, q, σ)
@@ -162,6 +176,7 @@ prox(ψ::ShiftedProximableFunction, q::V, σ::R) where {R <: Real, V <: Abstract
 
 """
     iprox(ψ, q, d)
+    iprox(ψ, q, σ)
 
 See the documentation of `iprox!`.
 In this form, the solution is stored in ψ's internal storage and a reference
@@ -169,6 +184,8 @@ is returned.
 """
 iprox(ψ::ShiftedProximableFunction, q::V, d::AbstractVector{R}) where {R <: Real, V <: AbstractVector{R}} =
   iprox!(ψ.sol, ψ, q, d)
+iprox(ψ::ShiftedProximableFunction, q::V, σ::R) where {R <: Real, V <: AbstractVector{R}} =
+  iprox!(ψ.sol, ψ, q, σ)
 
 """
     prox_zero(q, l, u)
