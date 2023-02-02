@@ -167,6 +167,7 @@ V4,
     xs = xi + si
 
     if i ∈ ψ.selected
+
       if abs(di) < eps(R) # consider di == 0
         if gi == zero(R)
           y[i] = (li ≤ -xi ≤ ui) ? -xs : zero(R)
@@ -187,38 +188,54 @@ V4,
             val_min = min(val_0, val_min)
           end        
         end
+
       else # di != 0
         di_2 = di / 2
         left = li - si
         right = ui - si
+        gi2_di = gi / di_2 # 2 gi / di
+        λ2_di = λ / di_2 # 2 λ / di
+
         if di ≥ eps(R)
+          # arg min yi² + 2giyi / di + 2λ||xi + si + yi||₀ / di + χ(si + yi | [li, ui])
           argmin_quad = -gi / di
-          if left ≤ argmin_quad ≤ right  # <=> li + xi ≤ xsq ≤ ui + xi
+          if left ≤ argmin_quad ≤ right  # <=> li - si ≤ -gi / di ≤ ui - si
             if gi == 0
-              val_min = xs == 0 ? zero(R) : λ
+              val_min = xs == 0 ? zero(R) : λ2_di
             else
-              val_min = (argmin_quad + xs == 0) ? (-gi^2 / (2 * di)) : (-gi^2 / (2 * di) + λ)
+              # (gi / di)² - 2 gi * (gi / di) / di + 2λ||xi + si + yi||₀ / di
+              # = - (gi / di)^2 + 2λ||xi + si + yi||₀ / di
+              val_min = (argmin_quad + xs == 0) ? (-argmin_quad^2) : (-argmin_quad^2 + λ2_di)
             end
             y[i] = argmin_quad
           else
-            val_left = di_2 * left^2 + gi * left + (xi == -li ? 0 : λ)
-            val_right = di_2 * right^2 + gi * right + (xi == -ui ? 0 : λ)
+            val_left = left^2 + gi2_di * left + (xi == -li ? 0 : λ2_di)
+            val_right = right^2 + gi2_di * right + (xi == -ui ? 0 : λ2_di)
             y[i] = (val_left < val_right) ? left : right
             val_min = min(val_left, val_right)
           end
+          # check value when h(xi+si+yi) = 0
+          if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi 
+            val_0 = xs^2 - gi2_di * xs # (xi + si)^2 - 2gi (xi + si) / di
+            (val_0 < val_min) && (y[i] = -xs)
+            val_min = min(val_0, val_min)
+          end
+
         else # di ≤ eps(R)
-          val_left = di_2 * left^2 + gi * left + (xi == -li ? 0 : λ)
-          val_right = di_2 * right^2 + gi * right + (xi == -ui ? 0 : λ)
-          y[i] = (val_left < val_right) ? left : right
-          val_min = min(val_left, val_right)
-        end
-        # check value when h(xi+si+yi) = 0
-        if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi 
-          val_0 = di_2 * xs^2 - gi * xs
-          (val_0 < val_min) && (y[i] = -xs)
-          val_min = min(val_0, val_min)
+          # arg max yi² + 2giyi / di + 2λ||xi + si + yi||₀ / di - χ(si + yi | [li, ui])
+          val_left = left^2 + gi2_di * left + (xi == -li ? 0 : λ2_di)
+          val_right = right^2 + gi2_di * right + (xi == -ui ? 0 : λ2_di)
+          y[i] = (val_left > val_right) ? left : right
+          val_max = max(val_left, val_right)
+          # check value when h(xi+si+yi) = 0
+          if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi 
+            val_0 = xs^2 - gi2_di * xs # (xi + si)^2 - 2gi (xi + si) / di
+            (val_0 > val_max) && (y[i] = -xs)
+            val_max = max(val_0, val_max)
+          end
         end
       end
+
     else
       y[i] = iprox_zero(di, gi, li - si, ui - si) 
     end

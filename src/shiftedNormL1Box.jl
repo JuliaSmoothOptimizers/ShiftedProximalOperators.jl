@@ -163,6 +163,7 @@ V4,
     if i ∈ ψ.selected
       left = li - si
       right = ui - si
+
       if abs(di) ≤ eps(R)
         # arg min gi (xi + si + yi) + λ |xi + si + yi|
         if abs(gi) ≤ λ
@@ -170,17 +171,20 @@ V4,
         else
           y[i] = (gi > 0) ? left : right
         end
+
       elseif di > eps(R)
-        # arg min di yi²/2 + gi (xi + si + yi) + λ |xi + si + yi|
+        # arg min yi² + 2gi (xi + si + yi) / di + 2λ |xi + si + yi| / di + χ(si + yi | [li, ui])
         di_2 = di / 2
         lx = li + xi
         ux = ui + xi
+        gi2_di = gi / di_2 # 2 gi / di
+        λ2_di = λ / di_2 # 2 λ / di
         if gi == zero(R)
-          val_left = di_2 * left^2 + λ * abs(lx)
-          val_right = di_2 * right^2 + λ * abs(ux)
+          val_left = left^2 + λ2_di * abs(lx)
+          val_right = right^2 + λ2_di * abs(ux)
         else
-          val_left = di_2 * left^2 + gi * lx + λ * abs(lx)
-          val_right = di_2 * right^2 + gi * ux + λ * abs(ux)
+          val_left = left^2 + gi2_di * lx + λ2_di * abs(lx)
+          val_right = right^2 + gi2_di * ux + λ2_di * abs(ux)
         end
         val_min = min(val_left, val_right)
         y[i] = val_left < val_right ? left : right
@@ -195,40 +199,44 @@ V4,
           argmin_quad2 = (λ - gi) / di
           if left ≤ argmin_quad1 ≤ right
             argmin_quad1_xs = xs + argmin_quad1
-            val_min_quad1 = di_2 * argmin_quad1^2 + gi * argmin_quad1_xs + λ * abs(argmin_quad1_xs)
+            val_min_quad1 = argmin_quad1^2 + gi2_di * argmin_quad1_xs + λ2_di * abs(argmin_quad1_xs)
             (val_min_quad1 < val_min) && (y[i] = argmin_quad1)
             val_min = min(val_min_quad1, val_min)
           end
           if left ≤ argmin_quad2 ≤ right
             argmin_quad2_xs = xs + argmin_quad2
-            val_min_quad2 = di_2 * argmin_quad2^2 + gi * argmin_quad2_xs + + λ * abs(argmin_quad2_xs)
+            val_min_quad2 = argmin_quad2^2 + gi2_di * argmin_quad2_xs + λ2_di * abs(argmin_quad2_xs)
             (val_min_quad2 < val_min) && (y[i] = argmin_quad2)
             val_min = min(val_min_quad2, val_min)
           end
-          val_0 = di_2 * xs^2
+          val_0 = xs^2
           (val_0 < val_min) && (y[i] = -xs)
           val_min = min(val_0, val_min)
         end
+
       else # di ≤ -eps(R)
-        # arg min di yi²/2 + gi (xi + si + yi) + λ |xi + si + yi|
+        # arg max yi² + 2gi (xi + si + yi) / di + 2λ |xi + si + yi| / di - χ(si + yi | [li, ui])
         di_2 = di / 2
+        gi2_di = gi / di_2 # 2 gi / di
+        λ2_di = λ / di_2 # 2 λ / di
         lx = li + xi
         ux = ui + xi
         if gi == zero(R)
-          val_left = di_2 * left^2 + λ * abs(lx)
-          val_right = di_2 * right^2 + λ * abs(ux)
+          val_left = left^2 + λ2_di * abs(lx)
+          val_right = right^2 + λ2_di * abs(ux)
         else
-          val_left = di_2 * left^2 + gi * lx + λ * abs(lx)
-          val_right = di_2 * right^2 + gi * (ux) + λ * abs(ux)
+          val_left = left^2 + gi2_di * lx + λ2_di * abs(lx)
+          val_right = right^2 + gi2_di * ux + λ2_di * abs(ux)
         end
-        val_min = min(val_left, val_right)
-        y[i] = (val_left < val_right) ? left : right
+        val_max = max(val_left, val_right)
+        y[i] = (val_left > val_right) ? left : right
         if li ≤ -xi ≤ ui
-          val_0 = di_2 * xs^2
-          (val_0 < val_min) && (y[i] = -xs)
-          val_min = min(val_0, val_min)
+          val_0 = xs^2
+          (val_0 > val_max) && (y[i] = -xs)
+          val_max = max(val_0, val_max)
         end
       end
+      
     else
       y[i] = iprox_zero(di, gi, li - si, ui - si) 
     end
