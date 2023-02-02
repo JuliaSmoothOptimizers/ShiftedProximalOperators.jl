@@ -18,7 +18,7 @@ function __init__()
 end
 
 export ShiftedProximableFunction
-export prox, prox!, set_radius!, shift!, shifted, set_bounds!
+export prox, prox!, iprox, iprox!, set_radius!, shift!, shifted, set_bounds!
 
 # import methods we override
 import ProximalOperators.prox, ProximalOperators.prox!
@@ -134,6 +134,21 @@ The solution is stored in the input vector `y` an `y` is returned.
 prox!
 
 """
+    iprox!(y, ψ, g, d)
+
+Evaluate the indefinite proximal operator of a separable box shifted regularizer, i.e, return
+a solution y of
+    minimize{yᵢ}  ½ dᵢyᵢ² + gᵢ yᵢ + ψ(yᵢ), i ∈ {1, ..., length(q)}
+where
+* ψ is a `ShiftedProximableFunction` representing a model of the sum of a separable function h(x + s) and
+  the indicator of a trust region;
+* q is the vector where the shifted proximal operator should be evaluated;
+* d is a vector.
+The solution is stored in the input vector `y` an `y` is returned.
+"""
+iprox!
+
+"""
     prox(ψ, q, σ)
 
 See the documentation of `prox!`.
@@ -155,6 +170,39 @@ separable nonsmooth term along a variable that is not part of those to which
 the nonsmooth term is applied.
 """
 @inline prox_zero(q::R, l::R, u::R) where {R <: Real} = min(max(q, l), u)
+
+"""
+    iprox_zero(d, g, l, u)
+
+Return the solution of
+
+    min ½ d y² + g y subject to l ≤ y ≤ u
+
+for any d, g, assuming that 0 ∈ [l, u] if d < eps() and g = 0.
+This problem occurs when computing the iprox with respect to a
+separable nonsmooth term along a variable that is not part of those to which
+the nonsmooth term is applied.
+"""
+function iprox_zero(d::R, g::R, l::R, u::R) where {R <: Real}
+  if d > eps(R) 
+    argmin_quad = -g / d
+    y = min(max(argmin_quad, l), u)
+  elseif d < -eps(R)
+    d_2 = d / 2
+    val_l = d_2 * l^2 + g * l
+    val_u = d_2 * u^2 + g * u
+    y = (val_l < val_u) ? l : u
+  else # abs(d) ≤ eps(R)
+    if g > zero(R)
+      y = l
+    elseif g < zero(R)
+      y = u
+    else # g == 0
+      y = zero(R)
+    end
+  end
+  return y
+end
 
 """
     shifted(h, x)

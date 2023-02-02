@@ -133,3 +133,105 @@ function prox!(
   end
   return y
 end
+
+# arg min yᵀDy/2 + gᵀy + λ h(x + s + y) + χ(y | [l-s, u-s]) 
+function iprox!(
+  y::AbstractVector{R},
+  ψ::ShiftedNormL1Box{R, T, V0, V1, V2, V3, V4},
+  g::AbstractVector{R},
+  d::AbstractVector{R},
+) where {
+R <: Real,
+T <: Integer,
+V0 <: AbstractVector{R},
+V1 <: AbstractVector{R},
+V2 <: AbstractVector{R},
+V3,
+V4,
+}
+  λ = ψ.λ
+
+  for i ∈ eachindex(y)
+    li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
+    ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
+    di = d[i]
+    gi = g[i]
+    si = ψ.sj[i]
+    xi = ψ.xk[i]
+    xs = xi + si
+
+    if i ∈ ψ.selected
+      left = li - si
+      right = ui - si
+      if abs(di) ≤ eps(R)
+        # arg min gi (xi + si + yi) + λ |xi + si + yi|
+        if abs(gi) ≤ λ
+          y[i] = min(max(left, -xs), right)
+        else
+          y[i] = (gi > 0) ? left : right
+        end
+      elseif di > eps(R)
+        # arg min di yi²/2 + gi (xi + si + yi) + λ |xi + si + yi|
+        di_2 = di / 2
+        lx = li + xi
+        ux = ui + xi
+        if gi == zero(R)
+          val_left = di_2 * left^2 + λ * abs(lx)
+          val_right = di_2 * right^2 + λ * abs(ux)
+        else
+          val_left = di_2 * left^2 + gi * lx + λ * abs(lx)
+          val_right = di_2 * right^2 + gi * ux + λ * abs(ux)
+        end
+        val_min = min(val_left, val_right)
+        y[i] = val_left < val_right ? left : right
+        if li ≥ -xi
+          argmin_quad = -(gi + λ) / di
+          (left ≤ argmin_quad ≤ right) && (y[i] = argmin_quad)
+        elseif -xi ≥ ui
+          argmin_quad = (λ - gi) / di
+          (left ≤ argmin_quad ≤ right) && (y[i] = argmin_quad)
+        else # li ≤ -xi ≤ ui, so xi + si + yi changes sign in [li - si, ui - si]
+          argmin_quad1 = -(gi + λ) / di
+          argmin_quad2 = (λ - gi) / di
+          if left ≤ argmin_quad1 ≤ right
+            argmin_quad1_xs = xs + argmin_quad1
+            val_min_quad1 = di_2 * argmin_quad1^2 + gi * argmin_quad1_xs + λ * abs(argmin_quad1_xs)
+            (val_min_quad1 < val_min) && (y[i] = argmin_quad1)
+            val_min = min(val_min_quad1, val_min)
+          end
+          if left ≤ argmin_quad2 ≤ right
+            argmin_quad2_xs = xs + argmin_quad2
+            val_min_quad2 = di_2 * argmin_quad2^2 + gi * argmin_quad2_xs + + λ * abs(argmin_quad2_xs)
+            (val_min_quad2 < val_min) && (y[i] = argmin_quad2)
+            val_min = min(val_min_quad2, val_min)
+          end
+          val_0 = di_2 * xs^2
+          (val_0 < val_min) && (y[i] = -xs)
+          val_min = min(val_0, val_min)
+        end
+      else # di ≤ -eps(R)
+        # arg min di yi²/2 + gi (xi + si + yi) + λ |xi + si + yi|
+        di_2 = di / 2
+        lx = li + xi
+        ux = ui + xi
+        if gi == zero(R)
+          val_left = di_2 * left^2 + λ * abs(lx)
+          val_right = di_2 * right^2 + λ * abs(ux)
+        else
+          val_left = di_2 * left^2 + gi * lx + λ * abs(lx)
+          val_right = di_2 * right^2 + gi * (ux) + λ * abs(ux)
+        end
+        val_min = min(val_left, val_right)
+        y[i] = (val_left < val_right) ? left : right
+        if li ≤ -xi ≤ ui
+          val_0 = di_2 * xs^2
+          (val_0 < val_min) && (y[i] = -xs)
+          val_min = min(val_0, val_min)
+        end
+      end
+    else
+      y[i] = iprox_zero(di, gi, li - si, ui - si) 
+    end
+  end
+  return y
+end
