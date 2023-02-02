@@ -139,3 +139,89 @@ function prox!(
   end
   return y
 end
+
+# arg min yᵀDy/2 + gᵀy + λ h(x + s + y) + χ(y | [l-s, u-s]) 
+function iprox!(
+  y::AbstractVector{R},
+  ψ::ShiftedNormL0Box{R, T, V0, V1, V2, V3, V4},
+  g::AbstractVector{R},
+  d::AbstractVector{R},
+) where {
+R <: Real,
+T <: Integer,
+V0 <: AbstractVector{R},
+V1 <: AbstractVector{R},
+V2 <: AbstractVector{R},
+V3,
+V4,
+}
+  λ = ψ.λ
+
+  for i ∈ eachindex(y)
+    li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
+    ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
+    di = d[i]
+    gi = g[i]
+    si = ψ.sj[i]
+    xi = ψ.xk[i]
+    xs = xi + si
+
+    if i ∈ ψ.selected
+      if abs(di) < eps(R) # consider di == 0
+        if gi == zero(R)
+          y[i] = (li ≤ -xi ≤ ui) ? -xs : zero(R)
+        else
+          if gi > zero(R)
+            left = li - si
+            val_min = gi * left + (xi == -li ? 0 : λ)
+            y[i] = left
+          elseif gi < zero(R)
+            right = ui - si
+            val_min = gi * right + (xi == -ui ? 0 : λ)
+            y[i] = right
+          end
+          # check value when h(xi+si+yi) = 0
+          if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi
+            val_0 = - gi * xs
+            (val_0 < val_min) && (y[i] = -xs)
+            val_min = min(val_0, val_min)
+          end        
+        end
+      else # di != 0
+        di_2 = di / 2
+        left = li - si
+        right = ui - si
+        if di ≥ eps(R)
+          argmin_quad = -gi / di
+          if left ≤ argmin_quad ≤ right  # <=> li + xi ≤ xsq ≤ ui + xi
+            if gi == 0
+              val_min = xs == 0 ? zero(R) : λ
+            else
+              val_min = (argmin_quad + xs == 0) ? (-gi^2 / (2 * di)) : (-gi^2 / (2 * di) + λ)
+            end
+            y[i] = argmin_quad
+          else
+            val_left = di_2 * left^2 + gi * left + (xi == -li ? 0 : λ)
+            val_right = di_2 * right^2 + gi * right + (xi == -ui ? 0 : λ)
+            y[i] = (val_left < val_right) ? left : right
+            val_min = min(val_left, val_right)
+          end
+        else # di ≤ eps(R)
+          val_left = di_2 * left^2 + gi * left + (xi == -li ? 0 : λ)
+          val_right = di_2 * right^2 + gi * right + (xi == -ui ? 0 : λ)
+          y[i] = (val_left < val_right) ? left : right
+          val_min = min(val_left, val_right)
+        end
+        # check value when h(xi+si+yi) = 0
+        if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi 
+          val_0 = di_2 * xs^2 - gi * xs
+          (val_0 < val_min) && (y[i] = -xs)
+          val_min = min(val_0, val_min)
+        end
+      end
+    else
+      y[i] = iprox_zero(di, gi, li - si, ui - si) 
+    end
+  end
+  return y
+end
