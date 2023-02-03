@@ -149,6 +149,15 @@ The solution is stored in the input vector `y` an `y` is returned.
 iprox!
 
 """
+    iprox(ψ, g, d)
+
+See the documentation of `iprox!`.
+In this form, the solution is stored in ψ's internal storage and a reference
+is returned.
+"""
+iprox(ψ::ShiftedProximableFunction, g::AbstractVector, d::AbstractVector) = iprox!(ψ.sol, ψ, g, d)
+
+"""
     prox(ψ, q, σ)
 
 See the documentation of `prox!`.
