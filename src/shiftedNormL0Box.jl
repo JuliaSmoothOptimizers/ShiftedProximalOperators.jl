@@ -57,8 +57,7 @@ shifted(
   Δ::R,
   χ::Conjugate{IndBallL1{R}},
   selected::AbstractArray{T} = 1:length(xk),
-) where {R <: Real, T <: Integer} =
-  ShiftedNormL0Box(h, xk, zero(xk), -Δ, Δ, false, selected)
+) where {R <: Real, T <: Integer} = ShiftedNormL0Box(h, xk, zero(xk), -Δ, Δ, false, selected)
 shifted(
   ψ::ShiftedNormL0Box{R, T, V0, V1, V2, V3, V4},
   sj::AbstractVector{R},
