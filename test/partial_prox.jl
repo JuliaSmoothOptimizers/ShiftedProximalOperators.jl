@@ -37,5 +37,22 @@ for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
         @test z[i] == p[i]
       end
     end
+
+    # tests iprox
+    if op == :NormL0 || op == :NormL1
+      for d ∈ [ones(n), -ones(n), zeros(n)]
+        y = iprox(ω, q, d)
+        ω = shifted(ψ, s)
+        z = iprox(ω, q, d)
+        p = ShiftedProximalOperators.iprox_zero.(d, q, l - s, u - s)
+        for i = 1:n
+          if i ∈ selected
+            @test z[i] == y[i]
+          else
+            @test z[i] == p[i]
+          end
+        end
+      end
+    end
   end
 end
