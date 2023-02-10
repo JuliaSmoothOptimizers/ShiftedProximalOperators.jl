@@ -138,11 +138,11 @@ prox!
 
 Evaluate the indefinite proximal operator of a separable box shifted regularizer, i.e, return
 a solution y of
-    minimize{yᵢ}  ½ dᵢyᵢ² + gᵢ yᵢ + ψ(yᵢ), i ∈ {1, ..., length(q)}
+    minimize{yᵢ}  ½ dᵢyᵢ² + gᵢ yᵢ + ψ(yᵢ), i ∈ {1, ..., length(y)}
 where
 * ψ is a `ShiftedProximableFunction` representing a model of the sum of a separable function h(x + s) and
   the indicator of a trust region;
-* q is the vector where the shifted proximal operator should be evaluated;
+* g is a vector;
 * d is a vector.
 The solution is stored in the input vector `y` an `y` is returned.
 """
