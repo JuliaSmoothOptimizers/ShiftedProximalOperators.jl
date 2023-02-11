@@ -140,7 +140,10 @@ function prox!(
   return y
 end
 
-# arg min yᵀDy/2 + gᵀy + λ h(x + s + y) + χ(y | [l-s, u-s]) 
+# arg min yᵀDy/2 + gᵀy + λ h(x + s + y) + χ(y | [l-s, u-s])
+# variable change v = x + s + y:
+# arg min vᵀDv/2 + fᵀv + λ h(v) + χ(v | [l+x, u+x])
+# with fᵢ = gᵢ - dᵢ(xᵢ + sᵢ)
 function iprox!(
   y::AbstractVector{R},
   ψ::ShiftedNormL0Box{R, T, V0, V1, V2, V3, V4},
@@ -169,6 +172,8 @@ V4,
     if i ∈ ψ.selected
 
       if abs(di) < eps(R) # consider di == 0
+        # arg min gi (xi + si + yi) + λ |xi + si + yi|₀
+        # arg min gi vi + λ |vi|₀
         if gi == zero(R)
           y[i] = (li ≤ -xi ≤ ui) ? -xs : zero(R)
         else
@@ -193,43 +198,43 @@ V4,
         di_2 = di / 2
         left = li - si
         right = ui - si
+        lx = li + xi
+        ux = ui + xi
         gi2_di = gi / di_2 # 2 gi / di
+        fi2_di = gi2_di - 2 * xs # 2fi / di = 2gi / di - 2(xi + si)
         λ2_di = λ / di_2 # 2 λ / di
 
         if di ≥ eps(R)
-          # arg min yi² + 2giyi / di + 2λ||xi + si + yi||₀ / di + χ(si + yi | [li, ui])
-          argmin_quad = -gi / di
-          if left ≤ argmin_quad ≤ right  # <=> li - si ≤ -gi / di ≤ ui - si
-            if gi == 0
-              val_min = xs == 0 ? zero(R) : λ2_di
-            else
-              # (gi / di)² - 2 gi * (gi / di) / di + 2λ||xi + si + yi||₀ / di
-              # = - (gi / di)^2 + 2λ||xi + si + yi||₀ / di
-              val_min = (argmin_quad + xs == 0) ? (-argmin_quad^2) : (-argmin_quad^2 + λ2_di)
-            end
-            y[i] = argmin_quad
+          # arg min vi² + 2fi vi / di + 2λ |vi| / di + χ(vi | [li + xi, ui + xi])
+          argmin_quad_y = -gi / di # arg min for initial problem
+          argmin_quad_v = argmin_quad_y + xs # arg min for problem with variable change
+          if lx ≤ argmin_quad_v ≤ ux  # <=> li - si ≤ -gi / di ≤ ui - si
+            # (fi / di)² - 2 gi * (fi / di) / di + 2λ|vi|₀ / di
+            # = - (fi / di)^2 + 2λ|vi|₀ / di
+            val_min = (argmin_quad_v == 0) ? (-argmin_quad_v^2) : (-argmin_quad_v^2 + λ2_di)
+            y[i] = argmin_quad_y
           else
-            val_left = left^2 + gi2_di * left + (xi == -li ? 0 : λ2_di)
-            val_right = right^2 + gi2_di * right + (xi == -ui ? 0 : λ2_di)
+            val_left = (lx == zero(R)) ? zero(R) : (lx^2 + fi2_di * lx + λ2_di)
+            val_right = (ux == zero(R)) ? zero(R) : (ux^2 + fi2_di * ux + λ2_di)
             y[i] = (val_left < val_right) ? left : right
             val_min = min(val_left, val_right)
           end
-          # check value when h(xi+si+yi) = 0
+          # check value when h(vi) = 0
           if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi 
-            val_0 = xs^2 - gi2_di * xs # (xi + si)^2 - 2gi (xi + si) / di
+            val_0 = zero(R) # if vi = 0 ,  yi = - xi - si
             (val_0 < val_min) && (y[i] = -xs)
             val_min = min(val_0, val_min)
           end
 
         else # di ≤ eps(R)
-          # arg max yi² + 2giyi / di + 2λ||xi + si + yi||₀ / di - χ(si + yi | [li, ui])
-          val_left = left^2 + gi2_di * left + (xi == -li ? 0 : λ2_di)
-          val_right = right^2 + gi2_di * right + (xi == -ui ? 0 : λ2_di)
+          # arg max vi² + 2fi vi / di + 2λ |vi| / di + χ(vi | [li + xi, ui + xi])
+          val_left = (lx == zero(R)) ? zero(R) : (lx^2 + fi2_di * lx + λ2_di)
+          val_right = (ux == zero(R)) ? zero(R) : (ux^2 + fi2_di * ux + λ2_di)
           y[i] = (val_left > val_right) ? left : right
           val_max = max(val_left, val_right)
-          # check value when h(xi+si+yi) = 0
+          # check value when h(vi) = 0
           if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi 
-            val_0 = xs^2 - gi2_di * xs # (xi + si)^2 - 2gi (xi + si) / di
+            val_0 = zero(R) # if vi = 0 ,  yi = - xi - si
             (val_0 > val_max) && (y[i] = -xs)
             val_max = max(val_0, val_max)
           end
