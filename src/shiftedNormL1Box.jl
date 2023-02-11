@@ -134,7 +134,10 @@ function prox!(
   return y
 end
 
-# arg min yᵀDy/2 + gᵀy + λ h(x + s + y) + χ(y | [l-s, u-s]) 
+# arg min yᵀDy/2 + gᵀy + λ h(x + s + y) + χ(y | [l-s, u-s])
+# variable change v = x + s + y:
+# arg min vᵀDv/2 + fᵀv + λ h(v) + χ(v | [l+x, u+x])
+# with fᵢ = gᵢ - dᵢ(xᵢ + sᵢ)
 function iprox!(
   y::AbstractVector{R},
   ψ::ShiftedNormL1Box{R, T, V0, V1, V2, V3, V4},
@@ -166,6 +169,7 @@ V4,
 
       if abs(di) ≤ eps(R)
         # arg min gi (xi + si + yi) + λ |xi + si + yi|
+        # arg min gi vi + λ |vi|
         if abs(gi) ≤ λ
           y[i] = min(max(left, -xs), right)
         else
@@ -173,65 +177,59 @@ V4,
         end
 
       elseif di > eps(R)
-        # arg min yi² + 2gi (xi + si + yi) / di + 2λ |xi + si + yi| / di + χ(si + yi | [li, ui])
+        # arg min vi² + 2fi vi / di + 2λ |vi| / di + χ(vi | [li + xi, ui + xi])
         di_2 = di / 2
         lx = li + xi
         ux = ui + xi
         gi2_di = gi / di_2 # 2 gi / di
+        fi2_di = gi2_di - 2 * xs # 2fi / di = 2gi / di - 2(xi + si)
         λ2_di = λ / di_2 # 2 λ / di
-        if gi == zero(R)
-          val_left = left^2 + λ2_di * abs(lx)
-          val_right = right^2 + λ2_di * abs(ux)
-        else
-          val_left = left^2 + gi2_di * lx + λ2_di * abs(lx)
-          val_right = right^2 + gi2_di * ux + λ2_di * abs(ux)
-        end
+
+        val_left = lx^2 + fi2_di * lx + λ2_di * abs(lx)
+        val_right = ux^2 + fi2_di * ux + λ2_di * abs(ux)
         val_min = min(val_left, val_right)
         y[i] = val_left < val_right ? left : right
-        if li ≥ -xi
-          argmin_quad = -(gi + λ) / di
-          (left ≤ argmin_quad ≤ right) && (y[i] = argmin_quad)
-        elseif -xi ≥ ui
-          argmin_quad = (λ - gi) / di
+        if lx ≥ zero(R)
+          argmin_quad_y = -(gi + λ) / di # less expensive to solve initial problem here
+          (left ≤ argmin_quad_y ≤ right) && (y[i] = argmin_quad_y)
+        elseif zero(R) ≥ ux
+          argmin_quad = (λ - gi) / di # less expensive to solve initial problem here
           (left ≤ argmin_quad ≤ right) && (y[i] = argmin_quad)
         else # li ≤ -xi ≤ ui, so xi + si + yi changes sign in [li - si, ui - si]
-          argmin_quad1 = -(gi + λ) / di
-          argmin_quad2 = (λ - gi) / di
-          if left ≤ argmin_quad1 ≤ right
-            argmin_quad1_xs = xs + argmin_quad1
-            val_min_quad1 = argmin_quad1^2 + gi2_di * argmin_quad1_xs + λ2_di * abs(argmin_quad1_xs)
-            (val_min_quad1 < val_min) && (y[i] = argmin_quad1)
+          argmin_quad_y1 = -(gi + λ) / di # candidate 1 for initial problem
+          argmin_quad_y2 = (λ - gi) / di # candidate 2 for initial problem
+          if left ≤ argmin_quad_y1 ≤ right
+            argmin_quad_v1 = xs + argmin_quad_y1 # candidate 1 for problem with variable change
+            val_min_quad1 = argmin_quad_v1^2 + fi2_di * argmin_quad_v1 + λ2_di * abs(argmin_quad_v1)
+            (val_min_quad1 < val_min) && (y[i] = argmin_quad_y1)
             val_min = min(val_min_quad1, val_min)
           end
-          if left ≤ argmin_quad2 ≤ right
-            argmin_quad2_xs = xs + argmin_quad2
-            val_min_quad2 = argmin_quad2^2 + gi2_di * argmin_quad2_xs + λ2_di * abs(argmin_quad2_xs)
-            (val_min_quad2 < val_min) && (y[i] = argmin_quad2)
+          if left ≤ argmin_quad_y2 ≤ right
+            argmin_quad_v2 = xs + argmin_quad_y2 # candidate 2 for problem with variable change
+            val_min_quad2 = argmin_quad_v2^2 + fi2_di * argmin_quad_v2 + λ2_di * abs(argmin_quad_v2)
+            (val_min_quad2 < val_min) && (y[i] = argmin_quad_y2)
             val_min = min(val_min_quad2, val_min)
           end
-          val_0 = xs^2
+          val_0 = zero(R) # if vi = 0 ,  yi = - xi - si
           (val_0 < val_min) && (y[i] = -xs)
           val_min = min(val_0, val_min)
         end
 
       else # di ≤ -eps(R)
-        # arg max yi² + 2gi (xi + si + yi) / di + 2λ |xi + si + yi| / di - χ(si + yi | [li, ui])
+        # arg max vi² + 2fi vi / di + 2λ |vi| / di + χ(vi | [li + xi, ui + xi])
         di_2 = di / 2
         gi2_di = gi / di_2 # 2 gi / di
+        fi2_di = gi2_di - 2 * xs # 2fi / di = 2gi / di - 2(xi + si)
         λ2_di = λ / di_2 # 2 λ / di
         lx = li + xi
         ux = ui + xi
-        if gi == zero(R)
-          val_left = left^2 + λ2_di * abs(lx)
-          val_right = right^2 + λ2_di * abs(ux)
-        else
-          val_left = left^2 + gi2_di * lx + λ2_di * abs(lx)
-          val_right = right^2 + gi2_di * ux + λ2_di * abs(ux)
-        end
+
+        val_left = lx^2 + fi2_di * lx + λ2_di * abs(lx)
+        val_right = ux^2 + fi2_di * ux + λ2_di * abs(ux)
         val_max = max(val_left, val_right)
         y[i] = (val_left > val_right) ? left : right
         if li ≤ -xi ≤ ui
-          val_0 = xs^2
+          val_0 = zero(R) # if vi = 0 ,  yi = - xi - si
           (val_0 > val_max) && (y[i] = -xs)
           val_max = max(val_0, val_max)
         end
