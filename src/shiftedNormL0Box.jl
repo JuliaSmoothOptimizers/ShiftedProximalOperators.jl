@@ -173,6 +173,7 @@ V4,
 
       if abs(di) < eps(R) # consider di == 0
         # arg min gi (xi + si + yi) + λ |xi + si + yi|₀
+        # arg min gi yi + λ |xi + si + yi|₀  (used here for less operations)
         # arg min gi vi + λ |vi|₀
         if gi == zero(R)
           y[i] = (li ≤ -xi ≤ ui) ? -xs : zero(R)
