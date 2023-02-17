@@ -144,13 +144,13 @@ function iprox!(
   g::AbstractVector{R},
   d::AbstractVector{R},
 ) where {
-R <: Real,
-T <: Integer,
-V0 <: AbstractVector{R},
-V1 <: AbstractVector{R},
-V2 <: AbstractVector{R},
-V3,
-V4,
+  R <: Real,
+  T <: Integer,
+  V0 <: AbstractVector{R},
+  V1 <: AbstractVector{R},
+  V2 <: AbstractVector{R},
+  V3,
+  V4,
 }
   λ = ψ.λ
 
@@ -234,9 +234,9 @@ V4,
           val_max = max(val_0, val_max)
         end
       end
-      
+
     else
-      y[i] = iprox_zero(di, gi, li - si, ui - si) 
+      y[i] = iprox_zero(di, gi, li - si, ui - si)
     end
   end
   return y

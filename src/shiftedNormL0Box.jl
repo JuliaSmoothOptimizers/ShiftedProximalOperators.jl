@@ -150,13 +150,13 @@ function iprox!(
   g::AbstractVector{R},
   d::AbstractVector{R},
 ) where {
-R <: Real,
-T <: Integer,
-V0 <: AbstractVector{R},
-V1 <: AbstractVector{R},
-V2 <: AbstractVector{R},
-V3,
-V4,
+  R <: Real,
+  T <: Integer,
+  V0 <: AbstractVector{R},
+  V1 <: AbstractVector{R},
+  V2 <: AbstractVector{R},
+  V3,
+  V4,
 }
   λ = ψ.λ
 
@@ -170,7 +170,6 @@ V4,
     xs = xi + si
 
     if i ∈ ψ.selected
-
       if abs(di) < eps(R) # consider di == 0
         # arg min gi (xi + si + yi) + λ |xi + si + yi|₀
         # arg min gi yi + λ |xi + si + yi|₀  (used here for less operations)
@@ -189,10 +188,10 @@ V4,
           end
           # check value when h(xi+si+yi) = 0
           if li ≤ -xi ≤ ui  # <=> li + xi ≤ 0 ≤ ui + xi
-            val_0 = - gi * xs
+            val_0 = -gi * xs
             (val_0 < val_min) && (y[i] = -xs)
             val_min = min(val_0, val_min)
-          end        
+          end
         end
 
       else # di != 0
@@ -243,7 +242,7 @@ V4,
       end
 
     else
-      y[i] = iprox_zero(di, gi, li - si, ui - si) 
+      y[i] = iprox_zero(di, gi, li - si, ui - si)
     end
   end
   return y
