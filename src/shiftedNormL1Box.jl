@@ -216,7 +216,7 @@ V4,
         end
 
       else # di ≤ -eps(R)
-        # arg max vi² + 2fi vi / di + 2λ |vi| / di + χ(vi | [li + xi, ui + xi])
+        # arg max vi² + 2fi vi / di + 2λ |vi| / di - χ(vi | [li + xi, ui + xi])
         di_2 = di / 2
         gi2_di = gi / di_2 # 2 gi / di
         fi2_di = gi2_di - 2 * xs # 2fi / di = 2gi / di - 2(xi + si)

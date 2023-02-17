@@ -228,7 +228,7 @@ V4,
           end
 
         else # di ≤ eps(R)
-          # arg max vi² + 2fi vi / di + 2λ |vi| / di + χ(vi | [li + xi, ui + xi])
+          # arg max vi² + 2fi vi / di + 2λ |vi| / di - χ(vi | [li + xi, ui + xi])
           val_left = (lx == zero(R)) ? zero(R) : (lx^2 + fi2_di * lx + λ2_di)
           val_right = (ux == zero(R)) ? zero(R) : (ux^2 + fi2_di * ux + λ2_di)
           y[i] = (val_left > val_right) ? left : right
