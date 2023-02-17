@@ -193,7 +193,7 @@ separable nonsmooth term along a variable that is not part of those to which
 the nonsmooth term is applied.
 """
 function iprox_zero(d::R, g::R, l::R, u::R) where {R <: Real}
-  if d > eps(R) 
+  if d > eps(R)
     argmin_quad = -g / d
     y = min(max(argmin_quad, l), u)
   elseif d < -eps(R)
