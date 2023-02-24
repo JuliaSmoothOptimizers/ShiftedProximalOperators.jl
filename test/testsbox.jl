@@ -1,4 +1,4 @@
-for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0Box, :ShiftedNormL1Box))
+for (op, shifted_op) ∈ zip((:NormL0, :NormL1, :RootNormLhalf), (:ShiftedNormL0Box, :ShiftedNormL1Box, :ShiftedRootNormLhalfBox))
   @testset "$shifted_op" begin
     if "$shifted_op" == "ShiftedNormL0Box"
 
@@ -53,17 +53,44 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0Box, :ShiftedNor
       # Case 7 : q-σλ > -(x+s) ; q-σλ < l-s -> solution : l-s
       # Case 8 : q-σλ > -(x+s) ; q-σλ > u-s -> solution : u-s
       # Case 9 : q-σλ > -(x+s) ; l-s < q-σλ < u-s -> solution : q-σλ
+
+    elseif "$shifted_op" == "ShiftedRootNormLhalfBox"
+
+      ## Testing ShiftedRootNormLhalfBox
+      # We want to find argmin_t obj(t) = 1/2 * 1/σ * (t-q)^2 + λ * √(|x+s+t|) + χ{s+t ∈ [l,u]} 
+      # Parameters σ, l , u and s are fixed for sake of simplicity, only q, x and λ vary.
+
+      # fixed parameters
+      σ = 1.0
+      l = [0.0]
+      u = [3.0]
+      s = [-1.0]
+
+      # variable parameters (to cover the 9 different cases)
+      q = [[5.0], [5.0], [5.0], [2.0], [0.0], [1.0], [0.0], [3.0], [3.0]]
+      x = [[1.0], [-1.0], [-1.0], [1.0], [1.0], [-1.0], [-1.0], [-1.0], [-1.0]]
+      λ = [1.0, 10.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0]
+      sol = [[4.0], [2.0], [4.0], [1.6054], [1.0], [2.0], [1.0], [2.702], [2.0]]
+      # Case 1 : q > u-s ; -(x+s), val ∉ [l-s,u-s] -> solution : u-s
+      # Case 2 : q > u-s , -(x+s), val ∈ [l-s,u-s], obj(-(x+s)) < obj(u-s) -> solution : -(x+s)
+      # Case 3 : q > u-s, -(x+s), val ∈ [l-s,u-s], obj(-(x+s)) >= obj(u-s) -> solution : u-s
+      # Case 4 : -(x+s) ∉ [l-s,u-s], val ∈ [l-s,u-s], obj(val) smallest -> solution : val
+      # Case 5 : q < l-s, -(x+s), val ∉ [l-s,u-s], obj(-(x+s)) >= obj(l-s) -> solution : l-s
+      # Case 6 : q < l-s, -(x+s) ∈ [l-s,u-s], val ∉ [l-s,u-s], obj(-(x+s)) < obj(l-s) -> solution : -(x+s)
+      # Case 7 : q < l-s, -(x+s) ∈ [l-, u-s], val ∉ [l-s,u-s], obj(-(x+s)) >= obj(l-s) -> solution : l-s
+      # Case 8 : -(x+s), val ∈ [l-s,u-s], obj(val) smallest -> solution : val
+      # Case 9 : -(x+s), val ∈ [l-s,u-s], obj(-(x+s)) smallest -> solution : -(x+s)
     end
 
     for i = 1:9
       qi = q[i]
       xi = x[i]
-      "$shifted_op" == "ShiftedNormL0Box" ? λi = λ[i] : λi = λ
+      "$shifted_op" == "ShiftedNormL1Box" ? λi = λ : λi = λ[i]
       h = eval(op)(λi)
       ψ = shifted(h, xi, l, u)
       ω = shifted(ψ, s)
       ShiftedProximalOperators.prox(ω, qi, σ)
-      @test ω.sol == sol[i]
+      @test isapprox(ω.sol, sol[i], atol = 1.0e-2) # for approximate value val with RootNormLhalf
     end
   end
 end
