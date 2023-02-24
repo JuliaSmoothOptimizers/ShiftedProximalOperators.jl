@@ -45,7 +45,7 @@ include("shiftedNormL1B2.jl")
 include("shiftedNormL1Box.jl")
 include("shiftedIndBallL0.jl")
 include("shiftedIndBallL0BInf.jl")
-include("shiftedRootNormLhalfBinf.jl")
+include("shiftedRootNormLhalfBox.jl")
 include("shiftedGroupNormL2Binf.jl")
 include("shiftedRank.jl")
 include("shiftedCappedl1.jl")
@@ -79,6 +79,7 @@ function set_radius!(ψ::ShiftedProximableFunction, Δ::R) where {R <: Real}
 end
 set_radius!(ψ::ShiftedNormL0Box, Δ::R) where {R <: Real} = set_bounds!(ψ, -Δ, Δ)
 set_radius!(ψ::ShiftedNormL1Box, Δ::R) where {R <: Real} = set_bounds!(ψ, -Δ, Δ)
+set_radius!(ψ::ShiftedRootNormLhalfBox, Δ::R) where {R <: Real} = set_bounds!(ψ, -Δ, Δ)
 
 """
     set_bounds!(ψ, l, u)

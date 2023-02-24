@@ -313,7 +313,7 @@ end
 for (op, tr, shifted_op) ∈ zip(
   (:NormL0, :NormL1, :NormL1, :RootNormLhalf),
   (:NormLinf, :NormLinf, :NormL2, :NormLinf),
-  (:ShiftedNormL0Box, :ShiftedNormL1Box, :ShiftedNormL1B2, :ShiftedRootNormLhalfBinf),
+  (:ShiftedNormL0Box, :ShiftedNormL1Box, :ShiftedNormL1B2, :ShiftedRootNormLhalfBox),
 )
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
@@ -324,12 +324,8 @@ for (op, tr, shifted_op) ∈ zip(
     h = Op(1.0)
     x = ones(n)
     Δ = 0.01
-    if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box")
+    if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box", "ShiftedRootNormLhalfBox")
       ψ = shifted(h, x, Δ, χ)
-    elseif "$shifted_op" ∈ ("ShiftedRootNormLhalfBinf",)
-      ψ = shifted(h, x, Δ, χ)
-      @test typeof(ψ) == ShiftedOp{Float64, Int, Vector{Float64}, Vector{Float64}, Vector{Float64}}
-      @test ψ.Δ == Δ
     else
       ψ = shifted(h, x, Δ, χ)
       @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
@@ -380,7 +376,7 @@ for (op, tr, shifted_op) ∈ zip(
         -0.010000000000000,
         0.010000000000000,
       ]
-    elseif "$shifted_op" == "ShiftedRootNormLhalfBinf"
+    elseif "$shifted_op" == "ShiftedRootNormLhalfBox"
       s_correct = [
         -0.010000000000000,
         0.005861665724748,
@@ -401,7 +397,7 @@ for (op, tr, shifted_op) ∈ zip(
     # test radius / bounds update
     Δ2 = 1.1
     set_radius!(ψ, Δ2)
-    if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box")
+    if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box", "ShiftedRootNormLhalfBox")
       @test ψ.l == -Δ2
       @test ψ.u == Δ2
     else
@@ -425,7 +421,7 @@ for (op, tr, shifted_op) ∈ zip(
     χ = eval(tr)(Float32(1.0))
     y = rand(Float32, 10)
     x = view(y, 1:2:10)
-    if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box")
+    if "$shifted_op" ∈ ("ShiftedNormL0Box", "ShiftedNormL1Box", "ShiftedRootNormLhalfBox")
       ψ = shifted(h, x, Float32(-0.5), Float32(0.5))
       @test typeof(ψ) == ShiftedOp{
         Float32,
@@ -435,15 +431,6 @@ for (op, tr, shifted_op) ∈ zip(
         Vector{Float32},
         Float32,
         Float32,
-      }
-    elseif "$shifted_op" ∈ ("ShiftedRootNormLhalfBinf",)
-      ψ = shifted(h, x, Float32(0.5), χ)
-      @test typeof(ψ) == ShiftedOp{
-        Float32,
-        Int,
-        SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
-        Vector{Float32},
-        Vector{Float32},
       }
     else
       ψ = shifted(h, x, Float32(0.5), χ)
