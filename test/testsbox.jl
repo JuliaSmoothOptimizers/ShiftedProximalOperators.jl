@@ -1,4 +1,7 @@
-for (op, shifted_op) ∈ zip((:NormL0, :NormL1, :RootNormLhalf), (:ShiftedNormL0Box, :ShiftedNormL1Box, :ShiftedRootNormLhalfBox))
+for (op, shifted_op) ∈ zip(
+  (:NormL0, :NormL1, :RootNormLhalf),
+  (:ShiftedNormL0Box, :ShiftedNormL1Box, :ShiftedRootNormLhalfBox),
+)
   @testset "$shifted_op" begin
     if "$shifted_op" == "ShiftedNormL0Box"
 
