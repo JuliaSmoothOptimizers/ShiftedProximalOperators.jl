@@ -112,9 +112,7 @@ function prox!(
     if i ∈ ψ.selected
       xs = ψ.sol[i]
       xsq = xs + qi
-      val = real(
-        2 * sign(xsq) / 3 * abs(xsq) * (1 + cos(2 * π / 3 - 2 * ϕ(xsq) / 3)),
-      )
+      val = real(2 * sign(xsq) / 3 * abs(xsq) * (1 + cos(2 * π / 3 - 2 * ϕ(xsq) / 3)))
 
       (_, a) = findmin((
         RNorm(li - si, i),
