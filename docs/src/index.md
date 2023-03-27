@@ -10,6 +10,10 @@ for use in the algorithms implemented in [RegularizedOptimization.jl](https://gi
 The main differences with the proximal operators implemented in
 [ProximalOperators.jl](https://github.com/JuliaFirstOrder/ProximalOperators.jl)
 are that those implemented here involve a shift of the nonsmooth term and may include an extra indicator function.
+We also implement new proximal operators.
+
+## Proximal operators
+
 The operators from 
 [ProximalOperators.jl](https://github.com/JuliaFirstOrder/ProximalOperators.jl)
 can be written as
@@ -17,8 +21,6 @@ can be written as
 ```math
 \mathrm{prox}_{\nu h}(q) = \arg\min_t \left\{ \tfrac{1}{2}\|t-q\|^2 + \nu h(t) \right\}
 ```
-
-## Proximal operators
 
 We consider a proximal operator from [ProximalOperators.jl](https://github.com/JuliaFirstOrder/ProximalOperators.jl), for example [`ProximalOperators.NormL1`](https://juliafirstorder.github.io/ProximalOperators.jl/stable/functions/#ProximalOperators.NormL1).
 
@@ -29,8 +31,7 @@ h = NormL1(1.0) # proximal operator
 
 This package provides the following shifted proximal operators,
 where `x` and `s` are fixed shifts, `h` is the nonsmooth term with respect
-to which we are computing the proximal operator, `χ(.; ΔB)` is the indicator of
-a ball of radius `Δ` defined by a certain norm.
+to which we are computing the proximal operator.
 
 ## Basic shifted proximal operator
 
@@ -57,6 +58,8 @@ which models
 ```
 
 ## Ball shifted proximal operator
+
+Let `χ(.; ΔB)` be the indicator of a ball of radius `Δ` defined by a certain norm.
 
 ```julia
 χ = NormL2(1.0) # choose the 2-norm for χ
