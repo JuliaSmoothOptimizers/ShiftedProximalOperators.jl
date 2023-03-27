@@ -7,9 +7,9 @@ lower-semicontinuous functions such as those implemented in
 [ProximalOperators.jl](https://github.com/JuliaFirstOrder/ProximalOperators.jl)
 for use in the algorithms implemented in [RegularizedOptimization.jl](https://github.com/JuliaSmoothOptimizers/RegularizedOptimization.jl).
 
-The main difference between the proximal operators implemented in
+The main differences with the proximal operators implemented in
 [ProximalOperators.jl](https://github.com/JuliaFirstOrder/ProximalOperators.jl)
-is that those implemented here involve a translation of the nonsmooth term.
+are that those implemented here involve a shift of the nonsmooth term and may include an extra indicator function.
 The operators from 
 [ProximalOperators.jl](https://github.com/JuliaFirstOrder/ProximalOperators.jl)
 can be written as
