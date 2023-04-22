@@ -16,4 +16,5 @@ makedocs(
 deploydocs(
   repo = "github.com/JuliaSmoothOptimizers/ShiftedProximalOperators.jl.git",
   push_preview = true,
+  devbranch = "master",
 )
