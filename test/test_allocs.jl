@@ -6,7 +6,5 @@ for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
   y = rand(n)
   val = ψ(y)
   allocs = @allocated ψ(y)
-  println(op)
-  println(allocs)
   @test allocs == 0
 end
