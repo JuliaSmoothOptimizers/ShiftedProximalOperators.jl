@@ -425,12 +425,12 @@ for (op, tr, shifted_op) ∈ zip(
       ψ = shifted(h, x, Float32(-0.5), Float32(0.5))
       @test typeof(ψ) == ShiftedOp{
         Float32,
-        Int,
         SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
         Vector{Float32},
         Vector{Float32},
         Float32,
         Float32,
+        UnitRange{Int},
       }
     else
       ψ = shifted(h, x, Float32(0.5), χ)
@@ -1087,3 +1087,4 @@ end
 
 include("testsbox.jl")
 include("partial_prox.jl")
+include("test_allocs.jl")

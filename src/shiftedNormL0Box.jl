@@ -2,12 +2,12 @@ export ShiftedNormL0Box
 
 mutable struct ShiftedNormL0Box{
   R <: Real,
-  T <: Integer,
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
   V3,
   V4,
+  VI <: AbstractArray{<:Integer},
 } <: ShiftedProximableFunction
   h::NormL0{R}
   xk::V0
@@ -16,7 +16,8 @@ mutable struct ShiftedNormL0Box{
   l::V3
   u::V4
   shifted_twice::Bool
-  selected::AbstractArray{T}
+  selected::VI
+  xsy::V2
 
   function ShiftedNormL0Box(
     h::NormL0{R},
@@ -28,10 +29,11 @@ mutable struct ShiftedNormL0Box{
     selected::AbstractArray{T},
   ) where {R <: Real, T <: Integer}
     sol = similar(xk)
+    xsy = similar(xk, length(selected))
     if any(l .> u)
       error("Error: at least one lower bound is greater than the upper bound.")
     end
-    new{R, T, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u)}(
+    new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u), typeof(selected)}(
       h,
       xk,
       sj,
@@ -40,6 +42,7 @@ mutable struct ShiftedNormL0Box{
       u,
       shifted_twice,
       selected,
+      xsy,
     )
   end
 end
@@ -59,20 +62,18 @@ shifted(
   selected::AbstractArray{T} = 1:length(xk),
 ) where {R <: Real, T <: Integer} = ShiftedNormL0Box(h, xk, zero(xk), -Δ, Δ, false, selected)
 shifted(
-  ψ::ShiftedNormL0Box{R, T, V0, V1, V2, V3, V4},
+  ψ::ShiftedNormL0Box{R, V0, V1, V2},
   sj::AbstractVector{R},
 ) where {
   R <: Real,
-  T <: Integer,
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
-  V3,
-  V4,
 } = ShiftedNormL0Box(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true, ψ.selected)
 
 function (ψ::ShiftedNormL0Box)(y)
-  val = ψ.h((ψ.xk + ψ.sj + y)[ψ.selected])
+  @. ψ.xsy = @views ψ.xk[ψ.selected] + ψ.sj[ψ.selected] + y[ψ.selected]
+  val = ψ.h(ψ.xsy)
   ϵ = √eps(eltype(y))
   for i ∈ eachindex(y)
     lower = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
@@ -91,17 +92,14 @@ fun_params(ψ::ShiftedNormL0Box) =
 
 function prox!(
   y::AbstractVector{R},
-  ψ::ShiftedNormL0Box{R, T, V0, V1, V2, V3, V4},
+  ψ::ShiftedNormL0Box{R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
 ) where {
   R <: Real,
-  T <: Integer,
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
-  V3,
-  V4,
 }
   c = 2 * ψ.λ * σ
 
@@ -146,17 +144,14 @@ end
 # with fᵢ = gᵢ - dᵢ(xᵢ + sᵢ)
 function iprox!(
   y::AbstractVector{R},
-  ψ::ShiftedNormL0Box{R, T, V0, V1, V2, V3, V4},
+  ψ::ShiftedNormL0Box{R, V0, V1, V2},
   g::AbstractVector{R},
   d::AbstractVector{R},
 ) where {
   R <: Real,
-  T <: Integer,
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
-  V3,
-  V4,
 }
   λ = ψ.λ
 
