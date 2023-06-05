@@ -2,12 +2,12 @@ export ShiftedRootNormLhalfBox
 
 mutable struct ShiftedRootNormLhalfBox{
   R <: Real,
-  T <: Integer,
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
   V3,
   V4,
+  VI <: AbstractArray{<:Integer},
 } <: ShiftedProximableFunction
   h::RootNormLhalf{R}
   xk::V0
@@ -16,7 +16,8 @@ mutable struct ShiftedRootNormLhalfBox{
   l::V3
   u::V4
   shifted_twice::Bool
-  selected::AbstractArray{T}
+  selected::VI
+  xsy::V2
 
   function ShiftedRootNormLhalfBox(
     h::RootNormLhalf{R},
@@ -28,7 +29,8 @@ mutable struct ShiftedRootNormLhalfBox{
     selected::AbstractArray{T},
   ) where {R <: Real, T <: Integer}
     sol = similar(sj)
-    new{R, T, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u)}(
+    xsy = similar(sj, length(selected))
+    new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u), typeof(selected)}(
       h,
       xk,
       sj,
@@ -37,6 +39,7 @@ mutable struct ShiftedRootNormLhalfBox{
       u,
       shifted_twice,
       selected,
+      xsy,
     )
   end
 end
@@ -56,20 +59,18 @@ shifted(
   selected::AbstractArray{T} = 1:length(xk),
 ) where {R <: Real, T <: Integer} = ShiftedRootNormLhalfBox(h, xk, zero(xk), -Δ, Δ, false, selected)
 shifted(
-  ψ::ShiftedRootNormLhalfBox{R, T, V0, V1, V2, V3, V4},
+  ψ::ShiftedRootNormLhalfBox{R, V0, V1, V2},
   sj::AbstractVector{R},
 ) where {
   R <: Real,
-  T <: Integer,
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
-  V3,
-  V4,
 } = ShiftedRootNormLhalfBox(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true, ψ.selected)
 
 function (ψ::ShiftedRootNormLhalfBox)(y)
-  val = ψ.h((ψ.xk + ψ.sj + y)[ψ.selected]) # use views here?
+  @. ψ.xsy = @views ψ.xk[ψ.selected] + ψ.sj[ψ.selected] + y[ψ.selected]
+  val = ψ.h(ψ.xsy)
   ϵ = √eps(eltype(y))
   for i ∈ eachindex(y)
     lower = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
@@ -88,12 +89,11 @@ fun_params(ψ::ShiftedRootNormLhalfBox) =
 
 function prox!(
   y::AbstractVector{R},
-  ψ::ShiftedRootNormLhalfBox{R, T, V0, V1, V2},
+  ψ::ShiftedRootNormLhalfBox{R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
 ) where {
   R <: Real,
-  T <: Integer,
   V0 <: AbstractVector{R},
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
