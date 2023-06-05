@@ -64,12 +64,8 @@ shifted(
 shifted(
   ψ::ShiftedNormL0Box{R, V0, V1, V2},
   sj::AbstractVector{R},
-) where {
-  R <: Real,
-  V0 <: AbstractVector{R},
-  V1 <: AbstractVector{R},
-  V2 <: AbstractVector{R},
-} = ShiftedNormL0Box(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true, ψ.selected)
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
+  ShiftedNormL0Box(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true, ψ.selected)
 
 function (ψ::ShiftedNormL0Box)(y)
   @. ψ.xsy = @views ψ.xk[ψ.selected] + ψ.sj[ψ.selected] + y[ψ.selected]
@@ -95,12 +91,7 @@ function prox!(
   ψ::ShiftedNormL0Box{R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
-) where {
-  R <: Real,
-  V0 <: AbstractVector{R},
-  V1 <: AbstractVector{R},
-  V2 <: AbstractVector{R},
-}
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   c = 2 * ψ.λ * σ
 
   for i ∈ eachindex(q)
@@ -147,12 +138,7 @@ function iprox!(
   ψ::ShiftedNormL0Box{R, V0, V1, V2},
   g::AbstractVector{R},
   d::AbstractVector{R},
-) where {
-  R <: Real,
-  V0 <: AbstractVector{R},
-  V1 <: AbstractVector{R},
-  V2 <: AbstractVector{R},
-}
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   λ = ψ.λ
 
   for i ∈ eachindex(y)
