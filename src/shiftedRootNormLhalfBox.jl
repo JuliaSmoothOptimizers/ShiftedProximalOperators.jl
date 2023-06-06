@@ -61,12 +61,8 @@ shifted(
 shifted(
   ψ::ShiftedRootNormLhalfBox{R, V0, V1, V2},
   sj::AbstractVector{R},
-) where {
-  R <: Real,
-  V0 <: AbstractVector{R},
-  V1 <: AbstractVector{R},
-  V2 <: AbstractVector{R},
-} = ShiftedRootNormLhalfBox(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true, ψ.selected)
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
+  ShiftedRootNormLhalfBox(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true, ψ.selected)
 
 function (ψ::ShiftedRootNormLhalfBox)(y)
   @. ψ.xsy = @views ψ.xk[ψ.selected] + ψ.sj[ψ.selected] + y[ψ.selected]
@@ -92,12 +88,7 @@ function prox!(
   ψ::ShiftedRootNormLhalfBox{R, V0, V1, V2},
   q::AbstractVector{R},
   σ::R,
-) where {
-  R <: Real,
-  V0 <: AbstractVector{R},
-  V1 <: AbstractVector{R},
-  V2 <: AbstractVector{R},
-}
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   ϕ(z) = acos(σ * ψ.λ / 4 * (abs(z) / 3)^(-3 / 2) + 0im)
 
   ψ.sol .= (ψ.xk .+ ψ.sj)
