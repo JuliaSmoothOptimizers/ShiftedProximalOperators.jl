@@ -15,6 +15,7 @@ mutable struct ShiftedGroupNormL2Binf{
   Δ::R
   χ::Conjugate{IndBallL1{R}}
   shifted_twice::Bool
+  xsy::V2
 
   function ShiftedGroupNormL2Binf(
     h::GroupNormL2{R, RR, I},
@@ -25,11 +26,17 @@ mutable struct ShiftedGroupNormL2Binf{
     shifted_twice::Bool,
   ) where {R <: Real, RR <: AbstractVector{R}, I}
     sol = similar(sj)
-    new{R, RR, I, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Δ, χ, shifted_twice)
+    xsy = similar(sj)
+    new{R, RR, I, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Δ, χ, shifted_twice, xsy)
   end
 end
 
-(ψ::ShiftedGroupNormL2Binf)(y) = ψ.h(ψ.xk + ψ.sj + y) .+ IndBallLinf(1.1 * ψ.Δ)(ψ.sj .+ y)
+function (ψ::ShiftedGroupNormL2Binf)(y)
+  @. ψ.xsy = ψ.sj + y
+  indball_val = IndBallLinf(1.1 * ψ.Δ)(ψ.xsy)
+  ψ.xsy .+= ψ.xk
+  return ψ.h(ψ.xsy) + indball_val
+end
 
 shifted(
   h::GroupNormL2{R, RR, I},
