@@ -25,7 +25,7 @@ end
 RootNormLhalf(lambda::R = 1) where {R <: Real} = RootNormLhalf{R}(lambda)
 
 function (f::RootNormLhalf)(x::AbstractArray{T}) where {T <: Real}
-  return f.lambda * mapreduce(vec->sqrt(abs(vec)), +, x) # λ * sum(sqrt(abs(x)))
+  return f.lambda * mapreduce(vec -> sqrt(abs(vec)), +, x) # λ * sum(sqrt(abs(x)))
 end
 
 function prox!(
