@@ -5,6 +5,56 @@ using Test
 
 include("test_psvd.jl")
 
+@testset "ShiftedNormL2Transform" begin
+  Op = eval(:NormL2)
+  ShiftedOp = eval(:ShiftedNormL2Transform)
+
+  x = vec([0.4754 1.1741])
+  s = zero(x)
+  q = vec([0.1097 1.1287 -0.29 1.2616])
+  Q = Matrix{Float64}(I,4,4)
+  y = similar(q)
+  y_true = vec([0.24545429  0.75250248 -0.66619752  1.19372286])
+  A = Float64[2 0 0 -1;0 1 1 0]
+  ν = 0.1056
+  τ = 3.62
+  h = Op(τ)
+  ψ = ShiftedOp(h,x,s,A,Q,false)
+  prox!(y, ψ, q, ν)
+  @test sum((y - y_true) .^ 2) ≤ 1e-11
+
+
+
+
+  # test basic types and properties
+  @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Matrix{Float64},Matrix{Float64}, Vector{Float64}}
+  @test all(ψ.sj .== 0)
+  @test all(ψ.xk .== x)
+  @test typeof(ψ.λ) == Float64
+  @test ψ.λ == h.lambda
+
+  # test values
+  
+  @test ψ(zeros(2)) == h(x)
+  y = rand(2)
+  @test ψ(y) == h(x + y)
+
+  # test shift update
+  shift!(ψ, y)
+  @test all(ψ.sj .== 0)
+  @test all(ψ.xk .== y)
+
+  # shift a shifted operator
+  s = ones(2) / 2
+  φ = shifted(ψ, s)
+  @test all(φ.sj .== s)
+  @test all(φ.xk .== x)
+  @test φ(zeros(2)) == h(x + s)
+  y = rand(2)
+  @test φ(y) == h(x + s + y)
+
+end
+
 #test Created norms/standard proxes - TODO: come up with more robust test
 for op ∈ (:RootNormLhalf,)
   @testset "$op" begin

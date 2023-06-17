@@ -40,6 +40,7 @@ include("shiftedNormL0Box.jl")
 include("shiftedRootNormLhalf.jl")
 include("shiftedNormL1.jl")
 include("shiftedGroupNormL2.jl")
+include("shiftedNormL2Transform.jl")
 
 include("shiftedNormL1B2.jl")
 include("shiftedNormL1Box.jl")
