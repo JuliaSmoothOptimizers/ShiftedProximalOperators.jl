@@ -13,6 +13,7 @@ mutable struct ShiftedGroupNormL2{
   sj::V1
   sol::V2
   shifted_twice::Bool
+  xsy::V2
 
   function ShiftedGroupNormL2(
     h::GroupNormL2{R, RR, I},
@@ -21,7 +22,8 @@ mutable struct ShiftedGroupNormL2{
     shifted_twice::Bool,
   ) where {R <: Real, RR <: AbstractVector{R}, I}
     sol = similar(sj)
-    new{R, RR, I, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, shifted_twice)
+    xsy = similar(sj)
+    new{R, RR, I, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, shifted_twice, xsy)
   end
 end
 

@@ -13,6 +13,7 @@ mutable struct ShiftedIndBallL0{
   sol::V2
   p::Vector{Int}
   shifted_twice::Bool
+  xsy::V2
 
   function ShiftedIndBallL0(
     h::IndBallL0{I},
@@ -21,6 +22,7 @@ mutable struct ShiftedIndBallL0{
     shifted_twice::Bool,
   ) where {I <: Integer, R <: Real}
     sol = similar(sj)
+    xsy = similar(sj)
     new{I, R, typeof(xk), typeof(sj), typeof(sol)}(
       h,
       xk,
@@ -28,6 +30,7 @@ mutable struct ShiftedIndBallL0{
       sol,
       Vector{Int}(undef, length(sj)),
       shifted_twice,
+      xsy,
     )
   end
 end
