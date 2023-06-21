@@ -43,13 +43,13 @@ include("test_psvd.jl")
   @test all(ψ.xk .== A*y)
 
   # shift a shifted operator
-  s = ones(2) / 2
+  s = ones(4) / 2
   φ = shifted(ψ, s)
-  @test all(φ.sj .== s)
+  @test all(φ.sj .== A*s)
   @test all(φ.xk .== x)
-  @test φ(zeros(4)) == h(x + s)
+  @test φ(zeros(4)) == h(x + A*s)
   y = rand(4)
-  @test φ(y) == h(x + s + A*y)
+  @test φ(y) == h(x + A*s + A*y)
 
 end
 

@@ -32,7 +32,7 @@ shifted(
   ψ::ShiftedNormL2{R, V0, V1, V2, V3},
   sj::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractMatrix{R}, V3 <: AbstractArray{R}} =
-  ShiftedNormL2(ψ.h, ψ.xk, sj, ψ.A, true)
+  ShiftedNormL2(ψ.h, ψ.xk, ψ.A*sj, ψ.A, true)
 
 fun_name(ψ::ShiftedNormL2) = "shifted L2 norm"
 fun_expr(ψ::ShiftedNormL2) = "t ↦ ‖xk + sk + At‖₂"
