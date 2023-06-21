@@ -25,6 +25,7 @@ import ProximalOperators.prox, ProximalOperators.prox!
 
 "Abstract type for shifted proximable functions."
 abstract type ShiftedProximableFunction end
+abstract type ShiftedLinearProximableFunction <: ShiftedProximableFunction end
 
 include("utils.jl")
 include("psvd.jl")
@@ -53,6 +54,7 @@ include("shiftedCappedl1.jl")
 include("shiftedNuclearnorm.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
+(ψ::ShiftedLinearProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + ψ.A*y)
 
 """
     shift!(ψ, x)
@@ -64,6 +66,15 @@ function shift!(ψ::ShiftedProximableFunction, shift::AbstractVector{R}) where {
     ψ.sj .= shift
   else
     ψ.xk .= shift
+  end
+  return ψ
+end
+
+function shift!(ψ::ShiftedLinearProximableFunction, shift::AbstractVector{R}) where {R <: Real}
+  if ψ.shifted_twice
+    ψ.sj .= ψ.A*shift
+  else
+    ψ.xk .= ψ.A*shift
   end
   return ψ
 end

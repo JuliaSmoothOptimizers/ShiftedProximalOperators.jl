@@ -6,7 +6,7 @@ mutable struct ShiftedNormL2{
   V1 <: AbstractVector{R},
   V2 <: AbstractMatrix{R},
   V3 <: AbstractVector{R}
-} <: ShiftedProximableFunction
+} <: ShiftedLinearProximableFunction
   h::NormL2{R}
   xk::V0
   sj::V1

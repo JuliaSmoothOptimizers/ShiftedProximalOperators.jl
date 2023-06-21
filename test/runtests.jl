@@ -3,7 +3,7 @@ using ProximalOperators
 using ShiftedProximalOperators
 using Test
 
-#include("test_psvd.jl")
+include("test_psvd.jl")
 
 
 @testset "ShiftedNormL2" begin
@@ -33,23 +33,23 @@ using Test
 
   # test values
   
-  @test ψ(zeros(2)) == h(x)
-  y = rand(2)
-  @test ψ(y) == h(x + y)
+  @test ψ(zeros(4)) == h(x)
+  y = rand(4)
+  @test ψ(y) == h(x + A*y)
 
   # test shift update
   shift!(ψ, y)
   @test all(ψ.sj .== 0)
-  @test all(ψ.xk .== y)
+  @test all(ψ.xk .== A*y)
 
   # shift a shifted operator
   s = ones(2) / 2
   φ = shifted(ψ, s)
   @test all(φ.sj .== s)
   @test all(φ.xk .== x)
-  @test φ(zeros(2)) == h(x + s)
-  y = rand(2)
-  @test φ(y) == h(x + s + y)
+  @test φ(zeros(4)) == h(x + s)
+  y = rand(4)
+  @test φ(y) == h(x + s + A*y)
 
 end
 
@@ -1133,6 +1133,6 @@ for (op, shifted_op) ∈ zip((:Nuclearnorm,), (:ShiftedNuclearnorm,))
   end
 end
 
-#include("testsbox.jl")
-#include("partial_prox.jl")
-#include("test_allocs.jl")
+include("testsbox.jl")
+include("partial_prox.jl")
+include("test_allocs.jl")
