@@ -52,16 +52,17 @@ function prox!(
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: Function,V3 <:Function,V4 <: AbstractMatrix{R}, V5 <: AbstractVector{R}}
   
-  if ψ.h.lambda^(-1)*ψ.h(inv(ψ.A*ψ.A')*ψ(q)) <= ψ.h.lambda*σ 
-    y .= q - ψ.A'*inv(ψ.A*ψ.A')*ψ(q)
+  b = ψ.c(ψ.xk+ψ.sj)
+  if ψ.h.lambda^(-1)*ψ.h(inv(ψ.A*ψ.A')*(ψ.A*q + b)) <= ψ.h.lambda*σ 
+    y .= q - ψ.A'*inv(ψ.A*ψ.A')*(ψ.A*q+b)
     return y
   end
   m = length(ψ.xk)
-  f(x) = ψ.h.lambda^(-2)*ψ.h(inv(ψ.A*ψ.A' + x*I(m))*ψ(q))^2 - (ψ.h.lambda*σ)^2
-  Df(x) = -2*ψ(q)'*inv(ψ.A*ψ.A'+x*I(m))^3*ψ(q)
+  f(x) = ψ.h.lambda^(-2)*ψ.h(inv(ψ.A*ψ.A' + x*I(m))*(ψ.A*q+b))^2 - (ψ.h.lambda*σ)^2
+  Df(x) = -2*(ψ.A*q+b)'*inv(ψ.A*ψ.A'+x*I(m))^3*(ψ.A*q+b)
   α = find_zero((f,Df),0.0,Roots.Newton())
   
-  y .= q - ψ.A'*inv(ψ.A*ψ.A'+α*I(m))*ψ(q)
+  y .= q - ψ.A'*inv(ψ.A*ψ.A'+α*I(m))*(ψ.A*q+b)
 
   return y
 
