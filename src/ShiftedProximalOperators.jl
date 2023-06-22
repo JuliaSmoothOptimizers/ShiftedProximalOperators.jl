@@ -25,7 +25,7 @@ import ProximalOperators.prox, ProximalOperators.prox!
 
 "Abstract type for shifted proximable functions."
 abstract type ShiftedProximableFunction end
-abstract type ShiftedLinearProximableFunction <: ShiftedProximableFunction end
+abstract type ShiftedCompositeProximableFunction <: ShiftedProximableFunction end
 
 include("utils.jl")
 include("psvd.jl")
@@ -54,7 +54,7 @@ include("shiftedCappedl1.jl")
 include("shiftedNuclearnorm.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
-(ψ::ShiftedLinearProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + ψ.A*y)
+(ψ::ShiftedCompositeProximableFunction)(y) = ((all(ψ.xk .== 0.0) && all(ψ.sj .== 0.0)) ? ψ.h(ψ.c(y)) : ψ.h(ψ.c(ψ.xk+ψ.sj)+ ψ.A*y))
 
 """
     shift!(ψ, x)
@@ -70,14 +70,6 @@ function shift!(ψ::ShiftedProximableFunction, shift::AbstractVector{R}) where {
   return ψ
 end
 
-function shift!(ψ::ShiftedLinearProximableFunction, shift::AbstractVector{R}) where {R <: Real}
-  if ψ.shifted_twice
-    ψ.sj .= ψ.A*shift
-  else
-    ψ.xk .= ψ.A*shift
-  end
-  return ψ
-end
 
 """
     set_radius!(ψ, Δ)
