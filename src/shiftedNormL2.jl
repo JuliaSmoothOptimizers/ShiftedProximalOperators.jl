@@ -58,8 +58,7 @@ function prox!(
   
   b = ψ.b
   ψ.c!(b,ψ.xk+ψ.sj)
-  println(ψ.b)
-  println(ψ.xk+ψ.sj)
+
   if ψ.h.lambda^(-1)*ψ.h(inv(ψ.A*ψ.A')*(ψ.A*q + b)) <= ψ.h.lambda*σ 
     y .= q - ψ.A'*inv(ψ.A*ψ.A')*(ψ.A*q+b)
     return y
