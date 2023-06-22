@@ -57,7 +57,7 @@ function prox!(
     y .= q - ψ.A'*inv(ψ.A*ψ.A')*(ψ.A*q+b)
     return y
   end
-  m = length(ψ.xk)
+  m = length(b)
   f(x) = ψ.h.lambda^(-2)*ψ.h(inv(ψ.A*ψ.A' + x*I(m))*(ψ.A*q+b))^2 - (ψ.h.lambda*σ)^2
   Df(x) = -2*(ψ.A*q+b)'*inv(ψ.A*ψ.A'+x*I(m))^3*(ψ.A*q+b)
   α = find_zero((f,Df),0.0,Roots.Newton())
