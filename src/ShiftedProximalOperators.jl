@@ -54,7 +54,7 @@ include("shiftedCappedl1.jl")
 include("shiftedNuclearnorm.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
-(ψ::ShiftedCompositeProximableFunction)(y) = (ψ.c!(ψ.b,y); (all(ψ.xk .== 0.0) && all(ψ.sj .== 0.0)) ? ψ.h(ψ.b) : ψ.h(ψ.b + ψ.A*y))
+(ψ::ShiftedCompositeProximableFunction)(y) = (all(ψ.xk .== 0.0) && all(ψ.sj .== 0.0)) ? (z= similar(ψ.b);ψ.c!(z,y);ψ.h(z)) : ψ.h(ψ.b + ψ.A*y)
 
 """
     shift!(ψ, x)
