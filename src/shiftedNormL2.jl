@@ -57,6 +57,7 @@ function prox!(
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: Function,V3 <:Function,V4 <: AbstractMatrix{R}, V5 <: AbstractVector{R}, V6 <: AbstractVector{R}}
   
   b = ψ.b
+  ψ.c!(b,ψ.xk+ψ.sj)
   println(ψ.b)
   println(ψ.xk+ψ.sj)
   if ψ.h.lambda^(-1)*ψ.h(inv(ψ.A*ψ.A')*(ψ.A*q + b)) <= ψ.h.lambda*σ 
