@@ -34,7 +34,7 @@ end
 shifted(h::NormL2{R}, c!::Function,J!::Function,A::AbstractMatrix{R},b::AbstractVector{R}) where {R <: Real} = 
   ShiftedCompositeNormL2(h,c!,J!,A,b,false)
 shifted(h::NormL2{R}, c!::Function,J!::Function,A::AbstractMatrix{R},b::AbstractVector{R}, xk :: AbstractVector{R}) where {R <: Real} =
-  (c!(xk,ψ.b);J!(xk,ψ.A);ShiftedCompositeNormL2(h,c!,J!,A,b,true))
+  (c!(xk,b);J!(xk,A);ShiftedCompositeNormL2(h,c!,J!,A,b,true))
 shifted(
   ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3, V4},
   xk::AbstractVector{R},
