@@ -30,6 +30,7 @@ abstract type ShiftedCompositeProximableFunction <: ShiftedProximableFunction en
 include("utils.jl")
 include("psvd.jl")
 
+include("affineNormL2.jl")
 include("rootNormLhalf.jl")
 include("groupNormL2.jl")
 include("Rank.jl")
@@ -41,7 +42,7 @@ include("shiftedNormL0Box.jl")
 include("shiftedRootNormLhalf.jl")
 include("shiftedNormL1.jl")
 include("shiftedGroupNormL2.jl")
-include("shiftedNormL2.jl")
+include("ShiftedCompositeNormL2.jl")
 
 include("shiftedNormL1B2.jl")
 include("shiftedNormL1Box.jl")
@@ -54,7 +55,7 @@ include("shiftedCappedl1.jl")
 include("shiftedNuclearnorm.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
-(ψ::ShiftedCompositeProximableFunction)(y) = (all(ψ.xk .== 0.0) && all(ψ.sj .== 0.0)) ? (z= similar(ψ.b);ψ.c!(z,y);ψ.h(z)) : ψ.h(ψ.b + ψ.A*y)
+(ψ::ShiftedCompositeProximableFunction)(y) = (!ψ.is_shifted) ? ( z = similar(ψ.b);ψ.c!(y,z);ψ.h(z)) : ψ.h(ψ.b + ψ.A*y)
 
 """
     shift!(ψ, x)
@@ -70,6 +71,12 @@ function shift!(ψ::ShiftedProximableFunction, shift::AbstractVector{R}) where {
   return ψ
 end
 
+function shift!(ψ::ShiftedCompositeProximableFunction, shift::AbstractVector{R}) where {R <: Real}
+  ψ.c!(shift,ψ.b)
+  ψ.J!(shift,ψ.A)
+  ψ.is_shifted = true
+  return ψ
+end
 
 """
     set_radius!(ψ, Δ)

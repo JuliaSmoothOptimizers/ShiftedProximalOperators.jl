@@ -6,51 +6,95 @@ using Test
 include("test_psvd.jl")
 
 
-@testset "ShiftedNormL2" begin
-  Op = eval(:NormL2)
-  ShiftedOp = eval(:ShiftedNormL2)
+for op ∈ (:AffineNormL2,)
+  @testset "$op" begin
+    Op = eval(op)
+    
+    A = Float64[2 0 0 -1;0 1 1 0]
+    b = [0.4754,1.1741]
+    λ = 3.62
+    h = Op(A,b,λ)
 
-  x = vec([0.4754 1.1741])
-  s = zero(x)
-  q = vec([0.1097 1.1287 -0.29 1.2616])
-  y = similar(q)
-  y_true = vec([0.24545429  0.75250248 -0.66619752  1.19372286])
-  A = Float64[2 0 0 -1;0 1 1 0]
-  ν = 0.1056
-  τ = 3.62
-  h = Op(τ)
-  ψ = ShiftedOp(h,x,s,A,false)
-  prox!(y, ψ, q, ν)
-  @test sum((y - y_true) .^ 2) ≤ 1e-11
+    x = [0.1097,1.1287,-0.29,1.2616]
+    y = similar(x)
+    y_true = [0.24545429,0.75250248,-0.66619752 ,1.19372286]
+    ν = 0.1056
+    
+    prox!(y, h, x, ν)
 
-
-  # test basic types and properties
-  @test typeof(ψ) == ShiftedOp{Float64, Vector{Float64}, Vector{Float64}, Matrix{Float64}, Vector{Float64}}
-  @test all(ψ.sj .== 0)
-  @test all(ψ.xk .== x)
-  @test typeof(ψ.λ) == Float64
-  @test ψ.λ == h.lambda
-
-  # test values
+    @test sum((y - y_true) .^ 2) ≤ 1e-11
+  end
+end
   
-  @test ψ(zeros(4)) == h(x)
-  y = rand(4)
-  @test ψ(y) == h(x + A*y)
+for (op,shifted_op) ∈ zip((:NormL2,), (:ShiftedCompositeNormL2,))
+  @testset "$shifted_op" begin
+    ShiftedOp = eval(shifted_op)
 
-  # test shift update
-  shift!(ψ, y)
-  @test all(ψ.sj .== 0)
-  @test all(ψ.xk .== A*y)
+    function c!(x,z)
+      z[1] = 2*x[1] - x[4]
+      z[2] = x[2] + x[3] 
+    end
+    function J!(x,z)
+      z .= Float64[2 0 0 -1;0 1 1 0]
+    end
+    λ = 3.62
+    Op = eval(op)
+    h = Op(λ)
 
-  # shift a shifted operator
-  s = ones(4) / 2
-  φ = shifted(ψ, s)
-  @test all(φ.sj .== A*s)
-  @test all(φ.xk .== x)
-  @test φ(zeros(4)) == h(x + A*s)
-  y = rand(4)
-  @test φ(y) == h(x + A*s + A*y)
+    b = zeros(Float64,2)
+    A = Matrix{Float64}(undef,2,4)
 
+    ψ = shifted(h,c!,J!,A,b)
+
+    # test non shifted operator
+    @test ψ(ones(Float64,4)) == h([1,2])
+    @test all(ψ(zeros(Float64,4)) .== 0.0)
+    @test all(ψ.b .== 0.0)
+    @test (!ψ.is_shifted)
+    
+    # test shifted operator
+    xk = [0.0,1.1741,0.0,-0.4754]
+    ϕ = shifted(ψ,xk)
+
+    @test ϕ(zeros(Float64,4)) == h([0.4754,1.1741])
+    @test ϕ(ones(Float64,4)) == h([0.4754,1.1741] + Float64[2 0 0 -1;0 1 1 0]*ones(Float64,4))
+    @test (ϕ.is_shifted)
+    @test ϕ.b == [0.4754,1.1741]
+    @test ϕ.A == Float64[2 0 0 -1;0 1 1 0]
+
+    # test prox 
+    x = [0.1097,1.1287,-0.29,1.2616]
+    y = similar(x)
+    y_true = [0.24545429,0.75250248,-0.66619752 ,1.19372286]
+    ν = 0.1056
+    prox!(y,ϕ,x,ν)
+    @test sum((y - y_true) .^ 2) ≤ 1e-11
+
+    # test in place shift
+    xk = ones(Float64,4)
+    shift!(ϕ,xk)
+    
+    @test ϕ.b == [1.0,2.0]
+    @test ϕ.A == Float64[2 0 0 -1;0 1 1 0]
+    @test ϕ(ones(Float64,4)) == h([1.0,2.0] + Float64[2 0 0 -1;0 1 1 0]*ones(Float64,4))
+
+    # test different types
+    h = Op(Float32(λ))
+    function c!(x,z)
+      z[1] = 2*x[1] - x[4]
+      z[2] = x[2] + x[3] 
+    end
+    function J!(x,z)
+      z .= Float32[2 0 0 -1;0 1 1 0]
+    end
+    b = zeros(Float32,2)
+    A = Matrix{Float32}(undef,2,4)
+
+    ψ = shifted(h,c!,J!,A,b)
+
+    @test typeof(ψ(zeros(Float32,4))) == Float32
+
+  end
 end
 
 #test Created norms/standard proxes - TODO: come up with more robust test
