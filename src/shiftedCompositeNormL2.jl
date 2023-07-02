@@ -74,9 +74,9 @@ function prox!(
   end
 
   m = length(b)
-  f(x::R) = (z = (ψ.A*ψ.A' + x*I(m))\(ψ.A*q+b); ψ.h.lambda^(-2)*ψ.h(z)^2 - (ψ.h.lambda*σ)^2)
+  f(x::R) = (z = (ψ.A*ψ.A' + x*I(m))\(ψ.A*q+b); ψ.h.lambda^(-2)*ψ.h(z)^2)
   Df(x::R) = (z = (ψ.A*ψ.A' + x*I(m))^3\(ψ.A*q+b); -2*(ψ.A*q+b)'*z)
-  α = find_zero((f,Df),0.0,Roots.Newton())
+  α = find_zero((x -> 1/f(x) - 1/(ψ.h.lambda*σ)^2,x -> -Df(x)/f(x)^2),0.0,Roots.Newton())
   
   z = -(ψ.A*ψ.A' + α*I(m))\(ψ.A*q+b)
   y .= q + ψ.A'*z
