@@ -49,37 +49,63 @@ function prox!(
   y::AbstractVector{R},
   ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3, V4},
   q::AbstractVector{R},
-  σ::R,
+  σ::R;
+  max_iter = 100,
+  tol = 1e-16
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
   
   if !ψ.is_shifted
     error("Shifted Norm L2 : Operator must be shifted for prox computation")
   end
-  b = ψ.b
+
+  α = 0.0
+  g = ψ.A*q + ψ.b
+  Δ = ψ.h.lambda*σ
+  s = zero(g)
+  w = zero(g)
+  m = length(g)
 
   try
-    z = -ψ.A*ψ.A'\(ψ.A*q + b)
+    C = cholesky(ψ.A*ψ.A')
+    s .=  C\(-g)
+    if norm(s) <= Δ
+      y .= q + ψ.A'*s
+      return y
+    end
+
+    w .= C.L\s
+    α = α + ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
+
   catch ex 
     if isa(ex,LinearAlgebra.SingularException)
-      error("Shifted Norm L2 : Jacobian is not full row rank")
+      @warn("Shifted Norm L2 : Jacobian is not full row rank")
+      α = 1.0 ### TO IMPROVE
+
+      C = cholesky(ψ.A*ψ.A'+α*I(m))
+      s .=  C\(-g)
+      w .= C.L\s
+      α = α + ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
+
     else
       rethrow()
     end
 
   end
   
-  if ψ.h.lambda^(-1)*ψ.h(z) <= ψ.h.lambda*σ 
-    y .= q + ψ.A'*z
-    return y
-  end
+  k = 0
+  while abs(norm(s)-Δ)>tol
+    k = k+1
+    if k>max_iter
+      error("Shifted Norm L2 : Could not compute prox (Newton method did not converge...)")
+    end
+    C = cholesky(ψ.A*ψ.A'+α*I(m))
+    s .=  C\(-g)
+    w .= C.L\s
 
-  m = length(b)
-  f(x::R) = (z = (ψ.A*ψ.A' + x*I(m))\(ψ.A*q+b); ψ.h.lambda^(-2)*ψ.h(z)^2)
-  Df(x::R) = (z = (ψ.A*ψ.A' + x*I(m))^3\(ψ.A*q+b); -2*(ψ.A*q+b)'*z)
-  α = find_zero((x -> 1/f(x) - 1/(ψ.h.lambda*σ)^2,x -> -Df(x)/f(x)^2),0.0,Roots.Newton())
-  
-  z = -(ψ.A*ψ.A' + α*I(m))\(ψ.A*q+b)
-  y .= q + ψ.A'*z
+    α = α + ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
+
+  end
+  y .= q + ψ.A'*s
 
   return y
 

@@ -1,4 +1,5 @@
 using LinearAlgebra
+using SparseArrays
 using ProximalOperators
 using ShiftedProximalOperators
 using Test
@@ -35,14 +36,14 @@ for (op,shifted_op) ∈ zip((:NormL2,), (:ShiftedCompositeNormL2,))
       z[2] = x[2] + x[3] 
     end
     function J!(x,z)
-      z .= Float64[2 0 0 -1;0 1 1 0]
+      z .= sparse(Float64[2 0 0 -1;0 1 1 0])
     end
     λ = 3.62
     Op = eval(op)
     h = Op(λ)
 
     b = zeros(Float64,2)
-    A = Matrix{Float64}(undef,2,4)
+    A = sparse(Matrix{Float64}(undef,2,4))
 
     ψ = shifted(h,c!,J!,A,b)
 
@@ -60,7 +61,7 @@ for (op,shifted_op) ∈ zip((:NormL2,), (:ShiftedCompositeNormL2,))
     @test ϕ(ones(Float64,4)) == h([0.4754,1.1741] + Float64[2 0 0 -1;0 1 1 0]*ones(Float64,4))
     @test (ϕ.is_shifted)
     @test ϕ.b == [0.4754,1.1741]
-    @test ϕ.A == Float64[2 0 0 -1;0 1 1 0]
+    @test ϕ.A == sparse(Float64[2 0 0 -1;0 1 1 0])
 
     # test prox 
     x = [0.1097,1.1287,-0.29,1.2616]
@@ -75,8 +76,8 @@ for (op,shifted_op) ∈ zip((:NormL2,), (:ShiftedCompositeNormL2,))
     shift!(ϕ,xk)
     
     @test ϕ.b == [1.0,2.0]
-    @test ϕ.A == Float64[2 0 0 -1;0 1 1 0]
-    @test ϕ(ones(Float64,4)) == h([1.0,2.0] + Float64[2 0 0 -1;0 1 1 0]*ones(Float64,4))
+    @test ϕ.A == sparse(Float64[2 0 0 -1;0 1 1 0])
+    @test ϕ(ones(Float64,4)) == h([1.0,2.0] + sparse(Float64[2 0 0 -1;0 1 1 0])*ones(Float64,4))
 
     # test different types
     h = Op(Float32(λ))
@@ -85,10 +86,10 @@ for (op,shifted_op) ∈ zip((:NormL2,), (:ShiftedCompositeNormL2,))
       z[2] = x[2] + x[3] 
     end
     function J!(x,z)
-      z .= Float32[2 0 0 -1;0 1 1 0]
+      z .= sparse(Float32[2 0 0 -1;0 1 1 0])
     end
     b = zeros(Float32,2)
-    A = Matrix{Float32}(undef,2,4)
+    A = sparse(Matrix{Float32}(undef,2,4))
 
     ψ = shifted(h,c!,J!,A,b)
 
