@@ -78,7 +78,7 @@ function prox!(
   catch ex 
     if isa(ex,LinearAlgebra.SingularException) || isa(ex,PosDefException)
       @warn("Shifted Norm L2 : Jacobian is not full row rank")
-      α = 1.0 ### TO IMPROVE
+      α += 1.0 ### TO IMPROVE
 
       C = cholesky(ψ.A*ψ.A'+α*I(m))
       s .=  C\(-g)
@@ -97,6 +97,7 @@ function prox!(
     if k>max_iter
       error("Shifted Norm L2 : Could not compute prox (Newton method did not converge...)")
     end
+    println(α)
     C = cholesky(ψ.A*ψ.A'+α*I(m))
     s .=  C\(-g)
     w = C.L\s
