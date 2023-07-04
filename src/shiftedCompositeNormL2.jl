@@ -51,7 +51,7 @@ function prox!(
   q::AbstractVector{R},
   σ::R;
   max_iter = 100,
-  ϵ = 1e-9
+  ϵ = 1e-16
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
   
   if !ψ.is_shifted
@@ -94,7 +94,7 @@ function prox!(
   end
   
   k = 0
-  while abs(norm(s)-Δ)> ϵ*Δ
+  while abs(norm(s)-Δ)> ϵ
     k = k+1
     if k>max_iter
       @warn("Shifted Norm L2 : Could not compute prox (Newton method did not converge...), prox may be inexact")
