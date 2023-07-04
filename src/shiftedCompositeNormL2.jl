@@ -110,6 +110,7 @@ function prox!(
       popfirst!(α_hist)
     end
     push!(α_hist, αn)
+
     println(α_hist)
     println(α)
 
@@ -126,6 +127,7 @@ function prox!(
     if k > max_lag
       for i = 1:max_lag-1 ## Check for oscillations in the Newton method
         if abs(α_hist[max_lag]-α_hist[max_lag-i]) < tol
+          println("OK")
           if abs(norm(s)-Δ) < sqrt(tol)
             break
           else 
