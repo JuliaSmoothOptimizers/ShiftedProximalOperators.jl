@@ -51,7 +51,7 @@ function prox!(
   q::AbstractVector{R},
   σ::R;
   tol = 1e-16,
-  debug = false
+  max_iter = 10000
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
   
   if !ψ.is_shifted
@@ -77,12 +77,16 @@ function prox!(
 
   catch ex 
     if isa(ex,LinearAlgebra.SingularException) || isa(ex,PosDefException)
-      α += sqrt(tol) ### TO IMPROVE
+      α_opt += sqrt(tol)
+      while α <= 0 
+        α_opt /= 10.0
+        C = cholesky(ψ.A*ψ.A'+α*I(m))
+        s .=  C\(-g)
+        w = C.L\s
+        α = α_opt + ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
+      end
 
-      C = cholesky(ψ.A*ψ.A'+α*I(m))
-      s .=  C\(-g)
-      w = C.L\s
-      α += ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
+      
 
     else
       rethrow()
@@ -90,22 +94,20 @@ function prox!(
 
   end
   
-  αn = 0
-  αprev = 0
-  αprevprev = 0
-  αprevprevprev = 0
-  
+  α_hist = zeros(R,max_iter)
+  k = 0
+
   while abs(norm(s)-Δ)>tol
+
+    k = k + 1 
     C = cholesky(ψ.A*ψ.A'+α*I(m))
     s .=  C\(-g)
     w = C.L\s
-    
-    αprevprevprevprev = αprevprevprev
-    αprevprevprev = αprevprev
-    αprevprev = αprev
-    αprev = αn
+
     αn = ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
-  
+    α_hist[k] = αn
+
+    
     if abs(αn) < tol
       if abs(norm(s)-Δ) < sqrt(tol)
         break
@@ -114,17 +116,16 @@ function prox!(
       end
     end
 
-    if abs(αprevprev-αn) < tol || abs(αprevprevprev - αn) < tol || abs(αprevprevprevprev - αn) < tol 
-      if abs(norm(s)-Δ) < sqrt(tol)
-        break
-      else 
-        error("Shifted Norm L2 : Newton method did not converge")
+    if k >= max_iter
+      for i = 1:max_iter-1 ## Check for oscillations in the Newton method
+        if abs(α_hist[k]-α_hist[k-i]) < tol && abs(norm(s)-Δ) < sqrt(tol)
+          break
+        else 
+          error("Shifted Norm L2 : Newton method did not converge")
+        end
       end
+    
     end
-    if debug
-      println(α)
-    end
-
     α += αn
 
   end
