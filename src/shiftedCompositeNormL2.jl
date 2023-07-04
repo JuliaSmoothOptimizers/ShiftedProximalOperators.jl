@@ -104,6 +104,7 @@ function prox!(
         break
       else 
         error("Shifted Norm L2 : Newton method did not converge")
+      end
     end
     α += αn
 
