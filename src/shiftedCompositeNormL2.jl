@@ -50,7 +50,8 @@ function prox!(
   ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3, V4},
   q::AbstractVector{R},
   σ::R;
-  tol = 1e-16
+  tol = 1e-16,
+  debug = false
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
   
   if !ψ.is_shifted
@@ -76,7 +77,6 @@ function prox!(
 
   catch ex 
     if isa(ex,LinearAlgebra.SingularException) || isa(ex,PosDefException)
-      @warn("Shifted Norm L2 : Jacobian is not full row rank")
       α += sqrt(tol) ### TO IMPROVE
 
       C = cholesky(ψ.A*ψ.A'+α*I(m))
@@ -103,7 +103,6 @@ function prox!(
   
     if abs(αn) < tol
       if abs(norm(s)-Δ) < sqrt(tol)
-        @warn("Shifted Norm L2 : Newton method did not converge well")
         break
       else 
         error("Shifted Norm L2 : Newton method did not converge")
@@ -112,11 +111,13 @@ function prox!(
 
     if abs(αprevprev-αn) < tol 
       if abs(norm(s)-Δ) < sqrt(tol)
-        @warn("Shifted Norm L2 : Newton method did not converge well due to oscillations")
         break
       else 
         error("Shifted Norm L2 : Newton method did not converge")
       end
+    end
+    if debug
+      println(α)
     end
 
     α += αn
