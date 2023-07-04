@@ -77,7 +77,7 @@ function prox!(
     α = α + ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
 
   catch ex 
-    if isa(ex,LinearAlgebra.SingularException)
+    if isa(ex,LinearAlgebra.SingularException) || isa(ex,PosDefException)
       @warn("Shifted Norm L2 : Jacobian is not full row rank")
       α = 1.0 ### TO IMPROVE
 
