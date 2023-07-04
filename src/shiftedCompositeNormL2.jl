@@ -122,7 +122,7 @@ function prox!(
     end
 
     if k > max_lag
-      for i = 1:max_lag ## Check for oscillations in the Newton method
+      for i = 1:max_lag-1 ## Check for oscillations in the Newton method
         if abs(α_hist[max_lag]-α_hist[max_lag-i]) < tol
           if abs(norm(s)-Δ) < sqrt(tol)
             break
