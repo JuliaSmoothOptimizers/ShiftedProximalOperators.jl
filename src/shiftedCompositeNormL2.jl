@@ -51,7 +51,7 @@ function prox!(
   q::AbstractVector{R},
   σ::R;
   max_iter = 100,
-  ϵ = 1e-16
+  tol = 1e-16
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
   
   if !ψ.is_shifted
@@ -61,7 +61,6 @@ function prox!(
   α = 0.0
   g = ψ.A*q + ψ.b
   Δ = ψ.h.lambda*σ
-
   s = zero(g)
   w = zero(g)
   m = length(g)
@@ -94,10 +93,10 @@ function prox!(
   end
   
   k = 0
-  while abs(norm(s)-Δ)> ϵ
+  while abs(norm(s)-Δ)>tol
     k = k+1
     if k>max_iter
-      @warn("Shifted Norm L2 : Could not compute prox (Newton method did not converge...), prox may be inexact")
+      error("Shifted Norm L2 : Could not compute prox (Newton method did not converge...)")
     end
     C = cholesky(ψ.A*ψ.A'+α*I(m))
     s .=  C\(-g)
