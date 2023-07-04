@@ -90,14 +90,13 @@ function prox!(
 
   end
   
-  k = 0 
+  αn = 0
   while abs(norm(s)-Δ)>tol
-    k = k+1
     C = cholesky(ψ.A*ψ.A'+α*I(m))
     s .=  C\(-g)
     w = C.L\s
     
-    αprev = k>1 ? αn : 0
+    αprev = αn
     αn = ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
   
     if abs(αn) < tol
