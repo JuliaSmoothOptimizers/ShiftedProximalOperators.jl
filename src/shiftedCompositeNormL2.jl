@@ -78,7 +78,7 @@ function prox!(
 
   catch ex 
     if isa(ex,LinearAlgebra.SingularException) || isa(ex,PosDefException)
-      α_opt = sqrt(tol)
+      α_opt = 10.0*sqrt(tol)
       while α <= 0 
         α_opt /= 10.0
         C = cholesky(ψ.A*ψ.A'+α_opt*I(m))
@@ -111,10 +111,6 @@ function prox!(
     end
     push!(α_hist, αn)
 
-    println(α_hist)
-    println(α)
-
-
     
     if abs(αn) < tol ## Check for improvement in the Newton method
       if abs(norm(s)-Δ) < sqrt(tol)
@@ -127,7 +123,7 @@ function prox!(
     if k > max_lag
       for i = 1:max_lag-1 ## Check for oscillations in the Newton method
         if abs(α_hist[max_lag]-α_hist[max_lag-i]) < tol
-          println("OK")
+          println(norm(s)-Δ)
           if abs(norm(s)-Δ) < sqrt(tol)
             break
           else 
