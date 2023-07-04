@@ -92,11 +92,16 @@ function prox!(
   
   αn = 0
   αprev = 0
+  αprevprev = 0
+  αprevprevprev = 0
+  
   while abs(norm(s)-Δ)>tol
     C = cholesky(ψ.A*ψ.A'+α*I(m))
     s .=  C\(-g)
     w = C.L\s
     
+    αprevprevprevprev = αprevprevprev
+    αprevprevprev = αprevprev
     αprevprev = αprev
     αprev = αn
     αn = ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
@@ -109,7 +114,7 @@ function prox!(
       end
     end
 
-    if abs(αprevprev-αn) < tol 
+    if abs(αprevprev-αn) < tol || abs(αprevprevprev - αn) < tol || abs(αprevprevprevprev - αn) < tol 
       if abs(norm(s)-Δ) < sqrt(tol)
         break
       else 
