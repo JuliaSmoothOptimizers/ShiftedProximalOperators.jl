@@ -77,7 +77,7 @@ function prox!(
 
   catch ex 
     if isa(ex,LinearAlgebra.SingularException) || isa(ex,PosDefException)
-      α_opt += sqrt(tol)
+      α_opt = sqrt(tol)
       while α <= 0 
         α_opt /= 10.0
         C = cholesky(ψ.A*ψ.A'+α*I(m))
@@ -85,9 +85,6 @@ function prox!(
         w = C.L\s
         α = α_opt + ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
       end
-
-      
-
     else
       rethrow()
     end
