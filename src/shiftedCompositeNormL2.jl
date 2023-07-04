@@ -80,12 +80,12 @@ function prox!(
       α_opt = sqrt(tol)
       while α <= 0 
         α_opt /= 10.0
-        C = cholesky(ψ.A*ψ.A'+α*I(m))
+        C = cholesky(ψ.A*ψ.A'+α_opt*I(m))
         s .=  C\(-g)
         w = C.L\s
         α = α_opt + ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
       end
-    else
+    else  
       rethrow()
     end
 
