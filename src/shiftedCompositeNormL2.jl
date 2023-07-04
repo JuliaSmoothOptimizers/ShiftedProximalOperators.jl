@@ -106,7 +106,7 @@ function prox!(
     αn = ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
 
 
-    if k> max_kag
+    if k> max_lag
       popfirst!(α_hist)
     end
     push!(α_hist, αn)
