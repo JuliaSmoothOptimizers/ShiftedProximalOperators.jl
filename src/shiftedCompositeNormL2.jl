@@ -58,11 +58,10 @@ function prox!(
     error("Shifted Norm L2 : Operator must be shifted for prox computation")
   end
 
-  α = 0.0
+  global α = 0.0
   g = ψ.A*q + ψ.b
   Δ = ψ.h.lambda*σ
   s = zero(g)
-  w = zero(g)
   m = length(g)
 
   try
@@ -73,8 +72,8 @@ function prox!(
       return y
     end
 
-    w .= C.L\s
-    α = α + ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
+    w = C.L\s
+    α += ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
 
   catch ex 
     if isa(ex,LinearAlgebra.SingularException) || isa(ex,PosDefException)
@@ -83,8 +82,8 @@ function prox!(
 
       C = cholesky(ψ.A*ψ.A'+α*I(m))
       s .=  C\(-g)
-      w .= C.L\s
-      α = α + ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
+      w = C.L\s
+      α += ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
 
     else
       rethrow()
@@ -100,9 +99,9 @@ function prox!(
     end
     C = cholesky(ψ.A*ψ.A'+α*I(m))
     s .=  C\(-g)
-    w .= C.L\s
+    w = C.L\s
 
-    α = α + ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
+    α += ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
 
   end
   y .= q + ψ.A'*s
