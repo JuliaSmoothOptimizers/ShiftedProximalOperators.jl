@@ -51,7 +51,7 @@ function prox!(
   q::AbstractVector{R},
   σ::R;
   tol = 1e-16,
-  max_iter = 10000
+  max_lag = 10
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
   
   if !ψ.is_shifted
@@ -63,6 +63,7 @@ function prox!(
   Δ = ψ.h.lambda*σ
   s = zero(g)
   m = length(g)
+
 
   try
     C = cholesky(ψ.A*ψ.A')
@@ -91,21 +92,28 @@ function prox!(
 
   end
   
-  α_hist = zeros(R,max_iter)
+  α_hist = zeros(R,max_lag)
   k = 0
 
   while abs(norm(s)-Δ)>tol
 
     k = k + 1 
+
     C = cholesky(ψ.A*ψ.A'+α*I(m))
     s .=  C\(-g)
     w = C.L\s
 
     αn = ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
-    α_hist[k] = αn
 
     
-    if abs(αn) < tol
+    if k> 10
+      popfirst!(α_hist)
+    end
+    push!(α_hist, αn)
+
+
+    
+    if abs(αn) < tol ## Check for improvement in the Newton method
       if abs(norm(s)-Δ) < sqrt(tol)
         break
       else 
@@ -113,16 +121,18 @@ function prox!(
       end
     end
 
-    if k >= max_iter
-      for i = 1:max_iter-1 ## Check for oscillations in the Newton method
-        if abs(α_hist[k]-α_hist[k-i]) < tol && abs(norm(s)-Δ) < sqrt(tol)
-          break
-        else 
-          error("Shifted Norm L2 : Newton method did not converge")
+    if k > max_lag
+      for i = 1:max_lag ## Check for oscillations in the Newton method
+        if abs(α_hist[k]-α_hist[k-i]) < tol
+          if abs(norm(s)-Δ) < sqrt(tol)
+            break
+          else 
+            error("Shifted Norm L2 : Newton method did not converge")
+          end
         end
       end
-    
     end
+
     α += αn
 
   end
