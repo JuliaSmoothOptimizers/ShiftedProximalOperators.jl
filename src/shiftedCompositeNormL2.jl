@@ -110,6 +110,8 @@ function prox!(
       popfirst!(α_hist)
     end
     push!(α_hist, αn)
+    println(α_hist)
+    println(α)
 
 
     
