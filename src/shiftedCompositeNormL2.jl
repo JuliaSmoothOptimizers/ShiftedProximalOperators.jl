@@ -90,14 +90,16 @@ function prox!(
 
   end
   
+  k = 0 
   while abs(norm(s)-Δ)>tol
-    
-    println(α)
+    k = k+1
     C = cholesky(ψ.A*ψ.A'+α*I(m))
     s .=  C\(-g)
     w = C.L\s
-
+    
+    αprev = k>1 ? αn : 0
     αn = ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
+  
     if abs(αn) < tol
       if abs(norm(s)-Δ) < sqrt(tol)
         @warn("Shifted Norm L2 : Newton method did not converge well")
@@ -106,6 +108,16 @@ function prox!(
         error("Shifted Norm L2 : Newton method did not converge")
       end
     end
+
+    if abs(αprev-αn) < tol 
+      if abs(norm(s)-Δ) < sqrt(tol)
+        @warn("Shifted Norm L2 : Newton method did not converge well")
+        break
+      else 
+        error("Shifted Norm L2 : Newton method did not converge")
+      end
+    end
+
     α += αn
 
   end
