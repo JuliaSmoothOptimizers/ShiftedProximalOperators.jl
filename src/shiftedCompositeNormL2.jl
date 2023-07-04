@@ -50,7 +50,6 @@ function prox!(
   ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3, V4},
   q::AbstractVector{R},
   σ::R;
-  max_iter = 100,
   tol = 1e-16
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
   
@@ -91,18 +90,22 @@ function prox!(
 
   end
   
-  k = 0
   while abs(norm(s)-Δ)>tol
-    k = k+1
-    if k>max_iter
-      error("Shifted Norm L2 : Could not compute prox (Newton method did not converge...)")
-    end
+    
     println(α)
     C = cholesky(ψ.A*ψ.A'+α*I(m))
     s .=  C\(-g)
     w = C.L\s
 
-    α += ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
+    αn = ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
+    if abs(αn) < tol
+      if abs(norm(s)-Δ) < sqrt(tol)
+        @warn("Shifted Norm L2 : Newton method did not converge well")
+        break
+      else 
+        error("Shifted Norm L2 : Newton method did not converge")
+    end
+    α += αn
 
   end
   y .= q + ψ.A'*s
