@@ -78,7 +78,7 @@ function prox!(
   catch ex 
     if isa(ex,LinearAlgebra.SingularException) || isa(ex,PosDefException)
       @warn("Shifted Norm L2 : Jacobian is not full row rank")
-      α += 1.0 ### TO IMPROVE
+      α += sqrt(tol) ### TO IMPROVE
 
       C = cholesky(ψ.A*ψ.A'+α*I(m))
       s .=  C\(-g)
