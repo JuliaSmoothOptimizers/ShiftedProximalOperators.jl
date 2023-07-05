@@ -78,7 +78,7 @@ function prox!(
 
   catch ex 
     if isa(ex,LinearAlgebra.SingularException) || isa(ex,PosDefException)
-      α_opt = 10.0*sqrt(tol)
+      α_opt = 1.0
       while α <= 0 
         α_opt /= 10.0
         println(α_opt)
