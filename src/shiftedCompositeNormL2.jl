@@ -123,10 +123,9 @@ function prox!(
     if k > max_lag
       for i = 1:max_lag-1 ## Check for oscillations in the Newton method
         if abs(α_hist[max_lag]-α_hist[max_lag-i]) < tol
-          print("Residue : ")
-          println(norm(s)-Δ)
           if abs(norm(s)-Δ) < sqrt(tol)
-            break
+            y .= q + ψ.A'*s
+            return y
           else 
             error("Shifted Norm L2 : Newton method did not converge")
           end
