@@ -82,6 +82,9 @@ function prox!(
       while α <= 0 
         α_opt /= 10.0
         println(α_opt)
+        println(eigen(ψ.A*ψ.A'+α_opt*I(m)).values)
+        print("without add")
+        println(eigen(ψ.A*ψ.A').values)
         C = cholesky(ψ.A*ψ.A'+α_opt*I(m))
         s .=  C\(-g)
         w = C.L\s
