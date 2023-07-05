@@ -78,18 +78,13 @@ function prox!(
 
   catch ex 
     if isa(ex,LinearAlgebra.SingularException) || isa(ex,PosDefException)
-      α_opt = 10.0
+      α_opt = 10.0*sqrt(tol)
       while α <= 0 
         α_opt /= 10.0
-        println(α_opt)
-        println(eigen(Matrix(ψ.A*ψ.A'+α_opt*I(m))).values)
-        print("without add")
-        println(eigen(Matrix(ψ.A*ψ.A')).values)
         C = cholesky(ψ.A*ψ.A'+α_opt*I(m))
         s .=  C\(-g)
         w = C.L\s
         α = α_opt + ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
-        println(α)
       end
     else  
       rethrow()
