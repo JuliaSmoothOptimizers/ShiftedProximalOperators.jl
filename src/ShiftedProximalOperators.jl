@@ -1,6 +1,7 @@
 module ShiftedProximalOperators
 
 using LinearAlgebra
+using SparseArrays
 
 using libblastrampoline_jll
 using OpenBLAS32_jll
