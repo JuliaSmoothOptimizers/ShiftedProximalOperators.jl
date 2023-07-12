@@ -15,13 +15,11 @@ struct AffineNormL2{R <: Real, V1 <: AbstractMatrix{R}, V2 <: AbstractVector{R}}
   A::V1
   b::V2
   function AffineNormL2{R,V1,V2}(A::V1,b::V2,lambda::R) where {R <: Real, V1 <: AbstractMatrix{R}, V2 <: AbstractVector{R}}
-    if lambda < 0
-      error("Affine Norm L2 : parameter λ must be nonnegative")
-    elseif size(A,1) != length(b)
-      error("Affine Norm L2 : dimensions of parameter A and b must match")
-    else
-      new{R,V1,V2}(lambda,A,b)
-    end
+    lambda > 0 || error("Affine Norm L2: parameter λ must be positive")
+    size(A,1) == length(b) || error("Affine Norm L2 : dimensions of parameter A and b must match")
+    size(A,1) <= size(A,2) || error("Affine Norm L2 : parameter A should have more columns than rows")
+    new{R,V1,V2}(lambda,A,b)
+  
   end
 end
 
@@ -41,31 +39,22 @@ function prox!(
   gamma::Real = 1,
 ) where {T <: Real, R <: Real, V1 <: AbstractMatrix{R}, V2 <: AbstractVector{R}}
 
-try
-  z = -f.A*f.A'\(f.A*x + f.b)
-catch ex 
-  if isa(ex,LinearAlgebra.SingularException)
-    error("Affine Norm L2 : A is not full row rank !")
-  else
-    rethrow()
-  end
-
-end
+z = f.A*f.A'\(f.A*x + f.b)
 
 if norm(z) <= f.lambda*gamma
-  y .= x + f.A'*z
+  y .= x - f.A'*z
   return y
 end
 
-m = length(f.b)
-g(α::T) = (z = (f.A*f.A' + α*I(m))\(f.A*x+f.b); norm(z)^2 - (f.lambda*gamma)^2)
-Dg(α::T) = (z = (f.A*f.A' + α*I(m))^3\(f.A*x+f.b); -2*(f.A*x+f.b)'*z)
-α_root = find_zero((g,Dg),0.0,Roots.Newton())
+  m = length(f.b)
+  g(α::T) = (z = (f.A*f.A' + α*I(m))\(f.A*x+f.b); norm(z)^2 - (f.lambda*gamma)^2)
+  Dg(α::T) = (z = (f.A*f.A' + α*I(m))^3\(f.A*x+f.b); -2*(f.A*x+f.b)'*z)
+  α_root = find_zero((g,Dg),zero(T),Roots.Newton())
 
-z = -(f.A*f.A' + α_root*I(m))\(f.A*x+f.b)
-y .= x + f.A'*z
+  z = (f.A*f.A' + α_root*I(m))\(f.A*x+f.b)
+  y .= x - f.A'*z
 
-return y
+  return y
 end
 
 fun_name(f::AffineNormL2) = "ℓ₂ norm of the affine function x ↦ Ax+b"
