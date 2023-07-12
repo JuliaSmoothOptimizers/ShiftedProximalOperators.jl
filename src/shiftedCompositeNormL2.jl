@@ -14,32 +14,49 @@ mutable struct ShiftedCompositeNormL2{
   A::V2
   b::V3
   sol::V4
-  is_shifted::Bool
   function ShiftedCompositeNormL2(
     h::NormL2{R},
     c!::Function,
     J!::Function,
     A::AbstractMatrix{R},
     b::AbstractVector{R},
-    is_shifted::Bool
   ) where {R <: Real}
     sol = similar(b,size(A,2))
     if length(b) != size(A,1)
       error("Shifted Norm L2 : Wrong input dimensions, constraints should have same length as rows of the jacobian")
     end
-    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b), typeof(sol)}(h,c!,J!,A,b, sol,is_shifted)
+    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b), typeof(sol)}(h,c!,J!,A,b, sol)
   end
 end
 
-shifted(h::NormL2{R}, c!::Function,J!::Function,A::AbstractMatrix{R},b::AbstractVector{R}) where {R <: Real} = 
-  ShiftedCompositeNormL2(h,c!,J!,A,b,false)
-shifted(h::NormL2{R}, c!::Function,J!::Function,A::AbstractMatrix{R},b::AbstractVector{R}, xk :: AbstractVector{R}) where {R <: Real} =
-  (c!(xk,b);J!(xk,A);ShiftedCompositeNormL2(h,c!,J!,A,b,true))
+
+shifted(h::NormL2{R}, c!::Function,J!::Function,A::AbstractMatrix{R},b::AbstractVector{R}, xk :: AbstractVector{R}) where {R <: Real} = begin
+  c!(b,xk)
+  J!(A,xk)
+  ShiftedCompositeNormL2(h,c!,J!,A,b)
+end
+
 shifted(
   ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3, V4},
   xk::AbstractVector{R},
-) where {R <: Real, V0 <: Function, V1 <: Function, V2 <: AbstractMatrix{R},V3<: AbstractVector{R},V4<: AbstractVector{R}} =
-  (b = similar(ψ.b);ψ.c!(xk,b);A = similar(ψ.A);ψ.J!(xk,A);ShiftedCompositeNormL2(ψ.h, ψ.c!,ψ.J!,A,b,true)) 
+) where {R <: Real, V0 <: Function, V1 <: Function, V2 <: AbstractMatrix{R},V3<: AbstractVector{R},V4 <: AbstractVector{R}} = begin
+  b = similar(ψ.b)
+  ψ.c!(b,xk)
+  A = similar(ψ.A)
+  ψ.J!(A,xk)
+  ShiftedCompositeNormL2(ψ.h, ψ.c!,ψ.J!,A,b)
+end
+ 
+shifted(
+  ψ::CompositeNormL2{R,V0,V1,V2,V3},
+  xk::AbstractVector{R}
+) where {R <: Real, V0 <: Function, V1 <: Function, V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}} = begin
+  b = similar(ψ.b)
+  ψ.c!(b,xk)
+  A = similar(ψ.A)
+  ψ.J!(A,xk)
+  ShiftedCompositeNormL2(ψ.h,ψ.c!,ψ.J!,A,b)
+end
 
 fun_name(ψ::ShiftedCompositeNormL2) = "shifted L2 norm"
 fun_expr(ψ::ShiftedCompositeNormL2) = "t ↦ ‖c(xk) + J(xk)t‖₂"
@@ -54,19 +71,16 @@ function prox!(
   max_lag = 10
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
   
-  if !ψ.is_shifted
-    error("Shifted Norm L2 : Operator must be shifted for prox computation")
-  end
 
   global α = 0.0
   g = ψ.A*q + ψ.b
+  H = ψ.A*ψ.A'
   Δ = ψ.h.lambda*σ
   s = zero(g)
   m = length(g)
 
-
   try
-    C = cholesky(ψ.A*ψ.A')
+    C = cholesky(H)
     s .=  C\(-g)
     if norm(s) <= Δ
       y .= q + ψ.A'*s
@@ -81,7 +95,7 @@ function prox!(
       α_opt = 10.0*sqrt(tol)
       while α <= 0 
         α_opt /= 10.0
-        C = cholesky(ψ.A*ψ.A'+α_opt*I(m))
+        C = cholesky(H+α_opt*I(m))
         s .=  C\(-g)
         w = C.L\s
         α = α_opt + ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
@@ -95,11 +109,12 @@ function prox!(
   α_hist = zeros(R,max_lag)
   k = 0
 
+  # Cf Algorithm 7.3.1 in Conn-Gould-Toint
   while abs(norm(s)-Δ)>tol
 
     k = k + 1 
 
-    C = cholesky(ψ.A*ψ.A'+α*I(m))
+    C = cholesky(H+α*I(m))
     s .=  C\(-g)
     w = C.L\s
 

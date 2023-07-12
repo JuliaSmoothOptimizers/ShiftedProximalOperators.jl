@@ -25,12 +25,14 @@ export prox, prox!, iprox, iprox!, set_radius!, shift!, shifted, set_bounds!
 import ProximalOperators.prox, ProximalOperators.prox!
 
 "Abstract type for shifted proximable functions."
+abstract type CompositeProximableFunction end
 abstract type ShiftedProximableFunction end
 abstract type ShiftedCompositeProximableFunction <: ShiftedProximableFunction end
 
 include("utils.jl")
 include("psvd.jl")
 
+include("CompositeNormL2.jl")
 include("affineNormL2.jl")
 include("rootNormLhalf.jl")
 include("groupNormL2.jl")
@@ -56,12 +58,10 @@ include("shiftedCappedl1.jl")
 include("shiftedNuclearnorm.jl")
 
 (ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
-(ψ::ShiftedCompositeProximableFunction)(y) = begin
-  if ψ.is_shifted
-    return ψ.h(ψ.b + ψ.A * y)
-  end
+(ψ::ShiftedCompositeProximableFunction)(y) = ψ.h(ψ.b + ψ.A * y)
+(ψ::CompositeProximableFunction)(y) = begin
   z = similar(ψ.b)
-  ψ.c!(y, z)
+  ψ.c!(z, y)
   ψ.h(z)
 end
 
@@ -80,9 +80,8 @@ function shift!(ψ::ShiftedProximableFunction, shift::AbstractVector{R}) where {
 end
 
 function shift!(ψ::ShiftedCompositeProximableFunction, shift::AbstractVector{R}) where {R <: Real}
-  ψ.c!(shift,ψ.b)
-  ψ.J!(shift,ψ.A)
-  ψ.is_shifted = true
+  ψ.c!(ψ.b,shift)
+  ψ.J!(ψ.A,shift)
   return ψ
 end
 
