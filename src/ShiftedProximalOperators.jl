@@ -62,7 +62,7 @@ include("shiftedNuclearnorm.jl")
   end
   z = similar(ψ.b)
   ψ.c!(y, z)
-  ψ.h(z))
+  ψ.h(z)
 end
 
 """
