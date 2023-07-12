@@ -59,5 +59,5 @@ end
 
 fun_name(f::AffineNormL2) = "ℓ₂ norm of the affine function x ↦ Ax+b"
 fun_dom(f::AffineNormL2) = "AbstractVector{Real}"
-fun_expr(f::AffineNormL2{T,V1,V2}) where {T <: Real, V1 <: AbstractMatrix{T}, V2 <: AbstractVector{T}} = "x ↦  λ ‖Ax+b‖₂"
+fun_expr(f::AffineNormL2{T,V1,V2}) where {T <: Real, V1 <: AbstractMatrix{T}, V2 <: AbstractVector{T}} = "x ↦ λ ‖Ax+b‖₂"
 fun_params(f::AffineNormL2{T,V1,V2}) where {T <: Real, V1 <: AbstractMatrix{T}, V2 <: AbstractVector{T}} = "λ = $(f.lambda)\n A = $(f.A)\n b = $(f.b)"
