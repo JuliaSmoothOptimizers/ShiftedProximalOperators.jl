@@ -60,9 +60,8 @@ for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
       for d ∈ [ones(n), 2 * ones(n), zeros(n)]
         ψ = shifted(h, x)
         y = iprox(ψ, q, d)
-        σ = abs(d[1])
+        σ = d[1]
         z = prox(ψ, q, σ)
-        p = ShiftedProximalOperators.iprox_zero.(d, q, l - s, u - s)
         for i = 1:n
           if i ∈ selected
             @test z[i] == y[i]
