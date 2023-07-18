@@ -51,3 +51,22 @@ function prox!(
 
   return y
 end
+
+# arg min yᵀDy/2 - gᵀy + λ h(x + s + y)
+# variable change v = x + s + y:
+# arg min vᵀDv/2 - fᵀv + λ h(v)
+# with fᵢ = gᵢ + dᵢ(xᵢ + sᵢ)
+function iprox!(
+  y::AbstractVector{R},
+  ψ::ShiftedNormL1{R, V0, V1, V2},
+  g::AbstractVector{R},
+  d::AbstractVector{R},
+) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
+  y .= -ψ.xk .- ψ.sj
+
+  for i ∈ eachindex(y)
+    y[i] = min(max(y[i], -g[i]/d[i] - ψ.λ/d[i] ), -g[i]/d[i] + ψ.λ/d[i] )
+  end
+
+  return y
+end
