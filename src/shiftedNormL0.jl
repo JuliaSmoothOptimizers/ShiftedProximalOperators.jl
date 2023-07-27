@@ -66,6 +66,7 @@ function iprox!(
 
   for i ∈ eachindex(y)
     di = d[i]
+    @assert di > 0
     ci = sqrt(2 * ψ.λ * di)
     xps = ψ.xk[i] + ψ.sj[i]
     if abs(di * xps - g[i]) ≤ ci
