@@ -65,6 +65,7 @@ function iprox!(
   y .= -ψ.xk .- ψ.sj
 
   for i ∈ eachindex(y)
+    @assert d[i] != 0
     y[i] = min(max(y[i], -g[i]/d[i] - ψ.λ/d[i] ), -g[i]/d[i] + ψ.λ/d[i] )
   end
 
