@@ -68,16 +68,18 @@ function prox!(
   q::AbstractVector{R},
   σ::R;
   tol = 1e-16,
-  max_lag = 10
+  max_iter = 10000
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
   
 
-  global α = 0.0
+  α = 0.0
   g = ψ.A*q + ψ.b
   H = ψ.A*ψ.A'
+
   Δ = ψ.h.lambda*σ
   s = zero(g)
   m = length(g)
+  k = 0
 
   try
     C = cholesky(H)
@@ -106,11 +108,9 @@ function prox!(
 
   end
   
-  α_hist = zeros(R,max_lag)
-  k = 0
 
   # Cf Algorithm 7.3.1 in Conn-Gould-Toint
-  while abs(norm(s)-Δ)>tol
+  while abs(norm(s)-Δ)>tol && k < max_iter
 
     k = k + 1 
 
@@ -119,40 +119,14 @@ function prox!(
     w = C.L\s
 
     αn = ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
-
-
-    if k> max_lag
-      popfirst!(α_hist)
-    end
-    push!(α_hist, αn)
-
-    
-    if abs(αn) < tol ## Check for improvement in the Newton method
-      if abs(norm(s)-Δ) < sqrt(tol)
-        break
-      else 
-        error("Shifted Norm L2 : Newton method did not converge")
-      end
-    end
-
-    if k > max_lag
-      for i = 1:max_lag-1 ## Check for oscillations in the Newton method
-        if abs(α_hist[max_lag]-α_hist[max_lag-i]) < tol
-          if abs(norm(s)-Δ) < sqrt(tol)
-            y .= q + ψ.A'*s
-            return y
-          else 
-            error("Shifted Norm L2 : Newton method did not converge")
-          end
-        end
-      end
-    end
-
     α += αn
 
   end
   y .= q + ψ.A'*s
 
-  return y
+  if k > max_iter && abs(norm(s)-Δ)>sqrt(tol)
+    error("ShiftedCompositeNormL2 : Newton Method did not converge.")
+  end 
 
+  return y
 end
