@@ -116,6 +116,7 @@ function prox!(
     k = k + 1 
     if debug 
       println(α)
+      println(norm(s)-Δ)
     end
     C = cholesky(H+α*I(m))
     s .=  C\(-g)
