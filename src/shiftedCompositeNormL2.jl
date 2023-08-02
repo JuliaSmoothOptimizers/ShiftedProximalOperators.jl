@@ -68,7 +68,8 @@ function prox!(
   q::AbstractVector{R},
   σ::R;
   tol = 1e-16,
-  max_iter = 10000
+  max_iter = 10000,
+  debug = false
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
   
 
@@ -113,7 +114,9 @@ function prox!(
   while abs(norm(s)-Δ)>tol && k < max_iter
 
     k = k + 1 
-
+    if debug 
+      println(α)
+    end
     C = cholesky(H+α*I(m))
     s .=  C\(-g)
     w = C.L\s
