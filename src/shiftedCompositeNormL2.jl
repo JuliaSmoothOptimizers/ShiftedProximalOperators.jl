@@ -116,14 +116,14 @@ function prox!(
     k = k + 1 
     if debug 
       println(α)
-      println(norm(s)-Δ)
+      println(norm(s)-Δ )
     end
     C = cholesky(H+α*I(m))
     s .=  C\(-g)
     w = C.L\s
 
     αn = ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
-    α += αn
+    α = max(0,α+αn)
 
   end
   y .= q + ψ.A'*s
