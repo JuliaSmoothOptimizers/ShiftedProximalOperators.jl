@@ -125,6 +125,9 @@ function prox!(
     αn = ((norm(s)/norm(w))^2)*(norm(s)-Δ)/Δ
     α = max(0,α+αn)
 
+    if abs(αn) < tol &&  abs(norm(s)-Δ)<sqrt(tol)
+      break
+
   end
   y .= q + ψ.A'*s
 
