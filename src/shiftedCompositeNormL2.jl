@@ -127,6 +127,7 @@ function prox!(
 
     if abs(αn) < tol &&  abs(norm(s)-Δ)<sqrt(tol)
       break
+    end
 
   end
   y .= q + ψ.A'*s
