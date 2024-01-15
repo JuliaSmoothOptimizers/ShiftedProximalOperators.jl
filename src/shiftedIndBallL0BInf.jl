@@ -15,6 +15,7 @@ mutable struct ShiftedIndBallL0BInf{
   Δ::R
   χ::Conjugate{IndBallL1{R}}
   shifted_twice::Bool
+  xsy::V2
   function ShiftedIndBallL0BInf(
     h::IndBallL0{I},
     xk::AbstractArray{R},
@@ -24,6 +25,7 @@ mutable struct ShiftedIndBallL0BInf{
     shifted_twice::Bool,
   ) where {I <: Integer, R <: Real}
     sol = similar(sj)
+    xsy = similar(sj)
     new{I, R, typeof(xk), typeof(sj), typeof(sol)}(
       h,
       xk,
@@ -33,12 +35,18 @@ mutable struct ShiftedIndBallL0BInf{
       Δ,
       χ,
       shifted_twice,
+      xsy,
     )
   end
 end
 
 # TODO: find a more robust solution than the factor 1.1 here.
-(ψ::ShiftedIndBallL0BInf)(y) = ψ.h(ψ.xk + ψ.sj + y) + IndBallLinf(1.1 * ψ.Δ)(ψ.sj + y)
+function (ψ::ShiftedIndBallL0BInf)(y)
+  @. ψ.xsy = ψ.sj + y
+  indball_val = IndBallLinf(1.1 * ψ.Δ)(ψ.xsy)
+  ψ.xsy .+= ψ.xk
+  return ψ.h(ψ.xsy) + indball_val
+end
 
 shifted(
   h::IndBallL0{I},

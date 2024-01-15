@@ -15,6 +15,7 @@ mutable struct ShiftedRank{
   sj::V1  # current shift
   sol::V2   # internal storage
   shifted_twice::Bool
+  xsy::V2
   function ShiftedRank(
     h::Rank{R, S, T, Tr, M},
     xk::AbstractVector{R},
@@ -22,7 +23,8 @@ mutable struct ShiftedRank{
     shifted_twice::Bool,
   ) where {R <: Real, S <: AbstractArray, T, Tr, M <: AbstractArray{T}}
     sol = similar(xk)
-    new{R, S, T, Tr, M, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, shifted_twice)
+    xsy = similar(xk)
+    new{R, S, T, Tr, M, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, shifted_twice, xsy)
   end
 end
 

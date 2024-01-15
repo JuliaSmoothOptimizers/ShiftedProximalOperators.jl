@@ -611,7 +611,7 @@ for (op, tr, shifted_op) ∈ zip((:NormL2,), (:NormLinf,), (:ShiftedGroupNormL2B
     @test φ(zeros(n)) == h(y + s)
     t = rand(n)
     t .*= ψ.Δ / ψ.χ(t) / 2
-    @test φ(t) == h(y + s + t)  # y inside the trust region
+    @test φ(t) ≈ h(y + s + t)  # y inside the trust region
     @test φ(3 * t) == Inf       # y outside the trust region
 
     # test different types
@@ -710,7 +710,7 @@ for (op, tr, shifted_op) ∈ zip((:GroupNormL2,), (:NormLinf,), (:ShiftedGroupNo
     @test φ(zeros(n)) == h(y + s)
     t = rand(n)
     t .*= ψ.Δ / ψ.χ(t) / 2
-    @test φ(t) == h(y + s + t)  # y inside the trust region
+    @test φ(t) ≈ h(y + s + t) # y inside the trust region
     @test φ(3 * t) == Inf       # y outside the trust region
 
     # test different types

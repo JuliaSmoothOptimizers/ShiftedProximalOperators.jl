@@ -13,6 +13,7 @@ mutable struct ShiftedNormL1B2{
   Δ::R
   χ::NormL2{R}
   shifted_twice::Bool
+  xsy::V2
 
   function ShiftedNormL1B2(
     h::NormL1{R},
@@ -23,7 +24,8 @@ mutable struct ShiftedNormL1B2{
     shifted_twice::Bool,
   ) where {R <: Real}
     sol = similar(sj)
-    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Δ, χ, shifted_twice)
+    xsy = similar(sj)
+    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, Δ, χ, shifted_twice, xsy)
   end
 end
 

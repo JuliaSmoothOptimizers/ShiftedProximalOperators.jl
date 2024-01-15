@@ -11,6 +11,7 @@ mutable struct ShiftedNormL0{
   sj::V1  # current shift
   sol::V2   # internal storage
   shifted_twice::Bool
+  xsy::V2
   function ShiftedNormL0(
     h::NormL0{R},
     xk::AbstractVector{R},
@@ -18,7 +19,8 @@ mutable struct ShiftedNormL0{
     shifted_twice::Bool,
   ) where {R <: Real}
     sol = similar(xk)
-    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, shifted_twice)
+    xsy = similar(xk)
+    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, shifted_twice, xsy)
   end
 end
 
