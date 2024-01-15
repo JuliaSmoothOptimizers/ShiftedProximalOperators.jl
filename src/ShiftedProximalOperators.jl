@@ -57,7 +57,10 @@ include("shiftedRank.jl")
 include("shiftedCappedl1.jl")
 include("shiftedNuclearnorm.jl")
 
-(ψ::ShiftedProximableFunction)(y) = ψ.h(ψ.xk + ψ.sj + y)
+function (ψ::ShiftedProximableFunction)(y)
+  @. ψ.xsy = ψ.xk + ψ.sj + y
+  return ψ.h(ψ.xsy)
+end
 (ψ::ShiftedCompositeProximableFunction)(y) = ψ.h(ψ.b + ψ.A * y)
 (ψ::CompositeProximableFunction)(y) = begin
   z = similar(ψ.b)

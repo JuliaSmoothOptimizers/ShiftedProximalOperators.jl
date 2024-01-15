@@ -12,6 +12,7 @@ mutable struct ShiftedRootNormLhalf{
   sj::V1
   sol::V2
   shifted_twice::Bool
+  xsy::V2
 
   function ShiftedRootNormLhalf(
     h::RootNormLhalf{R},
@@ -20,7 +21,8 @@ mutable struct ShiftedRootNormLhalf{
     shifted_twice::Bool,
   ) where {R <: Real}
     sol = similar(xk)
-    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, shifted_twice)
+    xsy = similar(xk)
+    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, shifted_twice, xsy)
   end
 end
 
