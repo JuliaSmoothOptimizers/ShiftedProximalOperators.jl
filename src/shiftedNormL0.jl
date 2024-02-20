@@ -63,7 +63,6 @@ function iprox!(
   g::AbstractVector{R},
   d::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-
   for i ∈ eachindex(y)
     di = d[i]
     @assert di > 0
@@ -72,7 +71,7 @@ function iprox!(
     if abs(di * xps - g[i]) ≤ ci
       y[i] = -xps
     else
-      y[i] = -g[i]/di
+      y[i] = -g[i] / di
     end
   end
   return y
