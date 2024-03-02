@@ -1,9 +1,83 @@
 using LinearAlgebra
+using SparseArrays
 using ProximalOperators
 using ShiftedProximalOperators
 using Test
 
 include("test_psvd.jl")
+
+for (op,composite_op,shifted_op) ∈ zip((:NormL1,), (:CompositeNormL1,), (:ShiftedCompositeNormL1,))
+  @testset "$shifted_op" begin
+    ShiftedOp = eval(shifted_op)
+    CompositeOp = eval(composite_op)
+
+    function c!(z,x)
+      z[1] = 2*x[1] - x[4]
+      z[2] = x[2] + x[3] 
+    end
+    function J!(z,x)
+      z .= sparse(Float64[2 0 0 -1;0 1 1 0])
+    end
+    λ = 3.62
+    Op = eval(op)
+    h = Op(λ)
+
+    b = zeros(Float64,2)
+    A = sparse(Matrix{Float64}(undef,2,4))
+
+
+    ψ = CompositeOp(h,c!,J!,A,b)
+
+    # test non shifted operator
+    @test ψ(ones(Float64,4)) == h([1,2])
+    @test all(ψ(zeros(Float64,4)) .== 0.0)
+    @test all(ψ.b .== 0.0)
+    
+    # test shifted operator
+    xk = [0.0,1.1741,0.0,-0.4754]
+    ϕ = shifted(ψ,xk)
+
+    @test ϕ(zeros(Float64,4)) == h([0.4754,1.1741])
+    @test ϕ(ones(Float64,4)) == h([0.4754,1.1741] + Float64[2 0 0 -1;0 1 1 0]*ones(Float64,4))
+    @test ϕ.b == [0.4754,1.1741]
+    @test ϕ.A == sparse(Float64[2 0 0 -1;0 1 1 0])
+
+    # test prox 
+    x = [0.1097,1.1287,-0.29,1.2616]
+    y = similar(x)
+    ν = 0.1056
+    prox!(y,ϕ,x,ν)
+    
+    if  "$op" == "NormL1"
+      y_true = [0.33642, 0.746428, -0.672272, 1.14824]
+      @test sum((y - y_true) .^ 2) ≤ 1e-11
+    end
+    # test in place shift
+    xk = ones(Float64,4)
+    shift!(ϕ,xk)
+    
+    @test ϕ.b == [1.0,2.0]
+    @test ϕ.A == sparse(Float64[2 0 0 -1;0 1 1 0])
+    @test ϕ(ones(Float64,4)) == h([1.0,2.0] + sparse(Float64[2 0 0 -1;0 1 1 0])*ones(Float64,4))
+
+    # test different types
+    h = Op(Float32(λ))
+    function c!(z,x)
+      z[1] = 2*x[1] - x[4]
+      z[2] = x[2] + x[3] 
+    end
+    function J!(z,x)
+      z .= sparse(Float32[2 0 0 -1;0 1 1 0])
+    end
+    b = zeros(Float32,2)
+    A = sparse(Matrix{Float32}(undef,2,4))
+
+    ψ = CompositeOp(h,c!,J!,A,b)
+
+    @test typeof(ψ(zeros(Float32,4))) == Float32
+
+  end
+end
 
 #test Created norms/standard proxes - TODO: come up with more robust test
 for op ∈ (:RootNormLhalf,)
