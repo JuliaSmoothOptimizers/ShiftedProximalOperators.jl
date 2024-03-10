@@ -22,6 +22,7 @@ mutable struct CompositeNormL1{
     J!::V1
     A::V2
     b::V3
+
     function CompositeNormL1(
       h::NormL1{R},
       c!::Function,
