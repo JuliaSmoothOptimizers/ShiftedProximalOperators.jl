@@ -23,7 +23,7 @@ mutable struct CompositeNormL1{
     V1 <: Function,
     V2 <: AbstractMatrix{R},
     V3 <: AbstractVector{R},
-  } <: CompositeProximableFunction
+  } <: AbstractCompositeNorm
     h::NormL1{R}
     c!::V0
     J!::V1

@@ -27,6 +27,8 @@ import ProximalOperators.prox, ProximalOperators.prox!
 "Abstract type for shifted proximable functions."
 abstract type ShiftedProximableFunction end
 abstract type CompositeProximableFunction end
+
+abstract type AbstractCompositeNorm <: CompositeProximableFunction end
 abstract type ShiftedCompositeProximableFunction <: ShiftedProximableFunction end
 
 include("utils.jl")
