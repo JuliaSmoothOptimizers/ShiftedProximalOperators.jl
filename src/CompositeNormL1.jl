@@ -2,7 +2,7 @@
 export CompositeNormL1
 
 @doc raw"""
-    CompositeNormL1(h,c!,J!,A,b)
+    CompositeNormL1(h, c!, J!, A, b)
 
 Returns the ``\ell_{1}`` norm operator composed with a function
 ```math
