@@ -69,7 +69,6 @@ function prox!(
   σ::R
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
   
-
   g = ψ.A*q + ψ.b
   H = ψ.A*ψ.A'
   
