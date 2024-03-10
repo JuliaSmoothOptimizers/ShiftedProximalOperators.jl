@@ -31,7 +31,7 @@ mutable struct CompositeNormL1{
       b::AbstractVector{R},
     ) where {R <: Real}
       length(b) == size(A,1) || error("Composite Norm L1 : Wrong input dimensions, constraints should have same length as rows of the jacobian")  
-      new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(h,c!,J!,A,b)
+      new{R, typeof(c!), typeof(J!), typeof(A), typeof(b)}(h, c!, J!, A, b)
     end
   end
 
