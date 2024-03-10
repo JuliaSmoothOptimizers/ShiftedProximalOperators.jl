@@ -25,7 +25,6 @@ for (op,composite_op,shifted_op) ∈ zip((:NormL1,), (:CompositeNormL1,), (:Shif
     b = zeros(Float64,2)
     A = sparse(Matrix{Float64}(undef,2,4))
 
-
     ψ = CompositeOp(h,c!,J!,A,b)
 
     # test non shifted operator
