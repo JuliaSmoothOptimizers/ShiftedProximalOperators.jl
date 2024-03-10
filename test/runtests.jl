@@ -74,7 +74,6 @@ for (op,composite_op,shifted_op) ∈ zip((:NormL1,), (:CompositeNormL1,), (:Shif
     ψ = CompositeOp(h,c!,J!,A,b)
 
     @test typeof(ψ(zeros(Float32,4))) == Float32
-
   end
 end
 
