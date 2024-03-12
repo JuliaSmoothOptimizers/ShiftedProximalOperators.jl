@@ -25,7 +25,7 @@ for (op,composite_op,shifted_op) ∈ zip((:NormL1,), (:CompositeNormL1,), (:Shif
     b = zeros(Float64,2)
     A = sparse(Matrix{Float64}(undef,2,4))
 
-    ψ = CompositeOp(h,c!,J!,A,b)
+    ψ = CompositeOp(λ,c!,J!,A,b)
 
     # test non shifted operator
     @test ψ(ones(Float64,4)) == h([1,2])
@@ -60,7 +60,6 @@ for (op,composite_op,shifted_op) ∈ zip((:NormL1,), (:CompositeNormL1,), (:Shif
     @test ϕ(ones(Float64,4)) == h([1.0,2.0] + sparse(Float64[2 0 0 -1;0 1 1 0])*ones(Float64,4))
 
     # test different types
-    h = Op(Float32(λ))
     function c!(z,x)
       z[1] = 2*x[1] - x[4]
       z[2] = x[2] + x[3] 
@@ -71,7 +70,7 @@ for (op,composite_op,shifted_op) ∈ zip((:NormL1,), (:CompositeNormL1,), (:Shif
     b = zeros(Float32,2)
     A = sparse(Matrix{Float32}(undef,2,4))
 
-    ψ = CompositeOp(h,c!,J!,A,b)
+    ψ = CompositeOp(Float32(λ),c!,J!,A,b)
 
     @test typeof(ψ(zeros(Float32,4))) == Float32
   end

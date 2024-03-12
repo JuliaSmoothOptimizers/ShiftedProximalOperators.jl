@@ -2,13 +2,13 @@
 export CompositeNormL1
 
 @doc raw"""
-    CompositeNormL1(h, c!, J!, A, b)
+    CompositeNormL1(λ, c!, J!, A, b)
 
 Returns the ``\ell_{1}`` norm operator composed with a function
 ```math
 f(x) = λ \|c(x)\|_1
 ```
-where ``\lambda \geq 0``. h should be a NormL1{R}(``\lambda``), c! and J! should be functions
+where ``\lambda \geq 0``. c! and J! should be functions
 ```math
 \begin{aligned}
 &c(x) : \mathbb{R}^n \xrightarrow[]{} \mathbb{R}^m \\
@@ -31,14 +31,15 @@ mutable struct CompositeNormL1{
     b::V3
 
     function CompositeNormL1(
-      h::NormL1{R},
+      λ::R,
       c!::Function,
       J!::Function,
       A::AbstractMatrix{R},
       b::AbstractVector{R},
     ) where {R <: Real}
+      λ >= 0 || error("Composite Norm L1 : λ should be nonnegative")
       length(b) == size(A,1) || error("Composite Norm L1 : Wrong input dimensions, c(x) should have same length as rows of J(x)")  
-      new{R, typeof(c!), typeof(J!), typeof(A), typeof(b)}(h, c!, J!, A, b)
+      new{R, typeof(c!), typeof(J!), typeof(A), typeof(b)}(NormL1(λ), c!, J!, A, b)
     end
   end
 
