@@ -23,7 +23,7 @@ mutable struct ShiftedCompositeNormL1{
   ) where {R <: Real}
     sol = similar(b,size(A,2))
     if length(b) != size(A,1)
-      error("Shifted Norm L1 : Wrong input dimensions, constraints should have same length as rows of the jacobian")
+      error("ShiftedCompositeNormL1 : Wrong input dimensions, constraints should have same length as rows of the Jacobian")
     end
     new{R,typeof(c!),typeof(J!),typeof(A),typeof(b), typeof(sol)}(h,c!,J!,A,b, sol)
   end
