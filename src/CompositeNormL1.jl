@@ -37,7 +37,7 @@ mutable struct CompositeNormL1{
       A::AbstractMatrix{R},
       b::AbstractVector{R},
     ) where {R <: Real}
-      λ >= 0 || error("Composite Norm L1 : λ should be nonnegative")
+      λ > 0 || error("CompositeNormL1 : λ should be positive")
       length(b) == size(A,1) || error("Composite Norm L1 : Wrong input dimensions, c(x) should have same length as rows of J(x)")  
       new{R, typeof(c!), typeof(J!), typeof(A), typeof(b)}(NormL1(λ), c!, J!, A, b)
     end
