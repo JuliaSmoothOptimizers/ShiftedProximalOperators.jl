@@ -73,7 +73,8 @@ function prox!(
   H = ψ.A*ψ.A'
   
   C = ldlt(H)
-  s =  C\(-g)
+  s =  C \ g
+  s .*= -1
 
   for i ∈ eachindex(s)
     s[i] = min(max(s[i], - ψ.h.lambda * σ), ψ.h.lambda * σ)
