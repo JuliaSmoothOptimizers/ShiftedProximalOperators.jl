@@ -43,6 +43,6 @@ mutable struct CompositeNormL1{
     end
   end
 
-fun_name(f::CompositeNormL1) = "ℓ₁ norm of the function x ↦ c(x)"
+fun_name(f::CompositeNormL1) = "ℓ₁ norm of the function c"
 fun_dom(f::CompositeNormL1) = "AbstractVector{Real}"
 fun_expr(f::CompositeNormL1{T,V0,V1,V2,V3}) where {T <: Real,V0 <: Function, V1 <: Function, V2 <: AbstractMatrix{T}, V3 <: AbstractVector{T}} = "x ↦ λ ‖c(x)‖₁"
