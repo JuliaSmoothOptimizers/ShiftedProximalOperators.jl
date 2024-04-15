@@ -8,7 +8,7 @@ Returns the ``\ell_{1}`` norm operator composed with a function
 ```math
 f(x) = λ \|c(x)\|_1
 ```
-where ``\lambda \geq 0``. c! and J! should be functions
+where ``\lambda > 0``. c! and J! should be functions
 ```math
 \begin{aligned}
 &c(x) : \mathbb{R}^n \xrightarrow[]{} \mathbb{R}^m \\
