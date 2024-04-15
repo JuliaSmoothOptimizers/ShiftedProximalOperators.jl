@@ -1,5 +1,22 @@
 export ShiftedCompositeNormL1
 
+@doc raw"""
+    ShiftedCompositeNormL1(h, c!, J!, A, b)
+
+Returns the shift of a function c composed with the ``\ell_{1}`` norm (see CompositeNormL1.jl).
+Here, c is linearized i.e, ``c(x+s) \approx c(x) + J(x)s``. 
+```math
+f(s) = λ \|c(x) + J(x)s\|_1
+```
+where ``\lambda > 0``. c! and J! should be functions
+```math
+\begin{aligned}
+&c(x) : \mathbb{R}^n \xrightarrow[]{} \mathbb{R}^m \\
+&J(x) : \mathbb{R}^n \xrightarrow[]{} \mathbb{R}^{m\times n}
+\end{aligned}
+```
+such that J is the Jacobian of c. A and b should respectively be a matrix and a vector which can respectively store the values of J and c.
+"""
 mutable struct ShiftedCompositeNormL1{
   R <: Real,
   V0 <: Function,
