@@ -29,7 +29,7 @@ for (op,composite_op,shifted_op) ∈ zip((:NormL1,), (:CompositeNormL1,), (:Shif
 
     # test non shifted operator
     @test ψ(ones(Float64,4)) == h([1,2])
-    @test all(ψ(zeros(Float64,4)) .== 0.0)
+    @test ψ(zeros(Float64,4)) .== 0.0
     @test all(ψ.b .== 0.0)
     
     # test shifted operator
