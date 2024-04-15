@@ -79,7 +79,8 @@ function prox!(
   for i ∈ eachindex(s)
     s[i] = min(max(s[i], - ψ.h.lambda * σ), ψ.h.lambda * σ)
   end
-  y .= q + ψ.A'*s
+  mul!(y, A’, s)
+  y .+= q
 
   return y 
 end
