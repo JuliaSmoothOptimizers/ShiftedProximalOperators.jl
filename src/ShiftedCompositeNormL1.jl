@@ -6,14 +6,13 @@ mutable struct ShiftedCompositeNormL1{
   V1 <: Function,
   V2 <: AbstractMatrix{R},
   V3 <: AbstractVector{R},
-  V4 <: AbstractVector{R}
 } <: ShiftedCompositeProximableFunction
   h::NormL1{R}
   c!::V0
   J!::V1
   A::V2
   b::V3
-  sol::V4
+  g::V3
   function ShiftedCompositeNormL1(
     h::NormL1{R},
     c!::Function,
@@ -21,11 +20,11 @@ mutable struct ShiftedCompositeNormL1{
     A::AbstractMatrix{R},
     b::AbstractVector{R},
   ) where {R <: Real}
-    sol = similar(b,size(A,2))
+    g = similar(b)
     if length(b) != size(A,1)
       error("ShiftedCompositeNormL1: Wrong input dimensions, there should be as many constraints as rows in the Jacobian")
     end
-    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b), typeof(sol)}(h,c!,J!,A,b, sol)
+    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(h,c!,J!,A,b,g)
   end
 end
 
@@ -37,9 +36,9 @@ shifted(h::NormL1{R}, c!::Function,J!::Function,A::AbstractMatrix{R},b::Abstract
 end
 
 shifted(
-  ψ::ShiftedCompositeNormL1{R, V0, V1, V2, V3, V4},
+  ψ::ShiftedCompositeNormL1{R, V0, V1, V2, V3},
   xk::AbstractVector{R},
-) where {R <: Real, V0 <: Function, V1 <: Function, V2 <: AbstractMatrix{R},V3<: AbstractVector{R},V4 <: AbstractVector{R}} = begin
+) where {R <: Real, V0 <: Function, V1 <: Function, V2 <: AbstractMatrix{R},V3<: AbstractVector{R}} = begin
   b = similar(ψ.b)
   ψ.c!(b,xk)
   A = similar(ψ.A)
@@ -64,22 +63,24 @@ fun_params(ψ::ShiftedCompositeNormL1) = "c(xk) = $(ψ.b)\n" * " "^14 * "J(xk) =
 
 function prox!(
   y::AbstractVector{R},
-  ψ::ShiftedCompositeNormL1{R, V0, V1, V2, V3, V4},
+  ψ::ShiftedCompositeNormL1{R, V0, V1, V2, V3},
   q::AbstractVector{R},
   σ::R
-) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}, V4 <: AbstractVector{R}}
+) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}}
   
-  g = ψ.A*q + ψ.b
+  mul!(ψ.g, ψ.A, q)
+  ψ.g .+= ψ.b
+
   H = ψ.A*ψ.A'
   
   C = ldlt(H)
-  s =  C \ g
-  s .*= -1
+  ψ.g .=  C \ ψ.g
+  ψ.g .*= -1
 
-  for i ∈ eachindex(s)
-    s[i] = min(max(s[i], - ψ.h.lambda * σ), ψ.h.lambda * σ)
+  for i ∈ eachindex(ψ.g)
+   ψ.g[i] = min(max(ψ.g[i], - ψ.h.lambda * σ), ψ.h.lambda * σ)
   end
-  mul!(y, ψ.A', s)
+  mul!(y, ψ.A', ψ.g)
   y .+= q
 
   return y 
