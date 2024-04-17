@@ -102,15 +102,16 @@ function prox!(
   qrm_solve!(spfct, y, ψ.sol, transp='n')
 
   # 1 step of iterative refinement
+  
   mul!(y, ψ.A', ψ.sol)
   mul!(ψ.dsol, ψ.A, y)
 
   ψ.res .-= ψ.dsol
-
-  qrm_solve!(spfct, ψ.res, y, transp='t')
-  qrm_solve!(spfct, y, ψ.dsol, transp='n')
-
-  ψ.sol .+= ψ.dsol
+  if norm(ψ.res) > eps(R)^0.75
+    qrm_solve!(spfct, ψ.res, y, transp='t')
+    qrm_solve!(spfct, y, ψ.dsol, transp='n')
+    ψ.sol .+= ψ.dsol
+  end  
 
   ψ.sol .*= -1
 
