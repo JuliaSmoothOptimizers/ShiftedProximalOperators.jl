@@ -29,7 +29,9 @@ mutable struct ShiftedCompositeNormL1{
   J!::V1
   A::V2
   b::V3
-  g::V3
+  res::V3
+  sol::V3
+  dsol::V3
   function ShiftedCompositeNormL1(
     h::NormL1{R},
     c!::Function,
@@ -37,11 +39,13 @@ mutable struct ShiftedCompositeNormL1{
     A::AbstractMatrix{R},
     b::AbstractVector{R},
   ) where {R <: Real}
-    g = similar(b)
+    res = similar(b)
+    sol = similar(b)
+    dsol = similar(b)
     if length(b) != size(A,1)
       error("ShiftedCompositeNormL1: Wrong input dimensions, there should be as many constraints as rows in the Jacobian")
     end
-    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(h,c!,J!,A,b,g)
+    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(h,c!,J!,A,b,res,sol,dsol)
   end
 end
 
@@ -85,8 +89,8 @@ function prox!(
   σ::R
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}}
 
-  mul!(ψ.g, ψ.A, q)
-  ψ.g .+= ψ.b
+  mul!(ψ.res, ψ.A, q)
+  ψ.res .+= ψ.b
 
   spmat = qrm_spmat_init(ψ.A; sym=false)
   spfct = qrm_spfct_init(spmat)
@@ -94,16 +98,27 @@ function prox!(
   qrm_set(spfct, "qrm_keeph", 0)
   qrm_factorize!(spmat, spfct, transp='t')
 
-  qrm_solve!(spfct, ψ.g, y, transp='t')
-  qrm_solve!(spfct, y, ψ.g, transp='n')
+  qrm_solve!(spfct, ψ.res, y, transp='t')
+  qrm_solve!(spfct, y, ψ.sol, transp='n')
 
-  ψ.g .*= -1
+  # 1 step of iterative refinement
+  mul!(y, ψ.A', ψ.sol)
+  mul!(ψ.dsol, ψ.A, y)
 
-  for i ∈ eachindex(ψ.g)
-   ψ.g[i] = min(max(ψ.g[i], - ψ.h.lambda * σ), ψ.h.lambda * σ)
+  ψ.res .-= ψ.dsol
+
+  qrm_solve!(spfct, ψ.res, y, transp='t')
+  qrm_solve!(spfct, y, ψ.dsol, transp='n')
+
+  ψ.sol .+= ψ.dsol
+
+  ψ.sol .*= -1
+
+  for i ∈ eachindex(ψ.sol)
+    ψ.sol[i] = min(max(ψ.sol[i], - ψ.h.lambda * σ), ψ.h.lambda * σ)
   end
 
-  mul!(y, ψ.A', ψ.g)
+  mul!(y, ψ.A', ψ.sol)
   y .+= q
 
   return y
