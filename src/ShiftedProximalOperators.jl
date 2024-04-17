@@ -2,6 +2,7 @@ module ShiftedProximalOperators
 
 using LinearAlgebra
 using SparseArrays
+using QRMumps
 
 using libblastrampoline_jll
 using OpenBLAS32_jll
@@ -46,7 +47,7 @@ include("shiftedNormL0Box.jl")
 include("shiftedRootNormLhalf.jl")
 include("shiftedNormL1.jl")
 include("shiftedGroupNormL2.jl")
-include("shiftedCompositeNormL1.jl")
+include("ShiftedCompositeNormL1.jl")
 
 include("shiftedNormL1B2.jl")
 include("shiftedNormL1Box.jl")

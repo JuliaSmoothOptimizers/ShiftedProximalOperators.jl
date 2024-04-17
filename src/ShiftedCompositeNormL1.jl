@@ -84,21 +84,27 @@ function prox!(
   q::AbstractVector{R},
   σ::R
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}}
-  
+
   mul!(ψ.g, ψ.A, q)
   ψ.g .+= ψ.b
 
-  H = ψ.A*ψ.A'
-  
-  C = ldlt(H)
-  ψ.g .=  C \ ψ.g
+  spmat = qrm_spmat_init(ψ.A; sym=false)
+  spfct = qrm_spfct_init(spmat)
+  qrm_analyse!(spmat, spfct; transp='t')
+  qrm_set(spfct, "qrm_keeph", 0)
+  qrm_factorize!(spmat, spfct, transp='t')
+
+  qrm_solve!(spfct, ψ.g, y, transp='t')
+  qrm_solve!(spfct, y, ψ.g, transp='n')
+
   ψ.g .*= -1
 
   for i ∈ eachindex(ψ.g)
    ψ.g[i] = min(max(ψ.g[i], - ψ.h.lambda * σ), ψ.h.lambda * σ)
   end
+
   mul!(y, ψ.A', ψ.g)
   y .+= q
 
-  return y 
+  return y
 end
