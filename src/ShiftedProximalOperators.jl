@@ -1,6 +1,8 @@
 module ShiftedProximalOperators
 
 using LinearAlgebra
+using SparseArrays
+using QRMumps
 
 using libblastrampoline_jll
 using OpenBLAS32_jll
@@ -25,16 +27,22 @@ import ProximalOperators.prox, ProximalOperators.prox!
 
 "Abstract type for shifted proximable functions."
 abstract type ShiftedProximableFunction end
+abstract type CompositeProximableFunction end
+
+abstract type AbstractCompositeNorm <: CompositeProximableFunction end
+abstract type ShiftedCompositeProximableFunction <: ShiftedProximableFunction end
 
 include("utils.jl")
 include("psvd.jl")
 
+include("compositeNormL2.jl")
 include("rootNormLhalf.jl")
 include("groupNormL2.jl")
 include("Rank.jl")
 include("cappedl1.jl")
 include("Nuclearnorm.jl")
 
+include("shiftedCompositeNormL2.jl")
 include("shiftedNormL0.jl")
 include("shiftedNormL0Box.jl")
 include("shiftedRootNormLhalf.jl")
@@ -56,6 +64,16 @@ function (ψ::ShiftedProximableFunction)(y)
   return ψ.h(ψ.xsy)
 end
 
+function (ψ::ShiftedCompositeProximableFunction)(y)
+  return ψ.h(ψ.b + ψ.A * y)
+end
+
+function (ψ::CompositeProximableFunction)(y)
+  z = similar(ψ.b)
+  ψ.c!(z, y)
+  ψ.h(z)
+end
+
 """
     shift!(ψ, x)
 
@@ -67,6 +85,12 @@ function shift!(ψ::ShiftedProximableFunction, shift::AbstractVector{R}) where {
   else
     ψ.xk .= shift
   end
+  return ψ
+end
+
+function shift!(ψ::ShiftedCompositeProximableFunction, shift::AbstractVector{R}) where {R <: Real}
+  ψ.c!(ψ.b,shift)
+  ψ.J!(ψ.A,shift)
   return ψ
 end
 
