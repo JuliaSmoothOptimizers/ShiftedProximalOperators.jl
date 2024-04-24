@@ -28,6 +28,8 @@ mutable struct ShiftedCompositeNormL2{
   c!::V0
   J!::V1
   A::V2
+  Aᵧ::V2
+  p::V3
   b::V3
   g::V3
   res::V3
@@ -40,14 +42,16 @@ mutable struct ShiftedCompositeNormL2{
     A::AbstractMatrix{R},
     b::AbstractVector{R},
   ) where {R <: Real}
+    p = similar(b, A.n + A.m)
     g = similar(b)
     res = similar(b)
     sol = similar(b)
     dsol = similar(b)
+    Aᵧ = SparseMatrixCOO(A.m,A.n + A.m, similar(A.rows,length(A.rows) + A.m), similar(A.cols, length(A.cols) + A.m), similar(A.vals,length(A.vals) + A.m))
     if length(b) != size(A,1)
       error("ShiftedCompositeNormL2: Wrong input dimensions, there should be as many constraints as rows in the Jacobian")
     end
-    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ),c!,J!,A,b,g,res,sol,dsol)
+    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ),c!,J!,A,Aᵧ,p,b,g,res,sol,dsol)
   end
 end
 
@@ -75,7 +79,7 @@ shifted(
 ) where {R <: Real, V0 <: Function, V1 <: Function, V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}} = begin
   b = similar(ψ.b)
   ψ.c!(b,xk)
-  A = similar(ψ.A)
+  A = copy(ψ.A)
   ψ.J!(A,xk)
   ShiftedCompositeNormL2(ψ.h.lambda, ψ.c!, ψ.J!, A, b)
 end
@@ -88,48 +92,46 @@ function prox!(
   y::AbstractVector{R},
   ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3},
   q::AbstractVector{R},
-  σ::R
+  σ::R;
+  maxiter = 10000
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}}
+
+  # Initialize Aᵧ
+  ψ.Aᵧ.rows .= [ψ.A.rows;collect(eltype(ψ.A.rows),1:ψ.A.m)] 
+  ψ.Aᵧ.cols .= [ψ.A.cols;collect(eltype(ψ.A.cols),ψ.A.n+1:ψ.A.n + ψ.A.m)]
+  ψ.Aᵧ.vals .= [ψ.A.vals;zeros(eltype(ψ.Aᵧ.vals),ψ.A.m)]
 
   mul!(ψ.g, ψ.A, q)
   ψ.g .+= ψ.b
 
-  #ψ.res .= ψ.g
-  spmat = qrm_spmat_init(ψ.A; sym=false)
+  spmat = qrm_spmat_init(ψ.Aᵧ; sym=false)
   spfct = qrm_spfct_init(spmat)
   qrm_analyse!(spmat, spfct; transp='t')
   qrm_set(spfct, "qrm_keeph", 0)
   qrm_factorize!(spmat, spfct, transp='t')
 
-  qrm_solve!(spfct, ψ.g, y, transp='t')
-  qrm_solve!(spfct, y, ψ.sol, transp='n')
-
-  """
-  # 1 step of iterative refinement
-
-  mul!(y, ψ.A', ψ.sol)
-  mul!(ψ.dsol, ψ.A, y)
-
-  ψ.res .-= ψ.dsol
-
-  if norm(ψ.res) > eps(R)^0.75
-    qrm_solve!(spfct, ψ.res, y, transp='t')
-    qrm_solve!(spfct, y, ψ.dsol, transp='n')
-    ψ.sol .+= ψ.dsol
-  end  
-  """
+  qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
+  qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
 
   ψ.sol .*= -1
 
   # Scalar Root finding
-  α = 0.0
-  while norm(ψ.sol) >= σ*ψ.h.lambda
+  γ = 0.0
+  k = 0
+  while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < maxiter
 
-    α += (norm(ψ.sol)/σ*ψ.h.lambda - 1.0)*(norm(y)/norm(ψ.sol))^2
-    ψ.sol .*= -1
+    γ += (norm(ψ.sol)/(σ*ψ.h.lambda) - 1.0)*(norm(ψ.p)/norm(ψ.sol))^2
+    qrm_update!(spmat,[ψ.A.vals; fill(eltype(ψ.A.vals)(sqrt(γ)),ψ.A.m)])
+    qrm_factorize!(spmat,spfct, transp='t')
+
+    qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
+    qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
     
+    ψ.sol .*= -1
+    k += 1
   end
 
+  k < maxiter || @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning y with residue $(abs(norm(ψ.sol) - σ*ψ.h.lambda)) instead"
   mul!(y, ψ.A', ψ.sol)
   y .+= q
   return y

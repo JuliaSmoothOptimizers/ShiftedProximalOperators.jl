@@ -3,6 +3,7 @@ module ShiftedProximalOperators
 using LinearAlgebra
 using SparseArrays
 using QRMumps
+using SparseMatricesCOO
 
 using libblastrampoline_jll
 using OpenBLAS32_jll
