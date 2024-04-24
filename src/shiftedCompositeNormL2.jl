@@ -29,12 +29,13 @@ mutable struct ShiftedCompositeNormL2{
   J!::V1
   A::V2
   Aᵧ::V2
-  p::V3
   b::V3
   g::V3
   res::V3
   sol::V3
   dsol::V3
+  p::V3
+  dp
   function ShiftedCompositeNormL2(
     λ::R,
     c!::Function,
@@ -43,6 +44,7 @@ mutable struct ShiftedCompositeNormL2{
     b::AbstractVector{R},
   ) where {R <: Real}
     p = similar(b, A.n + A.m)
+    dp = similar(b, A.n + A.m)
     g = similar(b)
     res = similar(b)
     sol = similar(b)
@@ -51,7 +53,7 @@ mutable struct ShiftedCompositeNormL2{
     if length(b) != size(A,1)
       error("ShiftedCompositeNormL2: Wrong input dimensions, there should be as many constraints as rows in the Jacobian")
     end
-    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ),c!,J!,A,Aᵧ,p,b,g,res,sol,dsol)
+    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ),c!,J!,A,Aᵧ,b,g,res,sol,dsol,p,dp)
   end
 end
 
@@ -113,6 +115,20 @@ function prox!(
   qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
   qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
 
+  # 1 Step of iterative refinement
+  ψ.res .= ψ.g
+
+  mul!(ψ.dp, ψ.Aᵧ', ψ.sol)
+  mul!(ψ.dsol, ψ.Aᵧ, ψ.dp)
+
+  ψ.res .-= ψ.dsol
+  if norm(ψ.res) > eps(R)^0.75
+    qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
+    qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
+    ψ.sol .+= ψ.dsol
+    ψ.p .+= ψ.dp
+  end  
+
   ψ.sol .*= -1
 
   # Scalar Root finding
@@ -126,6 +142,20 @@ function prox!(
 
     qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
     qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
+
+    # 1 Step of iterative refinement
+    ψ.res .= ψ.g
+
+    mul!(ψ.dp, ψ.Aᵧ', ψ.sol)
+    mul!(ψ.dsol, ψ.Aᵧ, ψ.dp)
+
+    ψ.res .-= ψ.dsol
+    if norm(ψ.res) > eps(R)^0.75
+      qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
+      qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
+      ψ.sol .+= ψ.dsol
+      ψ.p .+= ψ.dp
+    end  
     
     ψ.sol .*= -1
     k += 1
