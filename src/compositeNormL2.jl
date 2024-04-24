@@ -18,7 +18,7 @@ where ``\lambda > 0``. c! and J! should be functions
 such that J is the Jacobian of c. A and b should respectively be a matrix and a vector which can respectively store the values of J and c.
 A is expected to be sparse, c and J should have signatures
 c!(b <: AbstractVector{Real}, xk <: AbstractVector{Real})
-J!(A <: AbstractSparseMatrix{Real,Integer}, xk <: AbstractVector{Real})
+J!(A <: AbstractSparseMatrixCOO{Real,Integer}, xk <: AbstractVector{Real})
 """
 mutable struct CompositeNormL2{
     R <: Real,
