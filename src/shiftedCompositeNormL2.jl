@@ -135,7 +135,7 @@ function prox!(
   ψ.sol .*= -1
 
   # Scalar Root finding
-  γ = 0.0
+  γ = 1.0
   k = 0
   while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < maxiter
 
