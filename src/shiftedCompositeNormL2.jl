@@ -140,6 +140,11 @@ function prox!(
   while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < maxiter
 
     γ += (norm(ψ.sol)/(σ*ψ.h.lambda) - 1.0)*(norm(ψ.p)/norm(ψ.sol))^2
+
+    if γ < 0.0
+      @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning y with residue $(abs(norm(ψ.sol) - σ*ψ.h.lambda)) instead"
+      break
+    end
     qrm_update!(spmat,[ψ.A.vals; fill(eltype(ψ.A.vals)(sqrt(γ)),ψ.A.m)])
     qrm_factorize!(spmat,spfct, transp='t')
 
