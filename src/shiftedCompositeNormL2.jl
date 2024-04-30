@@ -101,6 +101,7 @@ function prox!(
   maxiter = 10000
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}}
 
+  γ = 0.0
   # Initialize Aᵧ
   ψ.Aᵧ.rows .= [ψ.A.rows;collect(eltype(ψ.A.rows),1:ψ.A.m)] 
   ψ.Aᵧ.cols .= [ψ.A.cols;collect(eltype(ψ.A.cols),ψ.A.n+1:ψ.A.n + ψ.A.m)]
@@ -134,8 +135,34 @@ function prox!(
 
   ψ.sol .*= -1
 
+  # Check full row rankness of J(x)
+  if any(.!isfinite.(ψ.sol)) ## Matrix J(x) hasn't full row rank
+
+    γ = 1.0
+    qrm_update!(spmat,[ψ.A.vals; fill(eltype(ψ.A.vals)(sqrt(γ)),ψ.A.m)])
+    qrm_factorize!(spmat,spfct, transp = 't')
+    
+    qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
+    qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
+
+    # 1 Step of iterative refinement
+    ψ.res .= ψ.g
+
+    mul!(ψ.dp, ψ.Aᵧ', ψ.sol)
+    mul!(ψ.dsol, ψ.Aᵧ, ψ.dp)
+
+    ψ.res .-= ψ.dsol
+    if norm(ψ.res) > eps(R)^0.75
+      qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
+      qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
+      ψ.sol .+= ψ.dsol
+      ψ.p .+= ψ.dp
+    end  
+    
+    ψ.sol .*= -1
+  end
+
   # Scalar Root finding
-  γ = 0.0
   k = 0
   if norm(ψ.sol) > σ*ψ.h.lambda
 
