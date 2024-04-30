@@ -137,7 +137,10 @@ function prox!(
   # Scalar Root finding
   γ = 0.0
   k = 0
-  if norm(ψ.sol) >= σ*ψ.h.lambda
+  if norm(ψ.sol) > σ*ψ.h.lambda
+
+    # Do we need step of iterative refinement for this one ?
+    qrm_solve!(spfct, ψ.sol, ψ.p, transp='t')
 
     while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < maxiter
 
@@ -148,6 +151,7 @@ function prox!(
 
       qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
       qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
+      qrm_solve!(spfct, ψ.sol, ψ.p, transp='t')
 
       # 1 Step of iterative refinement
       ψ.res .= ψ.g
@@ -159,6 +163,7 @@ function prox!(
       if norm(ψ.res) > eps(R)^0.75
         qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
         qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
+        qrm_solve!(spfct, ψ.dsol, ψ.dp, transp='t')
         ψ.sol .+= ψ.dsol
         ψ.p .+= ψ.dp
       end  
