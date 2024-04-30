@@ -135,34 +135,37 @@ function prox!(
   ψ.sol .*= -1
 
   # Scalar Root finding
-  γ = 1.0
+  γ = 0.0
   k = 0
-  while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < maxiter
+  if norm(ψ.sol) >= σ*ψ.h.lambda
 
-    γ += (norm(ψ.sol)/(σ*ψ.h.lambda) - 1.0)*(norm(ψ.sol)/norm(ψ.p))^2
+    while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < maxiter
 
-    qrm_update!(spmat,[ψ.A.vals; fill(eltype(ψ.A.vals)(sqrt(γ)),ψ.A.m)])
-    qrm_factorize!(spmat,spfct, transp='t')
+      γ += (norm(ψ.sol)/(σ*ψ.h.lambda) - 1.0)*(norm(ψ.sol)/norm(ψ.p))^2
+      
+      qrm_update!(spmat,[ψ.A.vals; fill(eltype(ψ.A.vals)(sqrt(γ)),ψ.A.m)])
+      qrm_factorize!(spmat,spfct, transp='t')
 
-    qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
-    qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
+      qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
+      qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
 
-    # 1 Step of iterative refinement
-    ψ.res .= ψ.g
+      # 1 Step of iterative refinement
+      ψ.res .= ψ.g
 
-    mul!(ψ.dp, ψ.Aᵧ', ψ.sol)
-    mul!(ψ.dsol, ψ.Aᵧ, ψ.dp)
+      mul!(ψ.dp, ψ.Aᵧ', ψ.sol)
+      mul!(ψ.dsol, ψ.Aᵧ, ψ.dp)
 
-    ψ.res .-= ψ.dsol
-    if norm(ψ.res) > eps(R)^0.75
-      qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
-      qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
-      ψ.sol .+= ψ.dsol
-      ψ.p .+= ψ.dp
-    end  
-    
-    ψ.sol .*= -1
-    k += 1
+      ψ.res .-= ψ.dsol
+      if norm(ψ.res) > eps(R)^0.75
+        qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
+        qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
+        ψ.sol .+= ψ.dsol
+        ψ.p .+= ψ.dp
+      end  
+      
+      ψ.sol .*= -1
+      k += 1
+    end
   end
 
   k < maxiter || @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning y with residue $(abs(norm(ψ.sol) - σ*ψ.h.lambda)) instead"
