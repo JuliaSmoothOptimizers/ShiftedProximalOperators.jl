@@ -105,7 +105,7 @@ function prox!(
   # Initialize Aᵧ
   ψ.Aᵧ.rows .= [ψ.A.rows;collect(eltype(ψ.A.rows),1:ψ.A.m)] 
   ψ.Aᵧ.cols .= [ψ.A.cols;collect(eltype(ψ.A.cols),ψ.A.n+1:ψ.A.n + ψ.A.m)]
-  ψ.Aᵧ.vals .= [ψ.A.vals;zeros(eltype(ψ.Aᵧ.vals),ψ.A.m)]
+  ψ.Aᵧ.vals .= [ψ.A.vals;zeros(eltype(ψ.A.vals),ψ.A.m)]
 
   mul!(ψ.g, ψ.A, q)
   ψ.g .+= ψ.b
