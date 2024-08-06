@@ -100,8 +100,8 @@ function prox!(
   σ::R;
   maxiter = 10000
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}}
-
   γ = 0.0
+  full_row_rank = true
   # Initialize Aᵧ
   ψ.Aᵧ.rows .= [ψ.A.rows;collect(eltype(ψ.A.rows),1:ψ.A.m)] 
   ψ.Aᵧ.cols .= [ψ.A.cols;collect(eltype(ψ.A.cols),ψ.A.n+1:ψ.A.n + ψ.A.m)]
@@ -110,10 +110,11 @@ function prox!(
   mul!(ψ.g, ψ.A, q)
   ψ.g .+= ψ.b
 
-  spmat = qrm_spmat_init(ψ.Aᵧ; sym=false)
-  spfct = qrm_spfct_init(spmat)
-  qrm_analyse!(spmat, spfct; transp='t')
+  spmat = qrm_spmat_init(ψ.Aᵧ; sym=false) # TODO: preallocate this
+  spfct = qrm_spfct_init(spmat) # TODO: preallocate this
   qrm_set(spfct, "qrm_keeph", 0)
+
+  qrm_analyse!(spmat, spfct; transp='t')
   qrm_factorize!(spmat, spfct, transp='t')
 
   qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
@@ -130,18 +131,35 @@ function prox!(
     qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
     qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
     ψ.sol .+= ψ.dsol
-    ψ.p .+= ψ.dp
   end  
 
   ψ.sol .*= -1
 
-  # Check full row rankness of J(x)
-  if any(.!isfinite.(ψ.sol)) ## Matrix J(x) hasn't full row rank
+  # Check full row rankness of J(x) by inspecting diagonal of R
+  R1 = qrm_spfct_get_r(spfct)
+  cp = qrm_spfct_get_cp(spfct)
+  rp = qrm_spfct_get_rp(spfct)
+  rows_R = Int[] #TODO : preallocate this
 
-    γ = 1.0
-    qrm_update!(spmat,[ψ.A.vals; fill(eltype(ψ.A.vals)(sqrt(γ)),ψ.A.m)])
-    qrm_factorize!(spmat,spfct, transp = 't')
+  for i = 1 : size(R1, 1)
+    if nnz(R1[rp[i],cp[:]]) != 0
+      push!(rows_R, i)
+    end
+  end
+  for i = 1 : size(R1, 2)
+    if abs(R1[rp[rows_R[i]], cp[i]]) < eps(R)^0.75
+      full_row_rank = false
+      break
+    end
+  end
+
+  if !full_row_rank 
+
+    γ = eps(R)
     
+    qrm_update!(spmat,[ψ.A.vals; fill(eltype(ψ.A.vals)(sqrt(γ)),ψ.A.m)])
+    qrm_factorize!(spmat, spfct, transp='t')
+
     qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
     qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
 
@@ -156,18 +174,26 @@ function prox!(
       qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
       qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
       ψ.sol .+= ψ.dsol
-      ψ.p .+= ψ.dp
-    end  
-    
+    end
+
     ψ.sol .*= -1
+
+    if norm(ψ.sol) < σ*ψ.h.lambda # We are in the hard-case
+      
+      ψ.sol .= -pinv(ψ.A*ψ.A')*ψ.g  #TODO : remove naive implementation
+      
+    end
   end
 
   # Scalar Root finding
   k = 0
   if norm(ψ.sol) > σ*ψ.h.lambda
 
-    # Do we need step of iterative refinement for this one ?
     qrm_solve!(spfct, ψ.sol, ψ.p, transp='t')
+    if norm(ψ.res) > eps(R)^0.75  
+      qrm_solve!(spfct, ψ.dsol, ψ.dp, transp='t')
+      ψ.p .+= ψ.dp
+    end
 
     while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < maxiter
 
@@ -180,7 +206,7 @@ function prox!(
       qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
       qrm_solve!(spfct, ψ.sol, ψ.p, transp='t')
 
-      # 1 Step of iterative refinement
+      # 1 Step of iterative refinement 
       ψ.res .= ψ.g
 
       mul!(ψ.dp, ψ.Aᵧ', ψ.sol)
