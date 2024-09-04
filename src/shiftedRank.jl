@@ -65,10 +65,11 @@ function prox!(
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
 }
+  λ = ψ.h.lambda
   ψ.sol .= q .+ ψ.xk .+ ψ.sj
   ψ.h.A .= reshape_array(ψ.sol, size(ψ.h.A))
   psvd_dd!(ψ.h.F, ψ.h.A, full = false)
-  c = sqrt(2 * ψ.λ * σ)
+  c = sqrt(2 * λ * σ)
   for i ∈ eachindex(ψ.h.F.S)
     if ψ.h.F.S[i] <= c
       ψ.h.F.U[:, i] .= 0

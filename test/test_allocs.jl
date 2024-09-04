@@ -83,4 +83,22 @@ end
     @test @wrappedallocs(prox!(y, ψ, y, 1.0)) == 0
     @test @wrappedallocs(iprox!(y, ψ, y, d)) == 0
   end
+
+  for (op, shifted_op) ∈ zip((:Rank, :Nuclearnorm), (:ShiftedRank, :ShiftedNuclearnorm))
+    ShiftedOp = eval(shifted_op)
+    Op = eval(op)
+    m = 10
+    n = 11
+    λ = 1.0
+    γ = 5.0
+    x = vec(reshape(rand(m, n), m * n, 1))
+    q = vec(reshape(rand(m, n), m * n, 1))
+    s = vec(reshape(rand(m, n), m * n, 1))
+    F = psvd_workspace_dd(zeros(m, n), full = false)
+    h = Op(λ, ones(m, n), F)
+    f = ShiftedOp(h, x, s, true)
+    y = zeros(m * n)
+    @test @wrappedallocs(prox!(y, h, x, γ)) == 0
+    @test @wrappedallocs(prox!(y, f, q, γ)) == 0
+  end
 end
