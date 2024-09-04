@@ -65,11 +65,11 @@ function prox!(
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
 }
+  λ = ψ.h.lambda
   ψ.sol .= q .+ ψ.xk .+ ψ.sj
   ψ.h.A .= reshape_array(ψ.sol, size(ψ.h.A))
   psvd_dd!(ψ.h.F, ψ.h.A, full = false)
-  c = sqrt(2 * ψ.λ * σ)
-  ψ.h.F.S .= max.(0, ψ.h.F.S .- ψ.λ * σ)
+  ψ.h.F.S .= max.(0, ψ.h.F.S .- λ * σ)
   for i ∈ eachindex(ψ.h.F.S)
     for j = 1:size(ψ.h.A, 1)
       ψ.h.F.U[j, i] = ψ.h.F.U[j, i] .* ψ.h.F.S[i]
