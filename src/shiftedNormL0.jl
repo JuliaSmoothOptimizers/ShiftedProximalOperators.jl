@@ -41,7 +41,8 @@ function prox!(
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  c = sqrt(2 * ψ.λ * σ)
+  λ = ψ.h.lambda
+  c = sqrt(2 * λ * σ)
   for i ∈ eachindex(q)
     xps = ψ.xk[i] + ψ.sj[i]
     if abs(xps + q[i]) ≤ c
@@ -63,10 +64,11 @@ function iprox!(
   g::AbstractVector{R},
   d::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
+  λ = ψ.h.lambda
   for i ∈ eachindex(y)
     di = d[i]
     @assert di > 0
-    ci = sqrt(2 * ψ.λ * di)
+    ci = sqrt(2 * λ * di)
     xps = ψ.xk[i] + ψ.sj[i]
     if abs(di * xps - g[i]) ≤ ci
       y[i] = -xps
