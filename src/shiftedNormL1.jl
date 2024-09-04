@@ -43,10 +43,11 @@ function prox!(
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  y .= -ψ.xk .- ψ.sj
+  λ = ψ.h.lambda
+  @. y = -ψ.xk - ψ.sj
 
   for i ∈ eachindex(y)
-    y[i] = min(max(y[i], q[i] - ψ.λ * σ), q[i] + ψ.λ * σ)
+    y[i] = min(max(y[i], q[i] - λ * σ), q[i] + λ * σ)
   end
 
   return y
@@ -62,11 +63,12 @@ function iprox!(
   g::AbstractVector{R},
   d::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  y .= -ψ.xk .- ψ.sj
+  λ = ψ.h.lambda
+  @. y = -ψ.xk - ψ.sj
 
   for i ∈ eachindex(y)
     @assert d[i] > 0
-    y[i] = min(max(y[i], -g[i] / d[i] - ψ.λ / d[i]), -g[i] / d[i] + ψ.λ / d[i])
+    y[i] = min(max(y[i], -g[i] / d[i] - λ / d[i]), -g[i] / d[i] + λ / d[i])
   end
 
   return y
