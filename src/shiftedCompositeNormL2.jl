@@ -20,6 +20,8 @@ A is expected to be sparse, c and J should have signatures
 c!(b <: AbstractVector{Real}, xk <: AbstractVector{Real})
 J!(A <: AbstractSparseMatrixCOO{Real,Integer}, xk <: AbstractVector{Real})
 """
+
+
 mutable struct ShiftedCompositeNormL2{
   R <: Real,
   V0 <: Function,
@@ -177,11 +179,54 @@ function prox!(
     end
 
     ψ.sol .*= -1
+    if norm(ψ.sol) < σ*ψ.h.lambda # We are in the hard-case #TODO: improve overall allocs of this + allow L pivoting
 
-    if norm(ψ.sol) < σ*ψ.h.lambda # We are in the hard-case
+      spmat = qrm_spmat_init(ψ.A; sym = false) # TODO: preallocate this
+      spfct = qrm_spfct_init(spmat) # TODO: preallocate this
+      qrm_set(spfct,"qrm_keeph",0)
+      qrm_analyse!(spmat,spfct, transp = 't')
+      qrm_factorize!(spmat,spfct,transp='t')
+
+
+      R1 = qrm_spfct_get_r(spfct)
+      rp = qrm_spfct_get_rp(spfct)
+      cp = qrm_spfct_get_cp(spfct)
+
+      R1 = R1[rp,cp]
+
+      nonzeros_R = []
+      for i = 1:size(R1,1)
+          if nnz(R1[i,:]) > 0
+              push!(nonzeros_R,i)
+          end
+      end
+      R1 = R1[nonzeros_R,:]
+
+      spmat = qrm_spmat_init(R1;sym = false)
+      spfct = qrm_spfct_init(spmat)
+      qrm_set(spfct,"qrm_ordering",1)
+      qrm_analyse!(spmat,spfct, transp ='t')
+      qrm_factorize!(spmat,spfct,transp = 't')
+
+      L = qrm_spfct_get_r(spfct)
+
+      nonzeros_L = []
+      for i = 1:size(L,1)
+          if abs(L[i,i]) > 1e-5
+              push!(nonzeros_L, i)
+          end
+      end
+
+      ψ.sol[cp] .= ψ.g
+
+      qrm_apply!(spfct,ψ.g, transp = 't')
+      ψ.sol[nonzeros_L] .= L[nonzeros_L,nonzeros_L]\ψ.sol[nonzeros_L]
+      ψ.sol[nonzeros_L] .= L[nonzeros_L,nonzeros_L]'\ψ.sol[nonzeros_L]
+      ψ.sol[setdiff(1:size(ψ.sol)[1],nonzeros_L)] = zeros(length(setdiff(1:size(ψ.sol)[1],nonzeros_L)))
+      qrm_apply!(spfct, ψ.sol, transp = 'n')
       
-      ψ.sol .= -pinv(ψ.A*ψ.A')*ψ.g  #TODO : remove naive implementation
-      
+      ψ.sol = ψ.sol[cp]
+      ψ.sol .*= -1.0      
     end
   end
 
