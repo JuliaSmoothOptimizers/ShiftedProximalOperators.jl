@@ -202,13 +202,13 @@ function prox!(
       end
       R1 = R1[nonzeros_R,:]
 
-      spmat2 = qrm_spmat_init(R1;sym = false)
-      spfct2 = qrm_spfct_init(spmat2)
-      qrm_set(spfct2,"qrm_ordering",1)
-      qrm_analyse!(spmat2,spfct2, transp ='t')
-      qrm_factorize!(spmat2,spfct2,transp = 't')
+      spmat = qrm_spmat_init(R1;sym = false)
+      spfct = qrm_spfct_init(spmat)
+      qrm_set(spfct,"qrm_ordering",1)
+      qrm_analyse!(spmat,spfct, transp ='t')
+      qrm_factorize!(spmat,spfct,transp = 't')
 
-      L = qrm_spfct_get_r(spfct2)
+      L = qrm_spfct_get_r(spfct)
 
       nonzeros_L = []
       for i = 1:size(L,1)
@@ -217,15 +217,15 @@ function prox!(
           end
       end
 
-      ψ.res[cp] .= ψ.g
+      ψ.sol[cp] .= ψ.g
 
-      qrm_apply!(spfct2,ψ.res, transp = 't')
-      ψ.res[nonzeros_L] .= L[nonzeros_L,nonzeros_L]\ψ.res[nonzeros_L]
-      ψ.res[nonzeros_L] .= L[nonzeros_L,nonzeros_L]'\ψ.res[nonzeros_L]
-      ψ.res[setdiff(1:size(ψ.res)[1],nonzeros_L)] = zeros(length(setdiff(1:size(ψ.res)[1],nonzeros_L)))
-      qrm_apply!(spfct2, ψ.res, transp = 'n')
+      qrm_apply!(spfct,ψ.g, transp = 't')
+      ψ.sol[nonzeros_L] .= L[nonzeros_L,nonzeros_L]\ψ.sol[nonzeros_L]
+      ψ.sol[nonzeros_L] .= L[nonzeros_L,nonzeros_L]'\ψ.sol[nonzeros_L]
+      ψ.sol[setdiff(1:size(ψ.sol)[1],nonzeros_L)] = zeros(length(setdiff(1:size(ψ.sol)[1],nonzeros_L)))
+      qrm_apply!(spfct, ψ.sol, transp = 'n')
       
-      ψ.sol .= ψ.res[cp]
+      ψ.sol = ψ.sol[cp]
       ψ.sol .*= -1.0      
     end
   end
