@@ -58,7 +58,6 @@ for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
     # tests iprox without bounds
     if op == :NormL0 || op == :NormL1
       ψ = shifted(h, x)
-      @test_throws AssertionError iprox(ψ, q, zeros(n))
       for d ∈ [ones(n), 2 * ones(n)]
         y = iprox(ψ, q, d)
         σ = d[1]
