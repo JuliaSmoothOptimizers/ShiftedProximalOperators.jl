@@ -1,5 +1,4 @@
 export ShiftedCompositeNormL2
-using DelimitedFiles
 @doc raw"""
     ShiftedCompositeNormL2(h, c!, J!, A, b)
 
