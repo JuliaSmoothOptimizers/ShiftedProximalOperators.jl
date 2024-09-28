@@ -1,5 +1,5 @@
 export ShiftedCompositeNormL2
-
+using DelimitedFiles
 @doc raw"""
     ShiftedCompositeNormL2(h, c!, J!, A, b)
 
@@ -100,7 +100,8 @@ function prox!(
   σ::R;
   maxiter = 10000
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}}
-  γ = 0.0
+  θ = R(0.8)
+  γ = R(0.0)
   full_row_rank = true
   # Initialize Aᵧ
   ψ.Aᵧ.rows .= [ψ.A.rows;collect(eltype(ψ.A.rows),1:ψ.A.m)] 
@@ -114,6 +115,7 @@ function prox!(
   spfct = qrm_spfct_init(spmat) # TODO: preallocate this
   qrm_set(spfct, "qrm_keeph", 0)
 
+  # Check interior convergence
   qrm_analyse!(spmat, spfct; transp='t')
   qrm_factorize!(spmat, spfct, transp='t')
 
@@ -162,42 +164,28 @@ function prox!(
 
     qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
     qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
-
-    # 1 Step of iterative refinement
-    ψ.res .= ψ.g
-
-    mul!(ψ.dp, ψ.Aᵧ', ψ.sol)
-    mul!(ψ.dsol, ψ.Aᵧ, ψ.dp)
-
-    ψ.res .-= ψ.dsol
-    if norm(ψ.res) > eps(R)^0.75
-      qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
-      qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
-      ψ.sol .+= ψ.dsol
-    end
+    qrm_solve!(spfct, ψ.sol, ψ.p, transp='t')
+    _iterative_refinement!(spfct, ψ)
 
     ψ.sol .*= -1
 
-    if norm(ψ.sol) < σ*ψ.h.lambda # We are in the hard-case
-      
-      ψ.sol .= -pinv(ψ.A*ψ.A')*ψ.g  #TODO : remove naive implementation
-      
+    if norm(ψ.sol) ≤ σ*ψ.h.lambda + eps(R) # We are in the hard-case, we consider ψ.sol is a good approximation of the least-norm solution
+      mul!(y, ψ.A', ψ.sol)
+      y .+= q
+      return y
     end
+
   end
 
   # Scalar Root finding
   k = 0
+  γ₊ = γ 
   if norm(ψ.sol) > σ*ψ.h.lambda
-
-    qrm_solve!(spfct, ψ.sol, ψ.p, transp='t')
-    if norm(ψ.res) > eps(R)^0.75  
-      qrm_solve!(spfct, ψ.dsol, ψ.dp, transp='t')
-      ψ.p .+= ψ.dp
-    end
 
     while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < maxiter
 
-      γ += (norm(ψ.sol)/(σ*ψ.h.lambda) - 1.0)*(norm(ψ.sol)/norm(ψ.p))^2
+      γ₊ += (norm(ψ.sol)/(σ*ψ.h.lambda) - 1.0)*(norm(ψ.sol)/norm(ψ.p))^2
+      γ = γ₊ > 0 ? γ₊ : θ*γ
       
       qrm_update!(spmat,[ψ.A.vals; fill(eltype(ψ.A.vals)(sqrt(γ)),ψ.A.m)])
       qrm_factorize!(spmat,spfct, transp='t')
@@ -205,29 +193,32 @@ function prox!(
       qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
       qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
       qrm_solve!(spfct, ψ.sol, ψ.p, transp='t')
-
-      # 1 Step of iterative refinement 
-      ψ.res .= ψ.g
-
-      mul!(ψ.dp, ψ.Aᵧ', ψ.sol)
-      mul!(ψ.dsol, ψ.Aᵧ, ψ.dp)
-
-      ψ.res .-= ψ.dsol
-      if norm(ψ.res) > eps(R)^0.75
-        qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
-        qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
-        qrm_solve!(spfct, ψ.dsol, ψ.dp, transp='t')
-        ψ.sol .+= ψ.dsol
-        ψ.p .+= ψ.dp
-      end  
+      _iterative_refinement!(spfct, ψ)
       
       ψ.sol .*= -1
       k += 1
     end
   end
 
-  k < maxiter || @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning y with residue $(abs(norm(ψ.sol) - σ*ψ.h.lambda)) instead"
+  #Sometimes gamma tends to 0, we don't to print the residual in this case, it is usually huge.
+  (k < maxiter && γ > eps(R)) && @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning with residue $(abs(norm(ψ.sol) - σ*ψ.h.lambda)) instead"
   mul!(y, ψ.A', ψ.sol)
   y .+= q
   return y
+end
+
+function _iterative_refinement!(spfct, ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3}) where{R, V0, V1, V2, V3}
+  ψ.res .= ψ.g
+
+  mul!(ψ.dp, ψ.Aᵧ', ψ.sol)
+  mul!(ψ.dsol, ψ.Aᵧ, ψ.dp)
+
+  ψ.res .-= ψ.dsol
+  if norm(ψ.res) > eps(R)^0.75
+    qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
+    qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
+    qrm_solve!(spfct, ψ.dsol, ψ.dp, transp='t')
+    ψ.sol .+= ψ.dsol
+    ψ.p .+= ψ.dp
+  end
 end
