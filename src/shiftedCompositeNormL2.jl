@@ -201,7 +201,7 @@ function prox!(
   end
 
   #Sometimes gamma tends to 0, we don't to print the residual in this case, it is usually huge.
-  (k < maxiter && γ > eps(R)) && @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning with residue $(abs(norm(ψ.sol) - σ*ψ.h.lambda)) instead"
+  (k > maxiter && γ > eps(R)) && @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning with residue $(abs(norm(ψ.sol) - σ*ψ.h.lambda)) instead"
   mul!(y, ψ.A', ψ.sol)
   y .+= q
   return y
