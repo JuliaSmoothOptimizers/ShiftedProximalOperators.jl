@@ -97,8 +97,11 @@ function prox!(
   ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3},
   q::AbstractVector{R},
   σ::R;
-  maxiter = 10000
+  max_iter = 10000,
+  max_time = 180.0
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}}
+
+  start_time = time()
   θ = R(0.8)
   γ = R(0.0)
   full_row_rank = true
@@ -175,13 +178,14 @@ function prox!(
     end
 
   end
-
+  
   # Scalar Root finding
   k = 0
+  elapsed_time = time() - start_time()
   γ₊ = γ 
   if norm(ψ.sol) > σ*ψ.h.lambda
 
-    while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < maxiter
+    while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < max_iter && elapsed_time < max_time
 
       γ₊ += (norm(ψ.sol)/(σ*ψ.h.lambda) - 1.0)*(norm(ψ.sol)/norm(ψ.p))^2
       γ = γ₊ > 0 ? γ₊ : θ*γ
@@ -196,11 +200,12 @@ function prox!(
       
       ψ.sol .*= -1
       k += 1
+      elapsed_time = time() - start_time()
     end
   end
 
   #Sometimes gamma tends to 0, we don't to print the residual in this case, it is usually huge.
-  (k > maxiter && γ > eps(R)) && @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning with residue $(abs(norm(ψ.sol) - σ*ψ.h.lambda)) instead"
+  (k > max_iter && γ > eps(R)) && @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning with residue $(abs(norm(ψ.sol) - σ*ψ.h.lambda)) instead"
   mul!(y, ψ.A', ψ.sol)
   y .+= q
   return y
