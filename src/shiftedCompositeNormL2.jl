@@ -181,7 +181,7 @@ function prox!(
   
   # Scalar Root finding
   k = 0
-  elapsed_time = time() - start_time()
+  elapsed_time = time() - start_time
   γ₊ = γ 
   if norm(ψ.sol) > σ*ψ.h.lambda
 
@@ -200,7 +200,7 @@ function prox!(
       
       ψ.sol .*= -1
       k += 1
-      elapsed_time = time() - start_time()
+      elapsed_time = time() - start_time
     end
   end
 
