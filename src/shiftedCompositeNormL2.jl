@@ -37,7 +37,8 @@ mutable struct ShiftedCompositeNormL2{
   sol::V3
   dsol::V3
   p::V3
-  dp
+  dp::V3
+  full_row_rank::Bool
   function ShiftedCompositeNormL2(
     λ::R,
     c!::Function,
@@ -55,7 +56,7 @@ mutable struct ShiftedCompositeNormL2{
     if length(b) != size(A,1)
       error("ShiftedCompositeNormL2: Wrong input dimensions, there should be as many constraints as rows in the Jacobian")
     end
-    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ),c!,J!,A,Aᵧ,b,g,res,sol,dsol,p,dp)
+    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ),c!,J!,A,Aᵧ,b,g,res,sol,dsol,p,dp,true)
   end
 end
 
@@ -104,6 +105,7 @@ function prox!(
   start_time = time()
   θ = R(0.8)
   γ = R(0.0)
+  γmin = eps(R)^(0.75)
   full_row_rank = true
   # Initialize Aᵧ
   ψ.Aᵧ.rows .= [ψ.A.rows;collect(eltype(ψ.A.rows),1:ψ.A.m)] 
@@ -123,19 +125,8 @@ function prox!(
 
   qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
   qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
-
-  # 1 Step of iterative refinement
-  ψ.res .= ψ.g
-
-  mul!(ψ.dp, ψ.Aᵧ', ψ.sol)
-  mul!(ψ.dsol, ψ.Aᵧ, ψ.dp)
-
-  ψ.res .-= ψ.dsol
-  if norm(ψ.res) > eps(R)^0.75
-    qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
-    qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
-    ψ.sol .+= ψ.dsol
-  end  
+  qrm_solve!(spfct, ψ.sol, ψ.p, transp='t')
+  _iterative_refinement!(spfct,ψ)
 
   ψ.sol .*= -1
 
@@ -152,14 +143,14 @@ function prox!(
   end
   for i = 1 : size(R1, 2)
     if abs(R1[rp[rows_R[i]], cp[i]]) < eps(R)^0.75
-      full_row_rank = false
+      ψ.full_row_rank = false
       break
     end
   end
 
-  if !full_row_rank 
+  if !ψ.full_row_rank
 
-    γ = eps(R)
+    γ = γmin
     
     qrm_update!(spmat,[ψ.A.vals; fill(eltype(ψ.A.vals)(sqrt(γ)),ψ.A.m)])
     qrm_factorize!(spmat, spfct, transp='t')
@@ -171,24 +162,25 @@ function prox!(
 
     ψ.sol .*= -1
 
-    if norm(ψ.sol) ≤ σ*ψ.h.lambda + eps(R) # We are in the hard-case, we consider ψ.sol is a good approximation of the least-norm solution
+    γ₊ = γ + (norm(ψ.sol)/(σ*ψ.h.lambda) - 1.0)*(norm(ψ.sol)/norm(ψ.p))^2
+    if norm(ψ.sol) ≤ σ*ψ.h.lambda + eps(R) && γ₊ ≤ γ    # We are in the hard-case, we consider ψ.sol is a good approximation of the least-norm solution
       mul!(y, ψ.A', ψ.sol)
       y .+= q
       return y
     end
-
   end
   
   # Scalar Root finding
   k = 0
   elapsed_time = time() - start_time
   γ₊ = γ 
-  if norm(ψ.sol) > σ*ψ.h.lambda
+  if norm(ψ.sol) > σ*ψ.h.lambda || !ψ.full_row_rank
 
     while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < max_iter && elapsed_time < max_time
 
       γ₊ += (norm(ψ.sol)/(σ*ψ.h.lambda) - 1.0)*(norm(ψ.sol)/norm(ψ.p))^2
       γ = γ₊ > 0 ? γ₊ : θ*γ
+      γ = γ ≤ γmin ? γmin : γ
       
       qrm_update!(spmat,[ψ.A.vals; fill(eltype(ψ.A.vals)(sqrt(γ)),ψ.A.m)])
       qrm_factorize!(spmat,spfct, transp='t')
@@ -197,6 +189,8 @@ function prox!(
       qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
       qrm_solve!(spfct, ψ.sol, ψ.p, transp='t')
       _iterative_refinement!(spfct, ψ)
+
+      γ == γmin && break
       
       ψ.sol .*= -1
       k += 1
