@@ -106,7 +106,6 @@ function prox!(
   θ = R(0.8)
   γ = R(0.0)
   γmin = eps(R)^(0.75)
-  full_row_rank = true
   # Initialize Aᵧ
   ψ.Aᵧ.rows .= [ψ.A.rows;collect(eltype(ψ.A.rows),1:ψ.A.m)] 
   ψ.Aᵧ.cols .= [ψ.A.cols;collect(eltype(ψ.A.cols),ψ.A.n+1:ψ.A.n + ψ.A.m)]
@@ -142,7 +141,7 @@ function prox!(
     end
   end
   for i = 1 : size(R1, 2)
-    if abs(R1[rp[rows_R[i]], cp[i]]) < eps(R)^0.75
+    if abs(R1[rp[rows_R[i]], cp[i]]) < eps(R)^0.4
       ψ.full_row_rank = false
       break
     end
