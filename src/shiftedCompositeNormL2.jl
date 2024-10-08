@@ -177,7 +177,8 @@ function prox!(
 
     while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < max_iter && elapsed_time < max_time
 
-      γ₊ += (norm(ψ.sol)/(σ*ψ.h.lambda) - 1.0)*(norm(ψ.sol)/norm(ψ.p))^2
+      solNorm = norm(ψ.sol)
+      γ₊ += (solNorm / (σ * ψ.h.lambda) - 1) * (solNorm / norm(ψ.p))^2
       γ = γ₊ > 0 ? γ₊ : θ*γ
       γ = γ ≤ γmin ? γmin : γ
       

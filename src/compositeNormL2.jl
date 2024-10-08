@@ -4,21 +4,23 @@ export CompositeNormL2
 @doc raw"""
     CompositeNormL2(λ, c!, J!, A, b)
 
-Returns the ``\ell_{2}`` norm operator composed with a function
+Returns the ``\ell_{2}`` norm operator composed with function ``c``:
 ```math
 f(x) = λ \|c(x)\|_2
 ```
-where ``\lambda > 0``. c! and J! should be functions
+where ``\lambda > 0``. `c!` and `J!` should implement functions
 ```math
 \begin{aligned}
-&c(x) : \mathbb{R}^n \xrightarrow[]{} \mathbb{R}^m \\
-&J(x) : \mathbb{R}^n \xrightarrow[]{} \mathbb{R}^{m\times n}
+c & : \mathbb{R}^n \to \mathbb{R}^m \\
+J & : \mathbb{R}^n \to \mathbb{R}^{m \times n}
 \end{aligned}
 ```
 such that J is the Jacobian of c. A and b should respectively be a matrix and a vector which can respectively store the values of J and c.
 A is expected to be sparse, c and J should have signatures
-c!(b <: AbstractVector{Real}, xk <: AbstractVector{Real})
-J!(A <: AbstractSparseMatrixCOO{Real,Integer}, xk <: AbstractVector{Real})
+
+    c!(b <: AbstractVector{Real}, xk <: AbstractVector{Real})
+    J!(A <: AbstractSparseMatrixCOO{Real,Integer}, xk <: AbstractVector{Real})
+
 """
 mutable struct CompositeNormL2{
     R <: Real,
