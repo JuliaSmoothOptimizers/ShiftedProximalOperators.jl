@@ -107,9 +107,12 @@ function prox!(
   γ = R(0.0)
   γmin = eps(R)^(0.75)
   # Initialize Aᵧ
-  ψ.Aᵧ.rows .= [ψ.A.rows;collect(eltype(ψ.A.rows),1:ψ.A.m)] 
-  ψ.Aᵧ.cols .= [ψ.A.cols;collect(eltype(ψ.A.cols),ψ.A.n+1:ψ.A.n + ψ.A.m)]
-  ψ.Aᵧ.vals .= [ψ.A.vals;zeros(eltype(ψ.A.vals),ψ.A.m)]
+  ψ.Aᵧ.rows[1:length(ψ.A.rows)] .= ψ.A.rows
+  ψ.Aᵧ.rows[length(ψ.A.rows)+1:end] .= eltype(ψ.A.rows)(1):eltype(ψ.A.rows)(ψ.A.m)
+  ψ.Aᵧ.cols[1:length(ψ.A.cols)] .= ψ.A.cols
+  ψ.Aᵧ.cols[length(ψ.A.cols)+1:end] .= eltype(ψ.A.cols)(ψ.A.n+1):eltype(ψ.A.cols)(ψ.A.n + ψ.A.m)
+  ψ.Aᵧ.vals[1:length(ψ.A.vals)] .= ψ.A.vals
+  ψ.Aᵧ.vals[length(ψ.A.vals)+1:end] .= eltype(ψ.A.vals)(0)
 
   mul!(ψ.g, ψ.A, q)
   ψ.g .+= ψ.b
