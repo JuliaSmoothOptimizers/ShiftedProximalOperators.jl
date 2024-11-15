@@ -84,7 +84,7 @@ shifted(
 ) where {R <: Real, V0 <: Function, V1 <: Function, V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}} = begin
   b = similar(ψ.b)
   ψ.c!(b,xk)
-  A = copy(ψ.A)
+  A = similar(ψ.A)
   ψ.J!(A,xk)
   ShiftedCompositeNormL2(ψ.h.lambda, ψ.c!, ψ.J!, A, b)
 end
