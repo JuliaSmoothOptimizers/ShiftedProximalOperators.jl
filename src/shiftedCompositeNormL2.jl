@@ -154,7 +154,8 @@ function prox!(
 
     α = αmin
     
-    qrm_update!(spmat,[ψ.A.vals; fill(eltype(ψ.A.vals)(sqrt(α)),ψ.A.m)])
+    ψ.Aα.vals[length(ψ.A.vals)+1:end] .= eltype(ψ.A.vals)(sqrt(α))
+    qrm_update!(spmat, ψ.Aα.vals)
     qrm_factorize!(spmat, spfct, transp='t')
 
     qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
@@ -185,7 +186,8 @@ function prox!(
       α = α₊ > 0 ? α₊ : θ*α
       α = α ≤ αmin ? αmin : α
       
-      qrm_update!(spmat,[ψ.A.vals; fill(eltype(ψ.A.vals)(sqrt(α)),ψ.A.m)])
+      ψ.Aα.vals[length(ψ.A.vals)+1:end] .= eltype(ψ.A.vals)(sqrt(α))
+      qrm_update!(spmat, ψ.Aα.vals)
       qrm_factorize!(spmat,spfct, transp='t')
 
       qrm_solve!(spfct, ψ.g, ψ.p, transp='t')
