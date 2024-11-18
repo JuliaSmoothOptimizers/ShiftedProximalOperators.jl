@@ -2,22 +2,24 @@ export ShiftedCompositeNormL2
 @doc raw"""
     ShiftedCompositeNormL2(h, c!, J!, A, b)
 
-Returns the shift of a function c composed with the ``\ell_{2}`` norm (see CompositeNormL2.jl).
-Here, c is linearized i.e, ``c(x+s) \approx c(x) + J(x)s``. 
+Returns the shift of a function ``c`` composed with the ``ℓ₂`` norm (see CompositeNormL2.jl).
+Here, ``c`` is linearized i.e, ``c(x+s) ≈ c(x) + J(x)s``. 
 ```math
-f(s) = λ \|c(x) + J(x)s\|_2
+f(s) = λ ‖c(x) + J(x)s‖₂,
 ```
-where ``\lambda > 0``. c! and J! should be functions
+where ``λ > 0``. `c!` and `J!` should implement functions 
 ```math
-\begin{aligned}
-&c(x) : \mathbb{R}^n \xrightarrow[]{} \mathbb{R}^m \\
-&J(x) : \mathbb{R}^n \xrightarrow[]{} \mathbb{R}^{m\times n}
-\end{aligned}
+c : ℜⁿ ↦ ℜᵐ,
 ```
-such that J is the Jacobian of c. A and b should respectively be a matrix and a vector which can respectively store the values of J and c.
-A is expected to be sparse, c and J should have signatures
+```math
+J : ℜⁿ ↦ ℜᵐˣⁿ,   
+```
+such that ``J`` is the Jacobian of ``c``. `A` and `b` should respectively be a matrix and a vector which can respectively store the values of ``J`` and ``c``.
+`A` is expected to be sparse, `c!` and `J!` should have signatures
+```
 c!(b <: AbstractVector{Real}, xk <: AbstractVector{Real})
 J!(A <: AbstractSparseMatrixCOO{Real,Integer}, xk <: AbstractVector{Real})
+```
 """
 mutable struct ShiftedCompositeNormL2{
   R <: Real,
@@ -116,6 +118,7 @@ function prox!(
 
   mul!(ψ.g, ψ.A, q)
   ψ.g .+= ψ.b
+  ψ.g .*= -1
 
   spmat = qrm_spmat_init(ψ.Aα; sym=false) # TODO: preallocate this
   spfct = qrm_spfct_init(spmat) # TODO: preallocate this
@@ -129,8 +132,6 @@ function prox!(
   qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
   qrm_solve!(spfct, ψ.sol, ψ.p, transp='t')
   _iterative_refinement!(spfct,ψ)
-
-  ψ.sol .*= -1
 
   # Check full row rankness of J(x) by inspecting diagonal of R
   R1 = qrm_spfct_get_r(spfct)
@@ -162,8 +163,6 @@ function prox!(
     qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
     qrm_solve!(spfct, ψ.sol, ψ.p, transp='t')
     _iterative_refinement!(spfct, ψ)
-
-    ψ.sol .*= -1
 
     α₊ = α + (norm(ψ.sol)/(σ*ψ.h.lambda) - 1.0)*(norm(ψ.sol)/norm(ψ.p))^2
     if norm(ψ.sol) ≤ σ*ψ.h.lambda + eps(R) && α₊ ≤ α    # We are in the hard-case, we consider ψ.sol is a good approximation of the least-norm solution
@@ -197,7 +196,6 @@ function prox!(
 
       α == αmin && break
       
-      ψ.sol .*= -1
       k += 1
       elapsed_time = time() - start_time
     end
