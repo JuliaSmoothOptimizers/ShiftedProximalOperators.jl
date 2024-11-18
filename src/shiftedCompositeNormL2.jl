@@ -61,24 +61,6 @@ mutable struct ShiftedCompositeNormL2{
     new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ),c!,J!,A,Aα,b,g,res,sol,dsol,p,dp,true)
   end
 end
-
-
-shifted(λ::R, c!::Function, J!::Function, A::AbstractMatrix{R}, b::AbstractVector{R}, xk :: AbstractVector{R}) where {R <: Real} = begin
-  c!(b,xk)
-  J!(A,xk)
-  ShiftedCompositeNormL2(λ,c!,J!,A,b)
-end
-
-shifted(
-  ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3},
-  xk::AbstractVector{R},
-) where {R <: Real, V0 <: Function, V1 <: Function, V2 <: AbstractMatrix{R}, V3<: AbstractVector{R}} = begin
-  b = similar(ψ.b)
-  ψ.c!(b,xk)
-  A = similar(ψ.A)
-  ψ.J!(A,xk)
-  ShiftedCompositeNormL2(ψ.h.lambda, ψ.c!, ψ.J!, A, b)
-end
  
 shifted(
   ψ::CompositeNormL2{R, V0, V1, V2, V3},
