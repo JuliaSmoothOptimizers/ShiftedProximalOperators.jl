@@ -165,7 +165,7 @@ function prox!(
     _iterative_refinement!(spfct, ψ)
 
     α₊ = α + (norm(ψ.sol)/(σ*ψ.h.lambda) - 1.0)*(norm(ψ.sol)/norm(ψ.p))^2
-    if norm(ψ.sol) ≤ σ*ψ.h.lambda + eps(R) && α₊ ≤ α    # We are in the hard-case, we consider ψ.sol is a good approximation of the least-norm solution
+    if norm(ψ.sol) ≤ σ*ψ.h.lambda + eps(R) && α₊ ≤ α    # We consider ψ.sol is a good approximation of the least-norm solution
       mul!(y, ψ.A', ψ.sol)
       y .+= q
       return y
@@ -177,8 +177,7 @@ function prox!(
   elapsed_time = time() - start_time
   α₊ = α 
   if norm(ψ.sol) > σ*ψ.h.lambda || !ψ.full_row_rank
-
-    while abs(norm(ψ.sol) - σ*ψ.h.lambda) > eps(R)^0.75 && k < max_iter && elapsed_time < max_time
+    while norm(ψ.sol) > σ*ψ.h.lambda + eps(R)^0.75 && k < max_iter && elapsed_time < max_time
 
       solNorm = norm(ψ.sol)
       α₊ += (solNorm / (σ * ψ.h.lambda) - 1) * (solNorm / norm(ψ.p))^2
@@ -201,21 +200,27 @@ function prox!(
     end
   end
 
-  #Sometimes gamma tends to 0, we don't to print the residual in this case, it is usually huge.
+  #Sometimes alpha tends to 0, we don't to print the residual in this case, it is usually huge.
   (k > max_iter && α > eps(R)) && @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning with residue $(abs(norm(ψ.sol) - σ*ψ.h.lambda)) instead"
   mul!(y, ψ.A', ψ.sol)
   y .+= q
   return y
 end
 
-function _iterative_refinement!(spfct, ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3}) where{R, V0, V1, V2, V3}
+function _iterative_refinement!(
+  spfct, 
+  ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3}; 
+  atol = sqrt(eps(R)), 
+  rtol = sqrt(eps(R))
+  ) where{R, V0, V1, V2, V3}
+
   ψ.res .= ψ.g
 
   mul!(ψ.dp, ψ.Aα', ψ.sol)
   mul!(ψ.dsol, ψ.Aα, ψ.dp)
 
   ψ.res .-= ψ.dsol
-  if norm(ψ.res) > eps(R)^0.75
+  if norm(ψ.res) > atol + rtol*norm(ψ.g)
     qrm_solve!(spfct, ψ.res, ψ.dp, transp='t')
     qrm_solve!(spfct, ψ.dp, ψ.dsol, transp='n')
     qrm_solve!(spfct, ψ.dsol, ψ.dp, transp='t')
