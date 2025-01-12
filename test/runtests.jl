@@ -5,6 +5,7 @@ using ProximalOperators
 using ShiftedProximalOperators
 using Test
 
+#include("test_allocs.jl")
 include("test_psvd.jl")
 
 for (op,composite_op,shifted_op) ∈ zip((:NormL2,), (:CompositeNormL2,), (:ShiftedCompositeNormL2,))
@@ -51,7 +52,8 @@ for (op,composite_op,shifted_op) ∈ zip((:NormL2,), (:CompositeNormL2,), (:Shif
     
     if "$op" == "NormL2"
       y_true = [0.24545429,0.75250248,-0.66619752 ,1.19372286]
-      @test sum((y - y_true) .^ 2) ≤ 1e-11
+      norm = Op(1.0)
+      @test norm(y - y_true) ≤ 1e-8
     end
 
     # test in place shift
@@ -77,6 +79,34 @@ for (op,composite_op,shifted_op) ∈ zip((:NormL2,), (:CompositeNormL2,), (:Shif
     ψ = CompositeOp(Float32(λ),c!,J!,A,b)
 
     @test typeof(ψ(zeros(Float32,4))) == Float32
+
+    # test rank deficient operators
+    function c_deff!(z,x)
+      z[1] = 2*x[1] - x[4]
+      z[2] = 4*x[1] - 2*x[4]
+    end
+    function J_deff!(z,x)
+      z.vals .= Float64[2.0,4.0,-1.0,-2.0]
+    end
+    λ = 3.62
+
+    b = zeros(Float64,2)
+    A = SparseMatrixCOO(Float64[2 0 0 -1;4 0 0 -2])
+
+    ψ = CompositeOp(λ,c_deff!,J_deff!,A,b)
+    xk = [0.0,1.1741,0.0,-0.4754]
+    ϕ = shifted(ψ,xk)
+
+    x = [0.1097,1.1287,-0.29,1.2616]
+    y = similar(x)
+    ν = 0.1056
+    prox!(y,ϕ,x,ν)
+    if "$op" == "NormL2"
+      y_true = [ 0.33642,1.1287,-0.29,1.14824]
+      norm = Op(1.0)
+      @test norm(y - y_true) ≤ 1e-8
+    end
+
 
   end
 end
