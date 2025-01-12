@@ -35,6 +35,9 @@ mutable struct ShiftedCompositeNormL2{
   Aα::V2
   spmat::qrm_spmat{R}
   spfct::qrm_spfct{R}
+  rows_R::Vector{Int}
+  rp::Vector{Int}
+  cp::Vector{Int}
   b::V3
   g::V3
   res::V3
@@ -64,11 +67,12 @@ mutable struct ShiftedCompositeNormL2{
     Aα.rows[length(A.rows)+1:end] .= eltype(A.rows)(1):eltype(A.rows)(A.m)
     Aα.cols[1:length(A.cols)] .= A.cols
     Aα.cols[length(A.cols)+1:end] .= eltype(A.cols)(A.n+1):eltype(A.cols)(A.n + A.m)
+    rows_R = zeros(Int, A.m)
 
     spmat = qrm_spmat_init(Aα; sym=false)
     spfct = qrm_spfct_init(spmat)
     qrm_set(spfct, "qrm_keeph", 0)
-    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ),c!,J!,A,Aα,spmat, spfct,b,g,res,sol,dsol,p,dp,true)
+    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ),c!,J!,A,Aα,spmat, spfct, rows_R,b,g,res,sol,dsol,p,dp,true)
   end
 end
  
@@ -123,20 +127,34 @@ function prox!(
   _iterative_refinement!(spfct,ψ)
 
   # Check full row rankness of J(x) by inspecting diagonal of R
-  R1 = qrm_spfct_get_r(spfct) # This always allocates
-  cp = qrm_spfct_get_cp(spfct)
+  R1 = qrm_spfct_get_r(spfct) 
+  cp = qrm_spfct_get_cp(spfct) #This allocates
   rp = qrm_spfct_get_rp(spfct)
-  rows_R = Int[] #TODO : preallocate this
+  rows_R = ψ.rows_R
+
+  k = 1
 
   for i = 1 : size(R1, 1)
-    if nnz(R1[rp[i],cp[:]]) != 0
-      push!(rows_R, i)
+    is_zeros = true
+    for j = 1 : size(R1, 2)
+      if R1[rp[i],cp[j]] != 0 
+        is_zeros = false
+        break
+      end
+    end
+    if !is_zeros 
+      rows_R[k] = i
+      k = k + 1
     end
   end
-  for i = 1 : size(R1, 2)
-    if abs(R1[rp[rows_R[i]], cp[i]]) < eps(R)^0.4
-      ψ.full_row_rank = false
-      break
+  if k <= size(R1, 2)
+    ψ.full_row_rank = false
+  else
+    for i = 1 : size(R1, 2)
+      if abs(R1[rp[rows_R[i]], cp[i]]) < eps(R)^0.4
+        ψ.full_row_rank = false
+        break
+      end
     end
   end
 
