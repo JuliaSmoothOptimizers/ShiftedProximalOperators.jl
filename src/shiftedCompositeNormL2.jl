@@ -33,6 +33,8 @@ mutable struct ShiftedCompositeNormL2{
   J!::V1
   A::V2
   Aα::V2
+  spmat::qrm_spmat{R}
+  spfct::qrm_spfct{R}
   b::V3
   g::V3
   res::V3
@@ -58,7 +60,15 @@ mutable struct ShiftedCompositeNormL2{
     if length(b) != size(A,1)
       error("ShiftedCompositeNormL2: Wrong input dimensions, there should be as many constraints as rows in the Jacobian")
     end
-    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ),c!,J!,A,Aα,b,g,res,sol,dsol,p,dp,true)
+    Aα.rows[1:length(A.rows)] .= A.rows
+    Aα.rows[length(A.rows)+1:end] .= eltype(A.rows)(1):eltype(A.rows)(A.m)
+    Aα.cols[1:length(A.cols)] .= A.cols
+    Aα.cols[length(A.cols)+1:end] .= eltype(A.cols)(A.n+1):eltype(A.cols)(A.n + A.m)
+
+    spmat = qrm_spmat_init(Aα; sym=false)
+    spfct = qrm_spfct_init(spmat)
+    qrm_set(spfct, "qrm_keeph", 0)
+    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ),c!,J!,A,Aα,spmat, spfct,b,g,res,sol,dsol,p,dp,true)
   end
 end
  
@@ -90,11 +100,8 @@ function prox!(
   θ = R(0.8)
   α = R(0.0)
   αmin = eps(R)^(0.75)
+
   # Initialize Aα
-  ψ.Aα.rows[1:length(ψ.A.rows)] .= ψ.A.rows
-  ψ.Aα.rows[length(ψ.A.rows)+1:end] .= eltype(ψ.A.rows)(1):eltype(ψ.A.rows)(ψ.A.m)
-  ψ.Aα.cols[1:length(ψ.A.cols)] .= ψ.A.cols
-  ψ.Aα.cols[length(ψ.A.cols)+1:end] .= eltype(ψ.A.cols)(ψ.A.n+1):eltype(ψ.A.cols)(ψ.A.n + ψ.A.m)
   ψ.Aα.vals[1:length(ψ.A.vals)] .= ψ.A.vals
   ψ.Aα.vals[length(ψ.A.vals)+1:end] .= eltype(ψ.A.vals)(0)
 
@@ -102,10 +109,10 @@ function prox!(
   ψ.g .+= ψ.b
   ψ.g .*= -1
 
-  spmat = qrm_spmat_init(ψ.Aα; sym=false) # TODO: preallocate this
-  spfct = qrm_spfct_init(spmat) # TODO: preallocate this
-  qrm_set(spfct, "qrm_keeph", 0)
+  spmat = ψ.spmat
+  spfct = ψ.spfct
 
+  qrm_update!(spmat, ψ.Aα.vals)
   # Check interior convergence
   qrm_analyse!(spmat, spfct; transp='t')
   qrm_factorize!(spmat, spfct, transp='t')
@@ -116,7 +123,7 @@ function prox!(
   _iterative_refinement!(spfct,ψ)
 
   # Check full row rankness of J(x) by inspecting diagonal of R
-  R1 = qrm_spfct_get_r(spfct)
+  R1 = qrm_spfct_get_r(spfct) # This always allocates
   cp = qrm_spfct_get_cp(spfct)
   rp = qrm_spfct_get_rp(spfct)
   rows_R = Int[] #TODO : preallocate this
