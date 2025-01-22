@@ -92,7 +92,6 @@ end
 function shift!(ψ::ShiftedCompositeProximableFunction, shift::AbstractVector{R}) where {R <: Real}
   ψ.c!(ψ.b,shift)
   ψ.J!(ψ.A,shift)
-  ψ.full_row_rank = true
   return ψ
 end
 

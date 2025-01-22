@@ -35,9 +35,6 @@ mutable struct ShiftedCompositeNormL2{
   Aα::V2
   spmat::qrm_spmat{R}
   spfct::qrm_spfct{R}
-  rows_R::Vector{Int}
-  rp::Vector{Int}
-  cp::Vector{Int}
   b::V3
   g::V3
   res::V3
@@ -45,7 +42,6 @@ mutable struct ShiftedCompositeNormL2{
   dsol::V3
   p::V3
   dp::V3
-  full_row_rank::Bool
   function ShiftedCompositeNormL2(
     λ::R,
     c!::Function,
@@ -67,12 +63,12 @@ mutable struct ShiftedCompositeNormL2{
     Aα.rows[length(A.rows)+1:end] .= eltype(A.rows)(1):eltype(A.rows)(A.m)
     Aα.cols[1:length(A.cols)] .= A.cols
     Aα.cols[length(A.cols)+1:end] .= eltype(A.cols)(A.n+1):eltype(A.cols)(A.n + A.m)
-    rows_R = zeros(Int, A.m)
 
     spmat = qrm_spmat_init(Aα; sym=false)
     spfct = qrm_spfct_init(spmat)
-    qrm_set(spfct, "qrm_keeph", 0)
-    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ),c!,J!,A,Aα,spmat, spfct, rows_R,b,g,res,sol,dsol,p,dp,true)
+    qrm_set(spfct, "qrm_keeph", 0) # Discard de Q matrix in all subsequent QR factorizations
+    qrm_set(spfct, "qrm_rd_eps", eps(R)^(0.4)) # If a diagonal elemnt of the R-factor is less than eps(R)^(0.4), we consider that A is rank defficient.
+    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ), c!, J!, A, Aα, spmat, spfct, b, g, res, sol, dsol, p, dp)
   end
 end
  
@@ -125,41 +121,10 @@ function prox!(
   qrm_solve!(spfct, ψ.p, ψ.sol, transp='n')
   qrm_solve!(spfct, ψ.sol, ψ.p, transp='t')
   _iterative_refinement!(spfct,ψ)
-
-  # Check full row rankness of J(x) by inspecting diagonal of R
-  R1 = qrm_spfct_get_r(spfct) 
-  cp = qrm_spfct_get_cp(spfct) #This allocates
-  rp = qrm_spfct_get_rp(spfct)
-  rows_R = ψ.rows_R
-
-  k = 1
-
-  for i = 1 : size(R1, 1)
-    is_zeros = true
-    for j = 1 : size(R1, 2)
-      if R1[rp[i],cp[j]] != 0 
-        is_zeros = false
-        break
-      end
-    end
-    if !is_zeros 
-      rows_R[k] = i
-      k = k + 1
-    end
-  end
-  if k <= size(R1, 2)
-    ψ.full_row_rank = false
-  else
-    for i = 1 : size(R1, 2)
-      if abs(R1[rp[rows_R[i]], cp[i]]) < eps(R)^0.4
-        ψ.full_row_rank = false
-        break
-      end
-    end
-  end
-
-  if !ψ.full_row_rank
-
+  
+  full_row_rank = !(qrm_get(spfct,"qrm_rd_num") > 0)
+  if !full_row_rank
+    #TODO: once Golub-Riley has been implemented in QRMumps, this should be replaced with a call to qrm_golub_riley
     α = αmin
     
     ψ.Aα.vals[length(ψ.A.vals)+1:end] .= eltype(ψ.A.vals)(sqrt(α))
@@ -183,7 +148,7 @@ function prox!(
   k = 0
   elapsed_time = time() - start_time
   α₊ = α 
-  if norm(ψ.sol) > σ*ψ.h.lambda || !ψ.full_row_rank
+  if norm(ψ.sol) > σ*ψ.h.lambda || !full_row_rank
     while norm(ψ.sol) > σ*ψ.h.lambda + eps(R)^0.75 && k < max_iter && elapsed_time < max_time
 
       solNorm = norm(ψ.sol)
@@ -214,6 +179,7 @@ function prox!(
   return y
 end
 
+#TODO: remove this and use qrm_iterative_refinement 
 function _iterative_refinement!(
   spfct, 
   ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3}; 
