@@ -5,7 +5,6 @@ using ProximalOperators
 using ShiftedProximalOperators
 using Test
 
-#include("test_allocs.jl")
 include("test_psvd.jl")
 
 for (op,composite_op,shifted_op) ∈ zip((:NormL2,), (:CompositeNormL2,), (:ShiftedCompositeNormL2,))
