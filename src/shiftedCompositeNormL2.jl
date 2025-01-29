@@ -142,13 +142,13 @@ function prox!(
     end
   end
 
-  #Sometimes alpha tends to 0, we don't to print the residual in this case, it is usually huge.
-  (k > max_iter && α > eps(R)) && @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning with residue $(abs(norm(ψ.q) - σ*ψ.h.lambda)) instead"
+  k > max_iter && @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning with residue $(abs(norm(ψ.q) - σ*ψ.h.lambda)) instead"
   mul!(y, ψ.A', ψ.q)
   y .+= q
   return y
 end
 
+# Utility function that computes in place both q = s(α) and p such that ‖p‖² = s(α)ᵀ∇s(α) for the secular equation.
 function _obj_dot_grad!(spmat :: qrm_spmat{T}, spfct :: qrm_spfct{T}, p :: AbstractVector{T}, q :: AbstractVector{T}, g :: AbstractVector{T}, dq :: AbstractVector{T}) where T
   qrm_factorize!(spmat, spfct, transp='t')
   qrm_solve!(spfct, g, p, transp='t')
