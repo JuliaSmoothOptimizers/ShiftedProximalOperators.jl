@@ -113,10 +113,13 @@ function prox!(
   # Check full-rankness
   full_row_rank = !(qrm_get(spfct,"qrm_rd_num") > 0)
   if !full_row_rank
-    qrm_golub_riley!(ψ.shifted_spmat, spfct, ψ.p, ψ.g, ψ.dp, ψ.q, transp = 't')
-    y .= ψ.p[1:length(y)]
-    y .+= q
-    return y 
+    α = αmin
+    qrm_golub_riley!(ψ.shifted_spmat, spfct, ψ.p, ψ.g, ψ.dp, ψ.q, transp = 't', α = αmin)
+    if norm(ψ.q) ≤ σ*ψ.h.lambda + eps(R)
+      y .= ψ.p[1:length(y)]
+      y .+= q
+      return y 
+    end
   end
   
   # Scalar Root finding
