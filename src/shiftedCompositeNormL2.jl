@@ -85,7 +85,7 @@ function prox!(
   y::AbstractVector{R},
   ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3},
   q::AbstractVector{R},
-  σ::R;
+  ν::R;
   max_iter = 10000,
   max_time = 180.0
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}}
@@ -114,8 +114,8 @@ function prox!(
   full_row_rank = !(qrm_get(spfct,"qrm_rd_num") > 0)
   if !full_row_rank
     α = αmin
-    qrm_golub_riley!(ψ.shifted_spmat, spfct, ψ.p, ψ.g, ψ.dp, ψ.q, transp = 't', α = αmin)
-    if norm(ψ.q) ≤ σ*ψ.h.lambda + eps(R)
+    qrm_golub_riley!(ψ.shifted_spmat, spfct, ψ.p, ψ.g, ψ.dp, ψ.q, ψ.dq, transp = 't', α = αmin)
+    if norm(ψ.q) ≤ ν*ψ.h.lambda + eps(R)
       y .= ψ.p[1:length(y)]
       y .+= q
       return y 
@@ -126,11 +126,11 @@ function prox!(
   k = 0
   elapsed_time = time() - start_time
   α₊ = α 
-  if norm(ψ.q) > σ*ψ.h.lambda || !full_row_rank
-    while norm(ψ.q) > σ*ψ.h.lambda + eps(R)^0.75 && k < max_iter && elapsed_time < max_time
+  if norm(ψ.q) > ν*ψ.h.lambda || !full_row_rank
+    while norm(ψ.q) > ν*ψ.h.lambda + eps(R)^0.75 && k < max_iter && elapsed_time < max_time
 
       solNorm = norm(ψ.q)
-      α₊ += (solNorm / (σ * ψ.h.lambda) - 1) * (solNorm / norm(ψ.p))^2
+      α₊ += (solNorm / (ν * ψ.h.lambda) - 1) * (solNorm / norm(ψ.p))^2
       α = α₊ > 0 ? α₊ : θ*α
       α = α ≤ αmin ? αmin : α
       
@@ -145,7 +145,7 @@ function prox!(
     end
   end
 
-  k > max_iter && @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning with residue $(abs(norm(ψ.q) - σ*ψ.h.lambda)) instead"
+  k > max_iter && @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning with residue $(abs(norm(ψ.q) - ν*ψ.h.lambda)) instead"
   mul!(y, ψ.A', ψ.q)
   y .+= q
   return y
