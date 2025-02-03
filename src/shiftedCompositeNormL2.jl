@@ -59,9 +59,7 @@ mutable struct ShiftedCompositeNormL2{
     spmat = qrm_spmat_init(A; sym=false)
     shifted_spmat = qrm_shift_spmat(spmat)
     spfct = qrm_spfct_init(spmat)
-    qrm_set(spfct, "qrm_keeph", 0) # Discard de Q matrix in all subsequent QR factorizations
-    qrm_set(spfct, "qrm_rd_eps", eps(R)^(0.4)) # If a diagonal elemnt of the R-factor is less than eps(R)^(0.4), we consider that A is rank defficient.
-
+  
     new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ), c!, J!, A, shifted_spmat, spfct, b, g, q, dq, p, dp)
   end
 end
@@ -86,14 +84,14 @@ function prox!(
   ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3},
   q::AbstractVector{R},
   ν::R;
-  max_iter = 10000,
+  max_iter = 1000,
   max_time = 180.0
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}}
 
   start_time = time()
   θ = R(0.8)
   α = R(0.0)
-  αmin = eps(R)^(0.75)
+  αmin = eps(R)^(0.9)
 
   # Compute RHS
   mul!(ψ.g, ψ.A, q)
@@ -105,29 +103,43 @@ function prox!(
   spmat = shifted_spmat.spmat
   spfct = ψ.spfct
   qrm_update_shift_spmat!(shifted_spmat, α)
+  spmat.val[1:spmat.mat.nz - spmat.mat.m] .= ψ.A.vals
+  qrm_spfct_init!(spfct, spmat)
+  qrm_set(spfct, "qrm_keeph", 0) # Discard de Q matrix in all subsequent QR factorizations
+  qrm_set(spfct, "qrm_rd_eps", eps(R)^(0.4)) # If a diagonal elemnt of the R-factor is less than eps(R)^(0.4), we consider that A is rank defficient.
 
   # Check interior convergence
   qrm_analyse!(spmat, spfct; transp='t')
   _obj_dot_grad!(spmat, spfct, ψ.p, ψ.q, ψ.g, ψ.dq)
   
   # Check full-rankness
-  full_row_rank = !(qrm_get(spfct,"qrm_rd_num") > 0)
+  full_row_rank = (qrm_get(spfct,"qrm_rd_num") == 0)
   if !full_row_rank
     α = αmin
-    qrm_golub_riley!(ψ.shifted_spmat, spfct, ψ.p, ψ.g, ψ.dp, ψ.q, ψ.dq, transp = 't', α = αmin)
-    if norm(ψ.q) ≤ ν*ψ.h.lambda + eps(R)
+    qrm_golub_riley!(ψ.shifted_spmat, spfct, ψ.p, ψ.g, ψ.dp, ψ.q, ψ.dq, transp = 't', α = α, tol = eps(R)^(0.75))
+
+    # Compute residual
+    qrm_spmat_mv!(spmat, R(1), ψ.q, R(0), ψ.dp, transp = 't')
+    qrm_spmat_mv!(spmat, R(1), ψ.dp, R(0), ψ.dq, transp = 'n')
+    @. ψ.dq = ψ.dq - ψ.g
+
+    if norm(ψ.q) ≤ ν*ψ.h.lambda + eps(R) && norm(ψ.dq) ≤ eps(R)^(0.5) # Check interior optimality and range of AAᵀ
       y .= ψ.p[1:length(y)]
       y .+= q
       return y 
     end
+
+    # The solution is not α = 0, prepare root finding
+    qrm_update_shift_spmat!(shifted_spmat, α)
+    _obj_dot_grad!(spmat, spfct, ψ.p, ψ.q, ψ.g, ψ.dq)
   end
   
   # Scalar Root finding
   k = 0
   elapsed_time = time() - start_time
   α₊ = α 
-  if norm(ψ.q) > ν*ψ.h.lambda || !full_row_rank
-    while norm(ψ.q) > ν*ψ.h.lambda + eps(R)^0.75 && k < max_iter && elapsed_time < max_time
+  if norm(ψ.q) > ν*ψ.h.lambda
+    while abs(norm(ψ.q) - ν*ψ.h.lambda) > eps(R)^0.75 && k < max_iter && elapsed_time < max_time
 
       solNorm = norm(ψ.q)
       α₊ += (solNorm / (ν * ψ.h.lambda) - 1) * (solNorm / norm(ψ.p))^2
