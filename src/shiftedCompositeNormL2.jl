@@ -84,7 +84,7 @@ function prox!(
   ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3},
   q::AbstractVector{R},
   ν::R;
-  max_iter = 1000,
+  max_iter = 10,
   max_time = 180.0
 ) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}}
 
@@ -139,7 +139,7 @@ function prox!(
   elapsed_time = time() - start_time
   α₊ = α 
   if norm(ψ.q) > ν*ψ.h.lambda
-    while abs(norm(ψ.q) - ν*ψ.h.lambda) > eps(R)^0.75 && k < max_iter && elapsed_time < max_time
+    while abs(norm(ψ.q) - ν*ψ.h.lambda) > eps(R)^0.3 && k < max_iter && elapsed_time < max_time
 
       solNorm = norm(ψ.q)
       α₊ += (solNorm / (ν * ψ.h.lambda) - 1) * (solNorm / norm(ψ.p))^2
