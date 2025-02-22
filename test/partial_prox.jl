@@ -1,7 +1,8 @@
 # test partial prox feature for operators that implement it
 for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
   @testset "shifted $op with box partial prox" begin
-    h = eval(op)(3.14)
+    λ = 3.14
+    h = eval(op)(λ)
     n = 5
     l = zeros(n)
     u = ones(n)
@@ -58,6 +59,7 @@ for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
     # tests iprox without bounds
     if op == :NormL0 || op == :NormL1
       ψ = shifted(h, x)
+      # test iprox with d > 0
       for d ∈ [ones(n), 2 * ones(n)]
         y = iprox(ψ, q, d)
         σ = d[1]
@@ -68,6 +70,19 @@ for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
           end
         end
       end
+      # test iprox with d < 0
+      for d ∈ [-ones(n), -2 * ones(n)]
+        y = iprox(ψ, q, d)
+        @test all(isinf.(y))
+      end
+      # test iprox with d = 0
+      d = zeros(n)
+      q1 = (λ + 1) * ones(n)
+      y = iprox(ψ, q1, d)
+      @test all(isinf.(y))
+      q2 = zeros(n)
+      y = iprox(ψ, q2, d)
+      @test all(y .== -ψ.xk - ψ.sj)
     end
   end
 end
