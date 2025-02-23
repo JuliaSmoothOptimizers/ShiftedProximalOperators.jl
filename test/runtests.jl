@@ -179,7 +179,7 @@ for (op, shifted_op) ∈ zip((:NormL2,), (:ShiftedGroupNormL2,))
   end
 end
 
-for (op, shifted_op) ∈ zip((:GroupNormL2,), (:ShiftedGroupNormL2,))
+for (op, shifted_op) ∈ zip((:GroupNormL2,:GroupNormL0), (:ShiftedGroupNormL2,:ShiftedGroupNormL0))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     Op = eval(op)
