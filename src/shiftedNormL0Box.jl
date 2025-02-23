@@ -92,7 +92,8 @@ function prox!(
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  c = 2 * ψ.λ * σ
+  λ = ψ.h.lambda
+  c = 2 * λ * σ
 
   for i ∈ eachindex(q)
     li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
@@ -139,7 +140,7 @@ function iprox!(
   g::AbstractVector{R},
   d::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
-  λ = ψ.λ
+  λ = ψ.h.lambda
 
   for i ∈ eachindex(y)
     li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]

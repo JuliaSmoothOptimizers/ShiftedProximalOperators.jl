@@ -38,7 +38,7 @@ for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
       end
     end
 
-    # tests iprox
+    # tests iprox with bounds
     if op == :NormL0 || op == :NormL1
       for d ∈ [ones(n), -ones(n), zeros(n)]
         y = iprox(ω, q, d)
@@ -50,6 +50,22 @@ for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
             @test z[i] == y[i]
           else
             @test z[i] == p[i]
+          end
+        end
+      end
+    end
+
+    # tests iprox without bounds
+    if op == :NormL0 || op == :NormL1
+      ψ = shifted(h, x)
+      @test_throws AssertionError iprox(ψ, q, zeros(n))
+      for d ∈ [ones(n), 2 * ones(n)]
+        y = iprox(ψ, q, d)
+        σ = d[1]
+        z = prox(ψ, q, σ)
+        for i = 1:n
+          if i ∈ selected
+            @test z[i] == y[i]
           end
         end
       end
