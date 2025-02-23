@@ -66,7 +66,7 @@ function prox!(
   
   for (idx, λ) ∈ zip(ψ.h.idx, ψ.h.lambda)
     snorm = norm(ψ.sol[idx])^2
-    if snorm <= 2 * γ * λ
+    if snorm <= 2 * σ * λ
       y[idx] .= 0
     else
       y[idx] .= ψ.sol[idx]

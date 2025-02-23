@@ -19,7 +19,6 @@ struct GroupNormL2{R <: Real, RR <: AbstractVector{R}, I}
   function GroupNormL2{R, RR, I}(lambda::RR, idx::I) where {R <: Real, RR <: AbstractVector{R}, I}
     any(lambda .< 0) && error("weights λ must be nonnegative")
     length(lambda) != length(idx) && error("number of weights and groups must be the same")
-    length(Set(Iterators.flatten(idx))) != sum(length, idx) && error("groups must be non-overlapping")
     new{R, RR, I}(lambda, idx)
   end
 end
