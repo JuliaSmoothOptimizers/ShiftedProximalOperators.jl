@@ -17,13 +17,9 @@ struct GroupNormL0{R <: Real, RR <: AbstractVector{R}, I}
   idx::I
 
   function GroupNormL0{R, RR, I}(lambda::RR, idx::I) where {R <: Real, RR <: AbstractVector{R}, I}
-    if any(lambda .< 0)
-      error("weights λ must be nonnegative")
-    elseif length(lambda) != length(idx)
-      error("number of weights and groups must be the same")
-    else
-      new{R, RR, I}(lambda, idx)
-    end
+    any(lambda .< 0) && error("weights λ must be nonnegative")
+    length(lambda) != length(idx) && error("number of weights and groups must be the same")
+    new{R, RR, I}(lambda, idx)
   end
 end
 
@@ -34,7 +30,7 @@ function (f::GroupNormL0)(x::AbstractArray{R}) where {R <: Real}
   sum_c = R(0)
   for (idx, λ) ∈ zip(f.idx, f.lambda)
     y = norm(x[idx])
-    if y>0
+    if y > 0
       sum_c += λ
     end
   end

@@ -62,7 +62,7 @@ function prox!(
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
 }
-  ψ.sol .= q + ψ.xk + ψ.sj
+  ψ.sol .= q .+ ψ.xk .+ ψ.sj
   
   for (idx, λ) ∈ zip(ψ.h.idx, ψ.h.lambda)
     snorm = norm(ψ.sol[idx])^2
@@ -72,6 +72,6 @@ function prox!(
       y[idx] .= ψ.sol[idx]
     end
   end
-  y .-= (ψ.xk + ψ.sj)
+  y .-= (ψ.xk .+ ψ.sj)
   return y
 end
