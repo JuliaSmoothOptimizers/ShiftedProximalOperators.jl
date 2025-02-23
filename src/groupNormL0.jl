@@ -1,4 +1,4 @@
-# Group L2 norm (times a constant)
+# Group L0 norm (times a constant)
 
 export GroupNormL0
 
