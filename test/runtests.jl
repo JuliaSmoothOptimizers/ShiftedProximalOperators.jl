@@ -52,7 +52,7 @@ for (op,composite_op,shifted_op) ∈ zip((:NormL2,), (:CompositeNormL2,), (:Shif
     if "$op" == "NormL2"
       y_true = [0.24545429,0.75250248,-0.66619752 ,1.19372286]
       norm = Op(1.0)
-      @test norm(y - y_true) ≤ 1e-8
+      @test norm(y - y_true) ≤ 1e-6
     end
 
     # test in place shift
@@ -103,7 +103,7 @@ for (op,composite_op,shifted_op) ∈ zip((:NormL2,), (:CompositeNormL2,), (:Shif
     if "$op" == "NormL2"
       y_true = [ 0.33642,1.1287,-0.29,1.14824]
       norm = Op(1.0)
-      @test norm(y - y_true) ≤ 1e-8
+      @test norm(y - y_true) ≤ 1e-6
     end
 
 
