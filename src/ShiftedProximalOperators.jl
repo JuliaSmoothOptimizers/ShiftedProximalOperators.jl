@@ -8,7 +8,6 @@ using libblastrampoline_jll
 using OpenBLAS32_jll
 using ProximalOperators
 using Roots
-using SparseArrays
 
 function __init__()
   # Ensure LBT points to a valid BLAS for psvd()
