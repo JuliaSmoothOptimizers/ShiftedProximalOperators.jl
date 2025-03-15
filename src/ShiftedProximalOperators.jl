@@ -65,13 +65,14 @@ function (ψ::ShiftedProximableFunction)(y)
 end
 
 function (ψ::ShiftedCompositeProximableFunction)(y)
-  return ψ.h(ψ.b + ψ.A * y)
+  mul!(ψ.g, ψ.A, y)
+  ψ.g .+= ψ.b
+  return ψ.h(ψ.g)
 end
 
 function (ψ::CompositeProximableFunction)(y)
-  z = similar(ψ.b)
-  ψ.c!(z, y)
-  ψ.h(z)
+  ψ.c!(ψ.g, y)
+  ψ.h(ψ.g)
 end
 
 """

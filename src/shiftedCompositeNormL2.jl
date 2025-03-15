@@ -2,51 +2,52 @@ export ShiftedCompositeNormL2
 @doc raw"""
     ShiftedCompositeNormL2(h, c!, J!, A, b)
 
-Returns the shift of a function ``c`` composed with the ``ℓ₂`` norm (see CompositeNormL2.jl).
-Here, ``c`` is linearized i.e, ``c(x+s) ≈ c(x) + J(x)s``. 
+Returns the shift of a function `c` composed with the `ℓ₂` norm (see CompositeNormL2.jl).
+Here, `c` is linearized i.e, `c(x + s) ≈ c(x) + J(x)s`. 
 ```math
 f(s) = λ ‖c(x) + J(x)s‖₂,
 ```
-where ``λ > 0``. `c!` and `J!` should implement functions 
+where `λ > 0`. `c!` and `J!` should implement functions 
 ```math
-c : ℜⁿ ↦ ℜᵐ,
+c : ℝⁿ ↦ ℝᵐ,
 ```
 ```math
-J : ℜⁿ ↦ ℜᵐˣⁿ,   
+J : ℝⁿ ↦ ℝᵐˣⁿ,   
 ```
-such that ``J`` is the Jacobian of ``c``. `A` and `b` should respectively be a matrix and a vector which can respectively store the values of ``J`` and ``c``.
+such that `J` is the Jacobian of `c`. It is expected that `m ≤ n`.
+`A` and `b` should respectively be a matrix and a vector which can respectively store the values of `J` and `c`.
 `A` is expected to be sparse, `c!` and `J!` should have signatures
 ```
 c!(b <: AbstractVector{Real}, xk <: AbstractVector{Real})
-J!(A <: AbstractSparseMatrixCOO{Real,Integer}, xk <: AbstractVector{Real})
+J!(A <: AbstractSparseMatrixCOO{Real, Integer}, xk <: AbstractVector{Real})
 ```
 """
 mutable struct ShiftedCompositeNormL2{
-  R <: Real,
+  T <: Real,
   F0 <: Function,
   F1 <: Function,
-  M <: AbstractMatrix{R},
-  V <: AbstractVector{R},
+  M <: AbstractMatrix{T},
+  V <: AbstractVector{T},
 } <: ShiftedCompositeProximableFunction
-  h::NormL2{R}
-  c!::V0
-  J!::V1
-  A::V2
-  shifted_spmat::qrm_shifted_spmat{R}
-  spfct::qrm_spfct{R}
-  b::V3
-  g::V3
-  q::V3
-  dq::V3
-  p::V3
-  dp::V3
+  h::NormL2{T}
+  c!::F0
+  J!::F1
+  A::M
+  shifted_spmat::qrm_shifted_spmat{T}
+  spfct::qrm_spfct{T}
+  b::V
+  g::V
+  q::V
+  dq::V
+  p::V
+  dp::V
   function ShiftedCompositeNormL2(
-    λ::R,
+    λ::T,
     c!::Function,
     J!::Function,
-    A::AbstractMatrix{R},
-    b::AbstractVector{R},
-  ) where {R <: Real}
+    A::AbstractMatrix{T},
+    b::AbstractVector{T},
+  ) where {T <: Real}
     p = similar(b, A.n + A.m)
     dp = similar(b, A.n + A.m)
     g = similar(b)
@@ -60,41 +61,42 @@ mutable struct ShiftedCompositeNormL2{
     shifted_spmat = qrm_shift_spmat(spmat)
     spfct = qrm_spfct_init(spmat)
   
-    new{R,typeof(c!),typeof(J!),typeof(A),typeof(b)}(NormL2(λ), c!, J!, A, shifted_spmat, spfct, b, g, q, dq, p, dp)
+    new{T, typeof(c!), typeof(J!), typeof(A), typeof(b)}(NormL2(λ), c!, J!, A, shifted_spmat, spfct, b, g, q, dq, p, dp)
   end
 end
  
 shifted(
-  ψ::CompositeNormL2{R, V0, V1, V2, V3},
-  xk::AbstractVector{R}
-) where {R <: Real, V0 <: Function, V1 <: Function, V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}} = begin
+  ψ::CompositeNormL2{T, F0, F1, M, V},
+  xk::AbstractVector{T}
+) where {T <: Real, F0 <: Function, F1 <: Function, M <: AbstractMatrix{T}, V <: AbstractVector{T}} = begin
   b = similar(ψ.b)
-  ψ.c!(b,xk)
+  ψ.c!(b, xk)
   A = similar(ψ.A)
-  ψ.J!(A,xk)
+  ψ.J!(A, xk)
   ShiftedCompositeNormL2(ψ.h.lambda, ψ.c!, ψ.J!, A, b)
 end
 
-fun_name(ψ::ShiftedCompositeNormL2) = "shifted L2 norm"
+fun_name(ψ::ShiftedCompositeNormL2) = "shifted `ℓ₂` norm"
 fun_expr(ψ::ShiftedCompositeNormL2) = "t ↦ ‖c(xk) + J(xk)t‖₂"
 fun_params(ψ::ShiftedCompositeNormL2) = "c(xk) = $(ψ.b)\n" * " "^14 * "J(xk) = $(ψ.A)\n"
 
 function prox!(
-  y::AbstractVector{R},
-  ψ::ShiftedCompositeNormL2{R, V0, V1, V2, V3},
-  q::AbstractVector{R},
-  ν::R;
+  y::AbstractVector{T},
+  ψ::ShiftedCompositeNormL2{T, F0, F1, M, V},
+  q::AbstractVector{T},
+  ν::T;
   max_iter = 10,
+  atol = eps(T)^0.3,
   max_time = 180.0
-) where {R <: Real, V0 <: Function,V1 <:Function,V2 <: AbstractMatrix{R}, V3 <: AbstractVector{R}}
+) where {T <: Real, F0 <: Function, F1 <:Function, M <: AbstractMatrix{T}, V <: AbstractVector{T}}
 
   start_time = time()
-  θ = R(0.8)
-  α = zero(R)
-  αmin = eps(R)^(0.9)
+  θ = T(0.8)
+  α = zero(T)
+  αmin = eps(T)^(0.9)
 
   # Compute RHS g = -(A * q + b)
-  mul!(ψ.g, ψ.A, q, -one(R), zero(R))
+  mul!(ψ.g, ψ.A, q, -one(T), zero(T))
   ψ.g .-= ψ.b
 
   # Retrieve qrm workspace
@@ -105,7 +107,7 @@ function prox!(
   spmat.val[1:spmat.mat.nz - spmat.mat.m] .= ψ.A.vals
   qrm_spfct_init!(spfct, spmat)
   qrm_set(spfct, "qrm_keeph", 0) # Discard de Q matrix in all subsequent QR factorizations
-  qrm_set(spfct, "qrm_rd_eps", eps(R)^(0.4)) # If a diagonal element of the R-factor is less than eps(R)^(0.4), we consider that A is rank defficient.
+  qrm_set(spfct, "qrm_rd_eps", eps(T)^(0.4)) # If a diagonal element of the R-factor is less than eps(R)^(0.4), we consider that A is rank defficient.
 
   # Check interior convergence
   qrm_analyse!(spmat, spfct; transp='t')
@@ -116,14 +118,14 @@ function prox!(
   if !full_row_rank
     # QRMumps cannot factorize rank-deficient matrices; use the Golub-Riley iteration instead
     α = αmin
-    qrm_golub_riley!(ψ.shifted_spmat, spfct, ψ.p, ψ.g, ψ.dp, ψ.q, ψ.dq, transp = 't', α = α, tol = eps(R)^(0.75))
+    qrm_golub_riley!(ψ.shifted_spmat, spfct, ψ.p, ψ.g, ψ.dp, ψ.q, ψ.dq, transp = 't', α = α, tol = eps(T)^(0.75))
 
     # Compute residual
-    qrm_spmat_mv!(spmat, R(1), ψ.q, R(0), ψ.dp, transp = 't')
-    qrm_spmat_mv!(spmat, R(1), ψ.dp, R(0), ψ.dq, transp = 'n')
+    qrm_spmat_mv!(spmat, T(1), ψ.q, T(0), ψ.dp, transp = 't')
+    qrm_spmat_mv!(spmat, T(1), ψ.dp, T(0), ψ.dq, transp = 'n')
     @. ψ.dq = ψ.dq - ψ.g
 
-    if norm(ψ.q) ≤ ν*ψ.h.lambda + eps(R) && norm(ψ.dq) ≤ eps(R)^(0.5) # Check interior optimality and range of AAᵀ
+    if norm(ψ.q) ≤ ν*ψ.h.lambda + eps(T) && norm(ψ.dq) ≤ eps(T)^(0.5) # Check interior optimality and range of AAᵀ
       y .= ψ.p[1:length(y)]
       y .+= q
       return y 
@@ -138,17 +140,19 @@ function prox!(
   k = 0
   elapsed_time = time() - start_time
   α₊ = α 
-  if norm(ψ.q) > ν*ψ.h.lambda
-    while abs(norm(ψ.q) - ν*ψ.h.lambda) > eps(R)^0.3 && k < max_iter && elapsed_time < max_time
 
-      solNorm = norm(ψ.q)
-      α₊ += (solNorm / (ν * ψ.h.lambda) - 1) * (solNorm / norm(ψ.p))^2
+  norm_q = norm(ψ.q)
+  if norm_q > ν*ψ.h.lambda + eps(T)
+    while abs(norm_q - ν*ψ.h.lambda) > atol && k < max_iter && elapsed_time < max_time
+
+      α₊ += (norm_q / (ν * ψ.h.lambda) - 1) * (norm_q / norm(ψ.p))^2
       α = α₊ > 0 ? α₊ : θ*α
       α = α ≤ αmin ? αmin : α
       
       qrm_update_shift_spmat!(shifted_spmat, α)
 
       _obj_dot_grad!(spmat, spfct, ψ.p, ψ.q, ψ.g, ψ.dq)
+      norm_q = norm(ψ.q)
 
       α == αmin && break
       
@@ -157,7 +161,7 @@ function prox!(
     end
   end
 
-  k > max_iter && @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning with residue $(abs(norm(ψ.q) - ν*ψ.h.lambda)) instead"
+  k > max_iter && @warn "ShiftedCompositeNormL2: Newton method did not converge during prox computation returning with residual $(abs(norm(ψ.q) - ν*ψ.h.lambda)) instead"
   mul!(y, ψ.A', ψ.q)
   y .+= q
   return y
