@@ -4,7 +4,7 @@ export CompositeNormL2
 @doc raw"""
     CompositeNormL2(λ, c!, J!, A, b)
 
-Returns a function ``c`` composed with the ``ℓ₂`` norm.
+Returns function ``c`` composed with the ``ℓ₂`` norm:
 ```math
 f(x) = λ ‖c(x)‖₂
 ```
@@ -24,10 +24,10 @@ such that ``J`` is the Jacobian of ``c``. `A` and `b` should respectively be a m
 """
 mutable struct CompositeNormL2{
     R <: Real,
-    V0 <: Function,
-    V1 <: Function,
-    V2 <: AbstractMatrix{R},
-    V3 <: AbstractVector{R},
+    F0 <: Function,
+    F1 <: Function,
+    M <: AbstractMatrix{R},
+    V <: AbstractVector{R},
   } <: AbstractCompositeNorm
     h::NormL2{R}
     c!::V0
@@ -43,7 +43,7 @@ mutable struct CompositeNormL2{
       b::AbstractVector{R},
     ) where {R <: Real}
       λ > 0 || error("CompositeNormL2: λ should be positive")
-      length(b) == size(A,1) || error("Composite Norm L2: Wrong input dimensions, c(x) should have same length as rows of J(x)")  
+      length(b) == size(A, 1) || error("Composite Norm L2: Wrong input dimensions, the length of c(x) should be the same as the number of rows of J(x)")  
       new{R, typeof(c!), typeof(J!), typeof(A), typeof(b)}(NormL2(λ), c!, J!, A, b)
     end
   end

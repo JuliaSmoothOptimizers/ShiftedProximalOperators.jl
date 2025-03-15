@@ -23,10 +23,10 @@ J!(A <: AbstractSparseMatrixCOO{Real,Integer}, xk <: AbstractVector{Real})
 """
 mutable struct ShiftedCompositeNormL2{
   R <: Real,
-  V0 <: Function,
-  V1 <: Function,
-  V2 <: AbstractMatrix{R},
-  V3 <: AbstractVector{R},
+  F0 <: Function,
+  F1 <: Function,
+  M <: AbstractMatrix{R},
+  V <: AbstractVector{R},
 } <: ShiftedCompositeProximableFunction
   h::NormL2{R}
   c!::V0
@@ -52,7 +52,7 @@ mutable struct ShiftedCompositeNormL2{
     g = similar(b)
     q = similar(b)
     dq = similar(b)
-    if length(b) != size(A,1)
+    if length(b) != size(A, 1)
       error("ShiftedCompositeNormL2: Wrong input dimensions, there should be as many constraints as rows in the Jacobian")
     end
 
@@ -90,13 +90,12 @@ function prox!(
 
   start_time = time()
   θ = R(0.8)
-  α = R(0.0)
+  α = zero(R)
   αmin = eps(R)^(0.9)
 
-  # Compute RHS
-  mul!(ψ.g, ψ.A, q)
-  ψ.g .+= ψ.b
-  ψ.g .*= -1
+  # Compute RHS g = -(A * q + b)
+  mul!(ψ.g, ψ.A, q, -one(R), zero(R))
+  ψ.g .-= ψ.b
 
   # Retrieve qrm workspace
   shifted_spmat = ψ.shifted_spmat
@@ -106,7 +105,7 @@ function prox!(
   spmat.val[1:spmat.mat.nz - spmat.mat.m] .= ψ.A.vals
   qrm_spfct_init!(spfct, spmat)
   qrm_set(spfct, "qrm_keeph", 0) # Discard de Q matrix in all subsequent QR factorizations
-  qrm_set(spfct, "qrm_rd_eps", eps(R)^(0.4)) # If a diagonal elemnt of the R-factor is less than eps(R)^(0.4), we consider that A is rank defficient.
+  qrm_set(spfct, "qrm_rd_eps", eps(R)^(0.4)) # If a diagonal element of the R-factor is less than eps(R)^(0.4), we consider that A is rank defficient.
 
   # Check interior convergence
   qrm_analyse!(spmat, spfct; transp='t')
@@ -115,6 +114,7 @@ function prox!(
   # Check full-rankness
   full_row_rank = (qrm_get(spfct,"qrm_rd_num") == 0)
   if !full_row_rank
+    # QRMumps cannot factorize rank-deficient matrices; use the Golub-Riley iteration instead
     α = αmin
     qrm_golub_riley!(ψ.shifted_spmat, spfct, ψ.p, ψ.g, ψ.dp, ψ.q, ψ.dq, transp = 't', α = α, tol = eps(R)^(0.75))
 

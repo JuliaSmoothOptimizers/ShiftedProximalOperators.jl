@@ -89,8 +89,8 @@ function shift!(ψ::ShiftedProximableFunction, shift::AbstractVector{R}) where {
 end
 
 function shift!(ψ::ShiftedCompositeProximableFunction, shift::AbstractVector{R}) where {R <: Real}
-  ψ.c!(ψ.b,shift)
-  ψ.J!(ψ.A,shift)
+  ψ.c!(ψ.b, shift)
+  ψ.J!(ψ.A, shift)
   return ψ
 end
 
