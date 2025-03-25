@@ -125,7 +125,7 @@ function prox!(
     qrm_spmat_mv!(spmat, T(1), ψ.dp, T(0), ψ.dq, transp = 'n')
     @. ψ.dq = ψ.dq - ψ.g # In this case, ψ.dq = AAᵀψ.q - b. If ‖ψ.dq‖₂ is small, then g ∈ Range(AAᵀ)
 
-    if norm(ψ.q) ≤ ν*ψ.h.lambda + eps(T) && norm(ψ.dq) ≤ eps(T)^(0.5) # Check interior optimality and range of AAᵀ
+    if abs(norm(ψ.q) - ν*ψ.h.lambda) > atol && norm(ψ.dq) ≤ eps(T)^(0.5) # Check interior optimality and range of AAᵀ
       y .= ψ.p[1:length(y)]
       y .+= q
       return y 
@@ -142,7 +142,7 @@ function prox!(
   α₊ = α 
 
   norm_q = norm(ψ.q)
-  if norm_q > ν*ψ.h.lambda + eps(T)
+  if abs(norm_q - ν*ψ.h.lambda) > atol
     while abs(norm_q - ν*ψ.h.lambda) > atol && k < max_iter && elapsed_time < max_time
 
       α₊ += (norm_q / (ν * ψ.h.lambda) - 1) * (norm_q / norm(ψ.p))^2
