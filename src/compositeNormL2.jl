@@ -35,7 +35,6 @@ mutable struct CompositeNormL2{
     J!::F1
     A::M
     b::V
-    g::V
 
     function CompositeNormL2(
       λ::T,
@@ -46,7 +45,7 @@ mutable struct CompositeNormL2{
     ) where {T <: Real}
       λ > 0 || error("CompositeNormL2: λ should be positive")
       length(b) == size(A, 1) || error("Composite Norm L2: Wrong input dimensions, the length of c(x) should be the same as the number of rows of J(x)")  
-      new{T, typeof(c!), typeof(J!), typeof(A), typeof(b)}(NormL2(λ), c!, J!, A, b, similar(b))
+      new{T, typeof(c!), typeof(J!), typeof(A), typeof(b)}(NormL2(λ), c!, J!, A, b)
     end
   end
 

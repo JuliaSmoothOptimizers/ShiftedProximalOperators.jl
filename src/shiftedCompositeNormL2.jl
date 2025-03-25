@@ -36,11 +36,11 @@ mutable struct ShiftedCompositeNormL2{
   shifted_spmat::qrm_shifted_spmat{T}
   spfct::qrm_spfct{T}
   b::V
-  g::V
-  q::V
-  dq::V
-  p::V
-  dp::V
+  g::V # Preallocated vector used either to compute A*y + b when we call ψ(y) or the RHS of the dual of the proximal problem.
+  q::V # Preallocated solution vector of the dual of the proximal problem.
+  dq::V # Preallocated vector to refine the q solution.
+  p::V # Preallocated vector used to compute s(α)ᵀ∇s(α) for the secular equation.
+  dp::V # Preallocated vector used to refine the p vector.
   function ShiftedCompositeNormL2(
     λ::T,
     c!::Function,

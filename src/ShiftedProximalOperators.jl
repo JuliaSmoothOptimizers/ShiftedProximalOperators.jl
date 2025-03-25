@@ -71,8 +71,8 @@ function (ψ::ShiftedCompositeProximableFunction)(y)
 end
 
 function (ψ::CompositeProximableFunction)(y)
-  ψ.c!(ψ.g, y)
-  ψ.h(ψ.g)
+  ψ.c!(ψ.b, y)
+  ψ.h(ψ.b)
 end
 
 """
