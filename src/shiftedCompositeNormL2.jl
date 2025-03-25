@@ -36,10 +36,10 @@ mutable struct ShiftedCompositeNormL2{
   shifted_spmat::qrm_shifted_spmat{T}
   spfct::qrm_spfct{T}
   b::V
-  g::V # Preallocated vector used either to compute A*y + b when we call ψ(y) or the RHS of the dual of the proximal problem.
-  q::V # Preallocated solution vector of the dual of the proximal problem.
+  g::V  # Preallocated vector used either to compute A*y + b when we call ψ(y) or the RHS of the dual of the proximal problem.
+  q::V  # Preallocated solution vector of the dual of the proximal problem.
   dq::V # Preallocated vector to refine the q solution.
-  p::V # Preallocated vector used to compute s(α)ᵀ∇s(α) for the secular equation.
+  p::V  # Preallocated vector used to compute s(α)ᵀ∇s(α) for the secular equation.
   dp::V # Preallocated vector used to refine the p vector.
   function ShiftedCompositeNormL2(
     λ::T,
@@ -118,12 +118,12 @@ function prox!(
   if !full_row_rank
     # QRMumps cannot factorize rank-deficient matrices; use the Golub-Riley iteration instead
     α = αmin
-    qrm_golub_riley!(ψ.shifted_spmat, spfct, ψ.p, ψ.g, ψ.dp, ψ.q, ψ.dq, transp = 't', α = α, tol = eps(T)^(0.75))
+    qrm_golub_riley!(ψ.shifted_spmat, spfct, ψ.p, ψ.g, ψ.dp, ψ.q, ψ.dq, transp = 't', α = α, tol = eps(T)^(0.75)) # Now, ψ.p = Aᵀψ.q and ψ.q = (AAᵀ)†b
 
     # Compute residual
     qrm_spmat_mv!(spmat, T(1), ψ.q, T(0), ψ.dp, transp = 't')
     qrm_spmat_mv!(spmat, T(1), ψ.dp, T(0), ψ.dq, transp = 'n')
-    @. ψ.dq = ψ.dq - ψ.g
+    @. ψ.dq = ψ.dq - ψ.g # In this case, ψ.dq = AAᵀψ.q - b. If ‖ψ.dq‖₂ is small, then g ∈ Range(AAᵀ)
 
     if norm(ψ.q) ≤ ν*ψ.h.lambda + eps(T) && norm(ψ.dq) ≤ eps(T)^(0.5) # Check interior optimality and range of AAᵀ
       y .= ψ.p[1:length(y)]
