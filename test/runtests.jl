@@ -7,106 +7,105 @@ using Test
 
 include("test_psvd.jl")
 
-for (op,composite_op,shifted_op) ∈ zip((:NormL2,), (:CompositeNormL2,), (:ShiftedCompositeNormL2,))
+for (op, composite_op, shifted_op) ∈
+    zip((:NormL2,), (:CompositeNormL2,), (:ShiftedCompositeNormL2,))
   @testset "$shifted_op" begin
     ShiftedOp = eval(shifted_op)
     CompositeOp = eval(composite_op)
 
-    function c!(z,x)
+    function c!(z, x)
       z[1] = 2*x[1] - x[4]
-      z[2] = x[2] + x[3] 
+      z[2] = x[2] + x[3]
     end
-    function J!(z,x)
-      z.vals .= Float64[2.0,1.0,1.0,-1.0]
+    function J!(z, x)
+      z.vals .= Float64[2.0, 1.0, 1.0, -1.0]
     end
     λ = 3.62
     Op = eval(op)
     h = Op(λ)
 
-    b = zeros(Float64,2)
-    A = SparseMatrixCOO(Float64[2 0 0 -1;0 1 1 0])
+    b = zeros(Float64, 2)
+    A = SparseMatrixCOO(Float64[2 0 0 -1; 0 1 1 0])
 
-
-    ψ = CompositeOp(λ,c!,J!,A,b)
+    ψ = CompositeOp(λ, c!, J!, A, b)
 
     # test non shifted operator
-    @test ψ(ones(Float64,4)) == h([1,2])
-    @test all(ψ(zeros(Float64,4)) .== 0.0)
+    @test ψ(ones(Float64, 4)) == h([1, 2])
+    @test all(ψ(zeros(Float64, 4)) .== 0.0)
     @test all(ψ.b .== 0.0)
-    
-    # test shifted operator
-    xk = [0.0,1.1741,0.0,-0.4754]
-    ϕ = shifted(ψ,xk)
 
-    @test ϕ(zeros(Float64,4)) == h([0.4754,1.1741])
-    @test ϕ(ones(Float64,4)) == h([0.4754,1.1741] + Float64[2 0 0 -1;0 1 1 0]*ones(Float64,4))
-    @test ϕ.b == [0.4754,1.1741]
-    @test ϕ.A == SparseMatrixCOO(Float64[2 0 0 -1;0 1 1 0])
+    # test shifted operator
+    xk = [0.0, 1.1741, 0.0, -0.4754]
+    ϕ = shifted(ψ, xk)
+
+    @test ϕ(zeros(Float64, 4)) == h([0.4754, 1.1741])
+    @test ϕ(ones(Float64, 4)) == h([0.4754, 1.1741] + Float64[2 0 0 -1; 0 1 1 0]*ones(Float64, 4))
+    @test ϕ.b == [0.4754, 1.1741]
+    @test ϕ.A == SparseMatrixCOO(Float64[2 0 0 -1; 0 1 1 0])
 
     # test prox 
-    x = [0.1097,1.1287,-0.29,1.2616]
+    x = [0.1097, 1.1287, -0.29, 1.2616]
     y = similar(x)
     ν = 0.1056
-    prox!(y,ϕ,x,ν)
-    
+    prox!(y, ϕ, x, ν)
+
     if "$op" == "NormL2"
-      y_true = [0.24545429,0.75250248,-0.66619752 ,1.19372286]
+      y_true = [0.24545429, 0.75250248, -0.66619752, 1.19372286]
       norm = Op(1.0)
       @test norm(y - y_true) ≤ 1e-6
     end
 
     # test in place shift
-    xk = ones(Float64,4)
-    shift!(ϕ,xk)
-    
-    @test ϕ.b == [1.0,2.0]
-    @test ϕ.A == SparseMatrixCOO(Float64[2 0 0 -1;0 1 1 0])
-    @test ϕ(ones(Float64,4)) == h([1.0,2.0] + SparseMatrixCOO(Float64[2 0 0 -1;0 1 1 0])*ones(Float64,4))
+    xk = ones(Float64, 4)
+    shift!(ϕ, xk)
+
+    @test ϕ.b == [1.0, 2.0]
+    @test ϕ.A == SparseMatrixCOO(Float64[2 0 0 -1; 0 1 1 0])
+    @test ϕ(ones(Float64, 4)) ==
+          h([1.0, 2.0] + SparseMatrixCOO(Float64[2 0 0 -1; 0 1 1 0])*ones(Float64, 4))
 
     # test different types
     h = Op(Float32(λ))
-    function c!(z,x)
+    function c!(z, x)
       z[1] = 2*x[1] - x[4]
-      z[2] = x[2] + x[3] 
+      z[2] = x[2] + x[3]
     end
-    function J!(z,x)
-      z.vals .= Float32[2.0,1.0,1.0,-1.0]
+    function J!(z, x)
+      z.vals .= Float32[2.0, 1.0, 1.0, -1.0]
     end
-    b = zeros(Float32,2)
-    A = SparseMatrixCOO(Float32[2 0 0 -1;0 1 1 0])
+    b = zeros(Float32, 2)
+    A = SparseMatrixCOO(Float32[2 0 0 -1; 0 1 1 0])
 
-    ψ = CompositeOp(Float32(λ),c!,J!,A,b)
+    ψ = CompositeOp(Float32(λ), c!, J!, A, b)
 
-    @test typeof(ψ(zeros(Float32,4))) == Float32
+    @test typeof(ψ(zeros(Float32, 4))) == Float32
 
     # test rank deficient operators
-    function c_deff!(z,x)
+    function c_deff!(z, x)
       z[1] = 2*x[1] - x[4]
       z[2] = 4*x[1] - 2*x[4]
     end
-    function J_deff!(z,x)
-      z.vals .= Float64[2.0,4.0,-1.0,-2.0]
+    function J_deff!(z, x)
+      z.vals .= Float64[2.0, 4.0, -1.0, -2.0]
     end
     λ = 3.62
 
-    b = zeros(Float64,2)
-    A = SparseMatrixCOO(Float64[2 0 0 -1;4 0 0 -2])
+    b = zeros(Float64, 2)
+    A = SparseMatrixCOO(Float64[2 0 0 -1; 4 0 0 -2])
 
-    ψ = CompositeOp(λ,c_deff!,J_deff!,A,b)
-    xk = [0.0,1.1741,0.0,-0.4754]
-    ϕ = shifted(ψ,xk)
+    ψ = CompositeOp(λ, c_deff!, J_deff!, A, b)
+    xk = [0.0, 1.1741, 0.0, -0.4754]
+    ϕ = shifted(ψ, xk)
 
-    x = [0.1097,1.1287,-0.29,1.2616]
+    x = [0.1097, 1.1287, -0.29, 1.2616]
     y = similar(x)
     ν = 0.1056
-    prox!(y,ϕ,x,ν)
+    prox!(y, ϕ, x, ν)
     if "$op" == "NormL2"
-      y_true = [ 0.33642,1.1287,-0.29,1.14824]
+      y_true = [0.33642, 1.1287, -0.29, 1.14824]
       norm = Op(1.0)
       @test norm(y - y_true) ≤ 1e-6
     end
-
-
   end
 end
 

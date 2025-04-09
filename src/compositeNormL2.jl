@@ -24,31 +24,41 @@ such that `J` is the Jacobian of `c`. It is expected that `m ≤ n`.
 ```
 """
 mutable struct CompositeNormL2{
-    T <: Real,
-    F0 <: Function,
-    F1 <: Function,
-    M <: AbstractMatrix{T},
-    V <: AbstractVector{T},
-  } <: AbstractCompositeNorm
-    h::NormL2{T}
-    c!::F0
-    J!::F1
-    A::M
-    b::V
+  T <: Real,
+  F0 <: Function,
+  F1 <: Function,
+  M <: AbstractMatrix{T},
+  V <: AbstractVector{T},
+} <: AbstractCompositeNorm
+  h::NormL2{T}
+  c!::F0
+  J!::F1
+  A::M
+  b::V
 
-    function CompositeNormL2(
-      λ::T,
-      c!::Function,
-      J!::Function,
-      A::AbstractMatrix{T},
-      b::AbstractVector{T},
-    ) where {T <: Real}
-      λ > 0 || error("CompositeNormL2: λ should be positive")
-      length(b) == size(A, 1) || error("Composite Norm L2: Wrong input dimensions, the length of c(x) should be the same as the number of rows of J(x)")  
-      new{T, typeof(c!), typeof(J!), typeof(A), typeof(b)}(NormL2(λ), c!, J!, A, b)
-    end
+  function CompositeNormL2(
+    λ::T,
+    c!::Function,
+    J!::Function,
+    A::AbstractMatrix{T},
+    b::AbstractVector{T},
+  ) where {T <: Real}
+    λ > 0 || error("CompositeNormL2: λ should be positive")
+    length(b) == size(A, 1) || error(
+      "Composite Norm L2: Wrong input dimensions, the length of c(x) should be the same as the number of rows of J(x)",
+    )
+    new{T, typeof(c!), typeof(J!), typeof(A), typeof(b)}(NormL2(λ), c!, J!, A, b)
   end
+end
 
 fun_name(f::CompositeNormL2) = "ℓ₂ norm of the function c"
 fun_dom(f::CompositeNormL2) = "AbstractVector{Real}"
-fun_expr(f::CompositeNormL2{T, F0, F1, M, V}) where {T <: Real, F0 <: Function, F1 <: Function, M <: AbstractMatrix{T}, V <: AbstractVector{T}} = "x ↦ λ ‖c(x)‖₂"
+fun_expr(
+  f::CompositeNormL2{T, F0, F1, M, V},
+) where {
+  T <: Real,
+  F0 <: Function,
+  F1 <: Function,
+  M <: AbstractMatrix{T},
+  V <: AbstractVector{T},
+} = "x ↦ λ ‖c(x)‖₂"
