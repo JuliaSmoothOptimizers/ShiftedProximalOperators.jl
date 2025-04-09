@@ -142,10 +142,11 @@ function prox!(
   α₊ = α 
 
   norm_q = norm(ψ.q)
-  if abs(norm_q - ν*ψ.h.lambda) > atol
-    while abs(norm_q - ν*ψ.h.lambda) > atol && k < max_iter && elapsed_time < max_time
+  νλ = ν * ψ.h.lambda
+  if abs(norm_q - νλ) > atol
+    while abs(norm_q - νλ) > atol && k < max_iter && elapsed_time < max_time
 
-      α₊ += (norm_q / (ν * ψ.h.lambda) - 1) * (norm_q / norm(ψ.p))^2
+      α₊ += (norm_q / (νλ - 1) * (norm_q / norm(ψ.p))^2
       α = α₊ > 0 ? α₊ : θ*α
       α = α ≤ αmin ? αmin : α
       
