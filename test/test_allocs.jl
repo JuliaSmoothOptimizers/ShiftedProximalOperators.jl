@@ -36,6 +36,36 @@ macro wrappedallocs(expr)
 end
 
 @testset "allocs" begin
+
+  for (op, composite_op) ∈ ((:NormL2, :CompositeNormL2),)
+    CompositeOp = eval(composite_op)
+
+    function c!(z,x)
+      z[1] = 2*x[1] - x[4]
+      z[2] = x[2] + x[3] 
+    end
+    function J!(z,x)
+      z.vals .= Float64[2.0,1.0,1.0,-1.0]
+    end
+    λ = 3.62
+    Op = eval(op)
+    h = Op(λ)
+
+    b = zeros(Float64,2)
+    A = SparseMatrixCOO(Float64[2 0 0 -1;0 1 1 0])
+
+    ψ = CompositeOp(λ,c!,J!,A,b)
+
+    # test shifted operator
+    xk = [0.0,1.1741,0.0,-0.4754]
+    ϕ = shifted(ψ,xk)
+
+    # test prox 
+    x = [0.1097,1.1287,-0.29,1.2616]
+    y = similar(x)
+    ν = 0.1056
+    @test @wrappedallocs(prox!(y,ϕ,x,ν)) == 0
+  end
   for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
     h = eval(op)(1.0)
     n = 1000
