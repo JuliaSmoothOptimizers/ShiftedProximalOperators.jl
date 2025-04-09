@@ -146,7 +146,7 @@ function prox!(
   if abs(norm_q - νλ) > atol
     while abs(norm_q - νλ) > atol && k < max_iter && elapsed_time < max_time
 
-      α₊ += (norm_q / (νλ - 1) * (norm_q / norm(ψ.p))^2
+      α₊ += (norm_q / νλ - 1) * (norm_q / norm(ψ.p))^2
       α = α₊ > 0 ? α₊ : θ*α
       α = α ≤ αmin ? αmin : α
       
