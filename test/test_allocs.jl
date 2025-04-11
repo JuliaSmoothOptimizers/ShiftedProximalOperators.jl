@@ -123,6 +123,9 @@ end
     @test @wrappedallocs(prox!(y, h, y, 1.0)) == 0
 
     ψ = shifted(h, xk)
+
+    @test @wrappedallocs(ψ(y)) == 0
+
     @test @wrappedallocs(prox!(y, ψ, y, 1.0)) == 0
   end
 
