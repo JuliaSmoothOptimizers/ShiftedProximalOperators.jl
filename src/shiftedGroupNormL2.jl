@@ -62,15 +62,18 @@ function prox!(
   V1 <: AbstractVector{R},
   V2 <: AbstractVector{R},
 }
-  ψ.sol .= q + ψ.xk + ψ.sj
+  @. ψ.sol = q + ψ.xk + ψ.sj
   for (idx, λ) ∈ zip(ψ.h.idx, ψ.h.lambda)
-    snorm = norm(ψ.sol[idx])
+    sol_idx = view(ψ.sol, idx)
+    yv = view(y, idx)
+    snorm = norm(sol_idx)
     if snorm == 0
       y[idx] .= 0
     else
-      y[idx] .= max(1 - σ * λ / snorm, 0) .* ψ.sol[idx]
+      α = max(1 - σ * λ / snorm, 0)
+      @. yv = α * sol_idx
     end
   end
-  y .-= (ψ.xk + ψ.sj)
+  @. y -= (ψ.xk + ψ.sj)
   return y
 end
