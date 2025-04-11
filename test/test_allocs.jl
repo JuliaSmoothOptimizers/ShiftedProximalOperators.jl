@@ -40,7 +40,7 @@ end
     CompositeOp = eval(composite_op)
 
     function c!(z, x)
-      z[1] = 2*x[1] - x[4]
+      z[1] = 2 * x[1] - x[4]
       z[2] = x[2] + x[3]
     end
     function J!(z, x)
@@ -111,6 +111,19 @@ end
     ψ = shifted(h, xk, -3.0, 4.0, rand(1:n, Int(n / 2)))
     @test @wrappedallocs(prox!(y, ψ, y, 1.0)) == 0
     @test @wrappedallocs(iprox!(y, ψ, y, d)) == 0
+  end
+
+  for op ∈ (:NormL2,)
+    h = eval(op)(1.0)
+    n = 1000
+    xk = rand(n)
+    y = rand(n)
+    d = rand(n)
+
+    @test @wrappedallocs(prox!(y, h, y, 1.0)) == 0
+
+    ψ = shifted(h, xk)
+    @test @wrappedallocs(prox!(y, ψ, y, 1.0)) == 0
   end
 
   for (op, shifted_op) ∈ zip((:Rank, :Nuclearnorm), (:ShiftedRank, :ShiftedNuclearnorm))
