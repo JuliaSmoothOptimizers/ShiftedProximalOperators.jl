@@ -32,8 +32,8 @@ GroupNormL2(lambda::AbstractVector{R} = [one(R)], idx::I = [:]) where {R <: Real
 
 function (f::GroupNormL2)(x::AbstractArray{R}) where {R <: Real}
   sum_c = R(0)
-  @views for (idx, λ) in zip(f.idx, f.lambda)
-    sum_c += λ * norm(view(x, idx))
+  @views for (idx, λ) ∈ zip(f.idx, f.lambda)
+    sum_c += λ * norm(x[idx])
   end
   return sum_c
 end
