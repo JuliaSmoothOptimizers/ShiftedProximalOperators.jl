@@ -13,11 +13,11 @@ for (op, composite_op, shifted_op) ∈
     ShiftedOp = eval(shifted_op)
     CompositeOp = eval(composite_op)
 
-    function c!(z, x)
+    function c1!(z, x)
       z[1] = 2*x[1] - x[4]
       z[2] = x[2] + x[3]
     end
-    function J!(z, x)
+    function J1!(z, x)
       z.vals .= Float64[2.0, 1.0, 1.0, -1.0]
     end
     λ = 3.62
@@ -27,7 +27,7 @@ for (op, composite_op, shifted_op) ∈
     b = zeros(Float64, 2)
     A = SparseMatrixCOO(Float64[2 0 0 -1; 0 1 1 0])
 
-    ψ = CompositeOp(λ, c!, J!, A, b)
+    ψ = CompositeOp(λ, c1!, J1!, A, b)
 
     # test non shifted operator
     @test ψ(ones(Float64, 4)) == h([1, 2])
@@ -66,17 +66,17 @@ for (op, composite_op, shifted_op) ∈
 
     # test different types
     h = Op(Float32(λ))
-    function c!(z, x)
+    function c2!(z, x)
       z[1] = 2*x[1] - x[4]
       z[2] = x[2] + x[3]
     end
-    function J!(z, x)
+    function J2!(z, x)
       z.vals .= Float32[2.0, 1.0, 1.0, -1.0]
     end
     b = zeros(Float32, 2)
     A = SparseMatrixCOO(Float32[2 0 0 -1; 0 1 1 0])
 
-    ψ = CompositeOp(Float32(λ), c!, J!, A, b)
+    ψ = CompositeOp(Float32(λ), c2!, J2!, A, b)
 
     @test typeof(ψ(zeros(Float32, 4))) == Float32
 
