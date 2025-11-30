@@ -1,6 +1,6 @@
 export ShiftedCompositeNormL2
 @doc raw"""
-    ShiftedCompositeNormL2(h, c!, J!, A, b)
+    ShiftedCompositeNormL2(h, c!, J!, A, b; store_previous_jacobian::Bool = false)
 
 Returns the shift of a function `c` composed with the `ℓ₂` norm (see CompositeNormL2.jl).
 Here, `c` is linearized i.e, `c(x + s) ≈ c(x) + J(x)s`. 
@@ -21,6 +21,9 @@ such that `J` is the Jacobian of `c`. It is expected that `m ≤ n`.
 c!(b <: AbstractVector{Real}, xk <: AbstractVector{Real})
 J!(A <: AbstractSparseMatrixCOO{Real, Integer}, xk <: AbstractVector{Real})
 ```
+Moreover, if you want shifted instances of the operator to store the previous Jacobian on each shift, you can specify `store_previous_jacobian = true`.
+In this case, each time a shift is performed, the previous Jacobian is stored in the `A_prev` field.
+This is particularly useful for quasi-Newton updates in the context of constrained optimization.
 """
 mutable struct ShiftedCompositeNormL2{
   T <: Real,

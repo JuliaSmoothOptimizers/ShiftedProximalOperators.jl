@@ -2,7 +2,7 @@
 export CompositeNormL2
 
 @doc raw"""
-    CompositeNormL2(λ, c!, J!, A, b)
+    CompositeNormL2(λ, c!, J!, A, b; store_previous_jacobian::Bool = false)
 
 Returns function `c` composed with the `ℓ₂` norm:
 ```math
@@ -22,6 +22,8 @@ such that `J` is the Jacobian of `c`. It is expected that `m ≤ n`.
     c!(b <: AbstractVector{Real}, xk <: AbstractVector{Real})
     J!(A <: AbstractSparseMatrixCOO{Real, Integer}, xk <: AbstractVector{Real})
 ```
+Moreover, if you want shifted instances of the operator to store the previous Jacobian on each shift, you can specify `store_previous_jacobian = true`.
+This is particularly useful for quasi-Newton updates in the context of constrained optimization.
 """
 mutable struct CompositeNormL2{
   T <: Real,
