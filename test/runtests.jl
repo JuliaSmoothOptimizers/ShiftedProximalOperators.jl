@@ -89,6 +89,12 @@ for (op, composite_op, shifted_op) ∈
     @test all(ϕ_store_prev.A_prev .== SparseMatrixCOO([4.0 0.0 0.0 -1.0; 0.0 1.0 1.0 0.0]))
     @test all(ϕ_store_prev.A .== SparseMatrixCOO([8.0 0.0 0.0 -1.0; 0.0 1.0 1.0 0.0]))
 
+    # test reshifting
+    xk = [0.5, 0.0, 0.0, 0.0]
+    shift!(ϕ_store_prev, xk)
+    @test all(ϕ_store_prev.A_prev .== SparseMatrixCOO([8.0 0.0 0.0 -1.0; 0.0 1.0 1.0 0.0]))
+    @test all(ϕ_store_prev.A .== SparseMatrixCOO([2.0 0.0 0.0 -1.0; 0.0 1.0 1.0 0.0]))
+
 
     # test different types
     h = Op(Float32(λ))

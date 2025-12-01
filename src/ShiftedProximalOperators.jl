@@ -79,6 +79,7 @@ function shift!(ψ::ShiftedProximableFunction, shift::AbstractVector{R}) where {
 end
 
 function shift!(ψ::ShiftedCompositeProximableFunction, shift::AbstractVector{R}) where {R <: Real}
+  !isnothing(ψ.A_prev) && (ψ.A_prev.vals .= ψ.A.vals) # Update previous Jacobian if necessary
   ψ.c!(ψ.b, shift)
   ψ.J!(ψ.A, shift)
   return ψ
