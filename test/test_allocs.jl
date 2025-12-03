@@ -73,12 +73,12 @@ end
     y = rand(n)
     val = ψ(y)
     allocs = @allocated ψ(y)
-    @test allocs == 16
+    @test allocs == 0
 
     ψ = shifted(h, xk, -3.0, 4.0, rand(1:n, Int(n / 2)))
     val = ψ(y)
     allocs = @allocated ψ(y)
-    @test allocs == 16
+    @test allocs == 0
   end
 
   for op ∈ (:IndBallL0,)
@@ -89,13 +89,13 @@ end
     y = rand(n)
     val = ψ(y)
     allocs = @allocated ψ(y)
-    @test allocs == 16
+    @test allocs == 0
 
     χ = NormLinf(1.0)
     ψ = shifted(h, xk, 0.5, χ)
     val = ψ(y)
     allocs = @allocated ψ(y)
-    @test allocs == 16
+    @test allocs == 0
   end
 
   for op ∈ (:NormL0, :NormL1)
