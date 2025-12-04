@@ -72,12 +72,12 @@ end
     ψ = shifted(h, xk)
     y = rand(n)
     val = ψ(y)
-    allocs = @allocated ψ(y)
+    allocs = @wrappedallocs ψ(y)
     @test allocs == 0
 
     ψ = shifted(h, xk, -3.0, 4.0, rand(1:n, Int(n / 2)))
     val = ψ(y)
-    allocs = @allocated ψ(y)
+    allocs = @wrappedallocs ψ(y)
     @test allocs == 0
   end
 
@@ -88,13 +88,13 @@ end
     ψ = shifted(h, xk)
     y = rand(n)
     val = ψ(y)
-    allocs = @allocated ψ(y)
+    allocs = @wrappedallocs ψ(y)
     @test allocs == 0
 
     χ = NormLinf(1.0)
     ψ = shifted(h, xk, 0.5, χ)
     val = ψ(y)
-    allocs = @allocated ψ(y)
+    allocs = @wrappedallocs ψ(y)
     @test allocs == 0
   end
 
