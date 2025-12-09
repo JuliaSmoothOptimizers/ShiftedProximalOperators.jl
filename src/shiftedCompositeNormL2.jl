@@ -30,13 +30,14 @@ mutable struct ShiftedCompositeNormL2{
   F0 <: Function,
   F1 <: Function,
   M <: AbstractMatrix{T},
+  N <: Union{Nothing, M},
   V <: AbstractVector{T},
 } <: ShiftedCompositeProximableFunction
   h::NormL2{T}
   c!::F0
   J!::F1
   A::M
-  A_prev::Union{Nothing, M}  # (Optional) can be used to store the previous Jacobian, useful for quasi-Newton approximations
+  A_prev::N # (Optional) can be used to store the previous Jacobian, useful for quasi-Newton approximations
   shifted_spmat::qrm_shifted_spmat{T}
   spfct::qrm_spfct{T}
   b::V
@@ -71,7 +72,7 @@ mutable struct ShiftedCompositeNormL2{
     shifted_spmat = qrm_shift_spmat(spmat)
     spfct = qrm_spfct_init(spmat)
 
-    new{T, typeof(c!), typeof(J!), typeof(A), typeof(b)}(
+    new{T, typeof(c!), typeof(J!), typeof(A), typeof(A_prev), typeof(b)}(
       NormL2(λ),
       c!,
       J!,
@@ -113,13 +114,13 @@ fun_params(ψ::ShiftedCompositeNormL2) = "c(xk) = $(ψ.b)\n" * " "^14 * "J(xk) =
 
 function prox!(
   y::AbstractVector{T},
-  ψ::ShiftedCompositeNormL2{T, F0, F1, M, V},
+  ψ::ShiftedCompositeNormL2{T, F0, F1, M, N, V},
   q::AbstractVector{T},
   ν::T;
   max_iter = 10,
   atol = eps(T)^0.3,
   max_time = 180.0,
-) where {T <: Real, F0 <: Function, F1 <: Function, M <: AbstractMatrix{T}, V <: AbstractVector{T}}
+) where {T <: Real, F0 <: Function, F1 <: Function, M <: AbstractMatrix{T}, N <: Union{Nothing, M}, V <: AbstractVector{T}}
   @assert ν > zero(T)
   start_time = time()
   θ = T(0.8)
