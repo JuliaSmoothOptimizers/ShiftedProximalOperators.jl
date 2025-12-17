@@ -71,9 +71,6 @@ function prox!(
   ψ.sol .= q .+ ψ.xk .+ ψ.sj
   ϵ = 1 ## sasha's initial guess
 
-  # Preallocate a temporary buffer once and reuse per-block to avoid allocations
-  tmp = similar(ψ.sol)
-
   for (idx, λ) ∈ zip(ψ.h.idx, ψ.h.lambda)
     σλ = λ * σ
 
@@ -82,7 +79,7 @@ function prox!(
       solb = ψ.sol[idx]
       xkb = ψ.xk[idx]
       sjb = ψ.sj[idx]
-      tmpb = tmp[1:length(solb)]
+      tmpb = ψ.xsy[1:length(solb)]
     end
 
     # in-place soft threshold into tmpb: tmpb .= sign.(expr) .* max.(0, abs.(expr) .- a)
@@ -117,10 +114,10 @@ function prox!(
     ansatz = lmin + ϵ #ansatz for upper bound
     step = ansatz / (σ * (ansatz - σλ))
     # compute zlmax using in-place softthres
-    softthres_block!(tmp[1:length(solb)], ψ.Δ * step, step)
+    softthres_block!(ψ.xsy[1:length(solb)], ψ.Δ * step, step)
     zlmax = 0.0
     @inbounds for i in 1:length(solb)
-      zlmax += tmp[i]^2
+      zlmax += ψ.xsy[i]^2
     end
     zlmax = sqrt(zlmax)
 
