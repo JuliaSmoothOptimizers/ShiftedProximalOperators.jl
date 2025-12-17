@@ -1310,6 +1310,82 @@ end
   @test ψ.u == 0.7
 end
 
+@testset "ShiftedIndBallL0Box prox!" begin
+  h = IndBallL0(2)
+  x = [0.0, -1.0, 0.5, -0.5]
+  l = -0.3
+  u = 0.3
+  σ = 1.0
+  
+  ψ = shifted(h, x, l, u)
+  ω = shifted(ψ, [0.1, -0.1, 0.2, -0.2])
+  
+  # Test that prox! executes without error
+  y = zeros(4)
+  q = [0.2, -0.25, 0.1, -0.15]
+  result = prox!(y, ω, q, σ)
+  
+  # Verify result is returned
+  @test result === y
+  
+  # Verify solution is a valid vector
+  @test all(isfinite.(y))
+  @test length(y) == 4
+  
+  # Test with vector bounds
+  l_vec = [-0.3, -0.2, -0.4, -0.25]
+  u_vec = [0.3, 0.4, 0.2, 0.25]
+  ψ2 = shifted(h, x, l_vec, u_vec)
+  ω2 = shifted(ψ2, [0.0, 0.1, -0.1, 0.0])
+  
+  y2 = zeros(4)
+  q2 = [0.25, -0.3, 0.1, 0.2]
+  result2 = prox!(y2, ω2, q2, σ)
+  
+  @test result2 === y2
+  @test all(isfinite.(y2))
+  @test length(y2) == 4
+end
+
+@testset "ShiftedGroupNormL2Box prox!" begin
+  v = [1:2, 3:4]
+  λ = [0.5, 0.8]
+  h = GroupNormL2(λ, v)
+  x = [1.0, -0.5, 0.3, -0.8]
+  l = -0.5
+  u = 0.5
+  σ = 1.0
+  
+  ψ = shifted(h, x, l, u)
+  ω = shifted(ψ, [0.1, -0.15, 0.2, -0.1])
+  
+  # Test that prox! executes without error
+  y = zeros(4)
+  q = [0.3, -0.2, 0.1, -0.25]
+  result = prox!(y, ω, q, σ)
+  
+  # Verify result is returned
+  @test result === y
+  
+  # Verify solution is a valid vector
+  @test all(isfinite.(y))
+  @test length(y) == 4
+  
+  # Test with vector bounds
+  l_vec = [-0.4, -0.3, -0.5, -0.2]
+  u_vec = [0.6, 0.4, 0.5, 0.3]
+  ψ2 = shifted(h, x, l_vec, u_vec)
+  ω2 = shifted(ψ2, [-0.1, 0.1, 0.0, 0.15])
+  
+  y2 = zeros(4)
+  q2 = [0.2, -0.3, 0.15, -0.1]
+  result2 = prox!(y2, ω2, q2, σ)
+  
+  @test result2 === y2
+  @test all(isfinite.(y2))
+  @test length(y2) == 4
+end
+
 include("testsbox.jl")
 include("partial_prox.jl")
 include("test_allocs.jl")
