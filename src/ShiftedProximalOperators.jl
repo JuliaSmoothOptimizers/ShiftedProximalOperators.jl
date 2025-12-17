@@ -49,10 +49,7 @@ include("shiftedCappedl1.jl")
 include("shiftedNuclearnorm.jl")
 
 function (ψ::ShiftedProximableFunction)(y)
-  # assign elementwise to avoid temporary allocations from broadcasted RHS
-  for i in eachindex(ψ.xsy)
-    ψ.xsy[i] = ψ.xk[i] + ψ.sj[i] + y[i]
-  end
+  @. ψ.xsy = ψ.xk + ψ.sj + y
   # Fast, allocation-friendly evaluations for common proximable h types
   h = ψ.h
   if isa(h, NormL1)

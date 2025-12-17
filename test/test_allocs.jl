@@ -29,6 +29,7 @@ macro wrappedallocs(expr)
   argnames = [gensym() for a in expr.args]
   quote
     function g($(argnames...))
+      $(Expr(expr.head, argnames...))
       @allocated $(Expr(expr.head, argnames...))
     end
     $(Expr(:call, :g, [esc(a) for a in expr.args]...))
@@ -39,12 +40,11 @@ end
   for (op, composite_op) ∈ ((:NormL2, :CompositeNormL2),)
     CompositeOp = eval(composite_op)
 
-    function c_allocs!(z, x)
+    function c!(z, x)
       z[1] = 2 * x[1] - x[4]
       z[2] = x[2] + x[3]
     end
-
-    function J_allocs!(z, x)
+    function J!(z, x)
       z.vals .= Float64[2.0, 1.0, 1.0, -1.0]
     end
     λ = 3.62
@@ -54,17 +54,17 @@ end
     b = zeros(Float64, 2)
     A = SparseMatrixCOO(Float64[2 0 0 -1; 0 1 1 0])
 
-    ψ = CompositeOp(λ, c_allocs!, J_allocs!, A, b)
+    ψ = CompositeOp(λ, c!, J!, A, b)
 
+    # test shifted operator
     xk = [0.0, 1.1741, 0.0, -0.4754]
     ϕ = shifted(ψ, xk)
 
+    # test prox 
     x = [0.1097, 1.1287, -0.29, 1.2616]
     y = similar(x)
     ν = 0.1056
-    prox!(y, ϕ, x, ν)
-
-    @test @wrappedallocs(prox!(y, ϕ, x, ν)) <= 64
+    @test @wrappedallocs(prox!(y, ϕ, x, ν)) == 0
   end
   for op ∈ (:NormL0, :NormL1, :RootNormLhalf)
     h = eval(op)(1.0)
@@ -73,14 +73,13 @@ end
     ψ = shifted(h, xk)
     y = rand(n)
     val = ψ(y)
-    allocs = @allocated ψ(y)
-
-    @test allocs <= 64
+    allocs = @wrappedallocs ψ(y)
+    @test allocs == 0
 
     ψ = shifted(h, xk, -3.0, 4.0, rand(1:n, Int(n / 2)))
     val = ψ(y)
-    allocs = @allocated ψ(y)
-    @test allocs <= 64
+    allocs = @wrappedallocs ψ(y)
+    @test allocs == 0
   end
 
   for op ∈ (:IndBallL0,)
@@ -90,14 +89,14 @@ end
     ψ = shifted(h, xk)
     y = rand(n)
     val = ψ(y)
-    allocs = @allocated ψ(y)
-    @test allocs <= 64
+    allocs = @wrappedallocs ψ(y)
+    @test allocs == 0
 
     χ = NormLinf(1.0)
     ψ = shifted(h, xk, 0.5, χ)
     val = ψ(y)
-    allocs = @allocated ψ(y)
-    @test allocs <= 64
+    allocs = @wrappedallocs ψ(y)
+    @test allocs == 0
   end
 
   for op ∈ (:NormL0, :NormL1)
@@ -107,12 +106,12 @@ end
     ψ = shifted(h, xk)
     y = rand(n)
     d = rand(n)
-    @test @wrappedallocs(prox!(y, ψ, y, 1.0)) <= 8
-    @test @wrappedallocs(iprox!(y, ψ, y, d)) <= 8
+    @test @wrappedallocs(prox!(y, ψ, y, 1.0)) == 0
+    @test @wrappedallocs(iprox!(y, ψ, y, d)) == 0
 
     ψ = shifted(h, xk, -3.0, 4.0, rand(1:n, Int(n / 2)))
-    @test @wrappedallocs(prox!(y, ψ, y, 1.0)) <= 8
-    @test @wrappedallocs(iprox!(y, ψ, y, d)) <= 8
+    @test @wrappedallocs(prox!(y, ψ, y, 1.0)) == 0
+    @test @wrappedallocs(iprox!(y, ψ, y, d)) == 0
   end
 
   for op ∈ (:NormL2,)
@@ -122,13 +121,13 @@ end
     y = rand(n)
     d = rand(n)
 
-    @test @wrappedallocs(prox!(y, h, y, 1.0)) <= 8
+    @test @wrappedallocs(prox!(y, h, y, 1.0)) == 0
 
     ψ = shifted(h, xk)
 
-    @test @wrappedallocs(ψ(y)) <= 8
+    @test @wrappedallocs(ψ(y)) == 0
 
-    @test @wrappedallocs(prox!(y, ψ, y, 1.0)) <= 8
+    @test @wrappedallocs(prox!(y, ψ, y, 1.0)) == 0
   end
 
   for (op, shifted_op) ∈ zip((:Rank, :Nuclearnorm), (:ShiftedRank, :ShiftedNuclearnorm))
@@ -145,10 +144,7 @@ end
     h = Op(λ, ones(m, n), F)
     f = ShiftedOp(h, x, s, true)
     y = zeros(m * n)
-
-    prox!(y, h, x, γ)
-    prox!(y, f, q, γ)
-    @test @wrappedallocs(prox!(y, h, x, γ)) <= 8
-    @test @wrappedallocs(prox!(y, f, q, γ)) <= 8
+    @test @wrappedallocs(prox!(y, h, x, γ)) == 0
+    @test @wrappedallocs(prox!(y, f, q, γ)) == 0
   end
 end
