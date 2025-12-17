@@ -33,7 +33,7 @@ mutable struct ShiftedIndBallL0Box{
     sol = similar(sj)
     xsy = similar(xk, length(selected))
     if any(l .> u)
-      error("Error: at least one lower bound is greater than the upper bound.")
+      error("At least one lower bound is greater than the upper bound.")
     end
     new{I, R, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u), typeof(selected)}(
       h,
