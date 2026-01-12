@@ -53,7 +53,7 @@ mutable struct ShiftedCompositeNormL2{
     J!::Function,
     A::AbstractMatrix{T},
     b::AbstractVector{T};
-    store_previous_jacobian::Bool = false
+    store_previous_jacobian::Bool = false,
   ) where {T <: Real}
     p = similar(b, A.n + A.m)
     dp = similar(b, A.n + A.m)
@@ -86,7 +86,7 @@ mutable struct ShiftedCompositeNormL2{
       dq,
       p,
       dp,
-      false
+      false,
     )
   end
 end
@@ -105,7 +105,14 @@ shifted(
   ψ.c!(b, xk)
   A = similar(ψ.A)
   ψ.J!(A, xk)
-  ShiftedCompositeNormL2(ψ.h.lambda, ψ.c!, ψ.J!, A, b, store_previous_jacobian = ψ.store_previous_jacobian)
+  ShiftedCompositeNormL2(
+    ψ.h.lambda,
+    ψ.c!,
+    ψ.J!,
+    A,
+    b,
+    store_previous_jacobian = ψ.store_previous_jacobian,
+  )
 end
 
 fun_name(ψ::ShiftedCompositeNormL2) = "shifted `ℓ₂` norm"
@@ -120,7 +127,14 @@ function prox!(
   max_iter = 10,
   atol = eps(T)^0.3,
   max_time = 180.0,
-) where {T <: Real, F0 <: Function, F1 <: Function, M <: AbstractMatrix{T}, N <: Union{Nothing, M}, V <: AbstractVector{T}}
+) where {
+  T <: Real,
+  F0 <: Function,
+  F1 <: Function,
+  M <: AbstractMatrix{T},
+  N <: Union{Nothing, M},
+  V <: AbstractVector{T},
+}
   @assert ν > zero(T)
   start_time = time()
   θ = T(0.8)

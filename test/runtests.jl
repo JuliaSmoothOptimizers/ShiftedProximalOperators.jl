@@ -49,7 +49,7 @@ for (op, composite_op, shifted_op) ∈
     ν = 0.1056
     prox!(y, ϕ, x, ν)
     @test ϕ.full_row_rank == true
-    
+
     if "$op" == "NormL2"
       y_true = [0.24545429, 0.75250248, -0.66619752, 1.19372286]
       norm = Op(1.0)
@@ -64,7 +64,7 @@ for (op, composite_op, shifted_op) ∈
     @test ϕ.A == SparseMatrixCOO(Float64[2 0 0 -1; 0 1 1 0])
     @test ϕ(ones(Float64, 4)) ==
           h([1.0, 2.0] + SparseMatrixCOO(Float64[2 0 0 -1; 0 1 1 0])*ones(Float64, 4))
-    
+
     # test store previous Jacobian option
 
     function c_store_prev!(z, x)
@@ -72,9 +72,10 @@ for (op, composite_op, shifted_op) ∈
       z[2] = x[2] + x[3]
     end
     function J_store_prev!(z, x)
-      z.vals .= Float64[4.0*x[1], 1.0, 1.0, -1.0]
+      z.vals .= Float64[4.0 * x[1], 1.0, 1.0, -1.0]
     end
-    ψ_store_prev = CompositeOp(λ, c_store_prev!, J_store_prev!, A, b, store_previous_jacobian = true)
+    ψ_store_prev =
+      CompositeOp(λ, c_store_prev!, J_store_prev!, A, b, store_previous_jacobian = true)
     @test ψ_store_prev.store_previous_jacobian == true
 
     xk = [1.0, 0.0, 0.0, 0.0]
@@ -94,7 +95,6 @@ for (op, composite_op, shifted_op) ∈
     shift!(ϕ_store_prev, xk)
     @test all(ϕ_store_prev.A_prev .== SparseMatrixCOO([8.0 0.0 0.0 -1.0; 0.0 1.0 1.0 0.0]))
     @test all(ϕ_store_prev.A .== SparseMatrixCOO([2.0 0.0 0.0 -1.0; 0.0 1.0 1.0 0.0]))
-
 
     # test different types
     h = Op(Float32(λ))
