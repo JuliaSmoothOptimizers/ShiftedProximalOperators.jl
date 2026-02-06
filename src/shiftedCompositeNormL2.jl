@@ -1,6 +1,6 @@
 export ShiftedCompositeNormL2
 @doc raw"""
-    ShiftedCompositeNormL2(h, c!, J!, A, b)
+    ShiftedCompositeNormL2(h, c!, J!, A, b; store_previous_jacobian::Bool = false)
 
 Returns the shift of a function `c` composed with the `ℓ₂` norm (see CompositeNormL2.jl).
 Here, `c` is linearized i.e, `c(x + s) ≈ c(x) + J(x)s`. 
@@ -21,18 +21,23 @@ such that `J` is the Jacobian of `c`. It is expected that `m ≤ n`.
 c!(b <: AbstractVector{Real}, xk <: AbstractVector{Real})
 J!(A <: AbstractSparseMatrixCOO{Real, Integer}, xk <: AbstractVector{Real})
 ```
+Moreover, if you want shifted instances of the operator to store the previous Jacobian on each shift, you can specify `store_previous_jacobian = true`.
+In this case, each time a shift is performed, the previous Jacobian is stored in the `A_prev` field.
+This is particularly useful for quasi-Newton updates in the context of constrained optimization.
 """
 mutable struct ShiftedCompositeNormL2{
   T <: Real,
   F0 <: Function,
   F1 <: Function,
   M <: AbstractMatrix{T},
+  N <: Union{Nothing, M},
   V <: AbstractVector{T},
 } <: ShiftedCompositeProximableFunction
   h::NormL2{T}
   c!::F0
   J!::F1
   A::M
+  A_prev::N # (Optional) can be used to store the previous Jacobian, useful for quasi-Newton approximations
   shifted_spmat::qrm_shifted_spmat{T}
   spfct::qrm_spfct{T}
   b::V
@@ -41,12 +46,14 @@ mutable struct ShiftedCompositeNormL2{
   dq::V # Preallocated vector to refine the q solution.
   p::V  # Preallocated vector used to compute s(α)ᵀ∇s(α) for the secular equation.
   dp::V # Preallocated vector used to refine the p vector.
+  full_row_rank::Bool # Boolean that tells whether A has full row rank or not. Is updated on each call to `prox!`
   function ShiftedCompositeNormL2(
     λ::T,
     c!::Function,
     J!::Function,
     A::AbstractMatrix{T},
-    b::AbstractVector{T},
+    b::AbstractVector{T};
+    store_previous_jacobian::Bool = false
   ) where {T <: Real}
     p = similar(b, A.n + A.m)
     dp = similar(b, A.n + A.m)
@@ -59,15 +66,18 @@ mutable struct ShiftedCompositeNormL2{
       )
     end
 
+    A_prev = store_previous_jacobian ? copy(A) : nothing
+
     spmat = qrm_spmat_init(A; sym = false)
     shifted_spmat = qrm_shift_spmat(spmat)
     spfct = qrm_spfct_init(spmat)
 
-    new{T, typeof(c!), typeof(J!), typeof(A), typeof(b)}(
+    new{T, typeof(c!), typeof(J!), typeof(A), typeof(A_prev), typeof(b)}(
       NormL2(λ),
       c!,
       J!,
       A,
+      A_prev,
       shifted_spmat,
       spfct,
       b,
@@ -76,6 +86,7 @@ mutable struct ShiftedCompositeNormL2{
       dq,
       p,
       dp,
+      false
     )
   end
 end
@@ -94,7 +105,7 @@ shifted(
   ψ.c!(b, xk)
   A = similar(ψ.A)
   ψ.J!(A, xk)
-  ShiftedCompositeNormL2(ψ.h.lambda, ψ.c!, ψ.J!, A, b)
+  ShiftedCompositeNormL2(ψ.h.lambda, ψ.c!, ψ.J!, A, b, store_previous_jacobian = ψ.store_previous_jacobian)
 end
 
 fun_name(ψ::ShiftedCompositeNormL2) = "shifted `ℓ₂` norm"
@@ -103,13 +114,14 @@ fun_params(ψ::ShiftedCompositeNormL2) = "c(xk) = $(ψ.b)\n" * " "^14 * "J(xk) =
 
 function prox!(
   y::AbstractVector{T},
-  ψ::ShiftedCompositeNormL2{T, F0, F1, M, V},
+  ψ::ShiftedCompositeNormL2{T, F0, F1, M, N, V},
   q::AbstractVector{T},
   ν::T;
   max_iter = 10,
   atol = eps(T)^0.3,
   max_time = 180.0,
-) where {T <: Real, F0 <: Function, F1 <: Function, M <: AbstractMatrix{T}, V <: AbstractVector{T}}
+) where {T <: Real, F0 <: Function, F1 <: Function, M <: AbstractMatrix{T}, N <: Union{Nothing, M}, V <: AbstractVector{T}}
+  @assert ν > zero(T)
   start_time = time()
   θ = T(0.8)
   α = zero(T)
@@ -134,8 +146,8 @@ function prox!(
   _obj_dot_grad!(spmat, spfct, ψ.p, ψ.q, ψ.g, ψ.dq)
 
   # Check full-rankness
-  full_row_rank = (qrm_get(spfct, "qrm_rd_num") == 0)
-  if !full_row_rank
+  ψ.full_row_rank = (qrm_get(spfct, "qrm_rd_num") == 0)
+  if !ψ.full_row_rank
     # QRMumps cannot factorize rank-deficient matrices; use the Golub-Riley iteration instead
     α = αmin
     qrm_golub_riley!(
