@@ -1222,6 +1222,48 @@ for (op, shifted_op) ∈ zip((:Nuclearnorm,), (:ShiftedNuclearnorm,))
   end
 end
 
+for (op, shifted_op) ∈ zip((:GroupNormL2,), (:ShiftedGroupNormL2Box,))
+  @testset "$shifted_op" begin
+    ShiftedOp = eval(shifted_op)
+    Op = eval(op)
+
+    λ = [1.0, 2.0]
+    idx = [1:2, 3:4]
+    h = Op(λ, idx)
+    x = zeros(4)
+    l = [-1.0, -1.0, -1.0, -1.0]
+    u = [1.0, 1.0, 1.0, 1.0]
+
+    ψ = shifted(h, x, l, u)
+    @test typeof(ψ) <: ShiftedOp
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== x)
+    @test ψ.l == l
+    @test ψ.u == u
+    @test ψ.selected == 1:4
+
+    # test value function in the box
+    @test ψ(zeros(4)) == h(x)
+
+    # test value function out of the box -> Inf
+    @test ψ(2 .* ones(4)) == Inf
+
+    # test shift update
+    y = rand(4)
+    shift!(ψ, y)
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== y)
+
+    # shift a shifted operator
+    s = ones(4) ./ 2
+    φ = shifted(ψ, s)
+    @test all(φ.sj .== s)
+    @test all(φ.xk .== y)
+    @test φ.l == l
+    @test φ.u == u
+  end
+end
+
 include("testsbox.jl")
 include("partial_prox.jl")
 include("test_allocs.jl")

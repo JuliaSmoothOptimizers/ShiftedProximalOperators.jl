@@ -302,3 +302,66 @@ for (op, shifted_op) ∈ zip((:NormL0, :NormL1), (:ShiftedNormL0Box, :ShiftedNor
     end
   end
 end
+
+for (op, shifted_op) ∈ zip((:GroupNormL2,), (:ShiftedGroupNormL2Box,))
+  @testset "$shifted_op" begin
+    ## Testing ShiftedGroupNormL2Box
+    # Looking for argmin_t obj(t) = 1/(2σ) * ‖t-q‖² + λ * ‖x+s+t‖₂ + χ{s+t ∈ [l,u]}
+
+    σ = 1.0
+    λ = [1.0]
+    idx = [1:2]
+    l = [-1.0, -1.0]
+    u = [1.0, 1.0]
+    s = [0.0, 0.0]
+
+    x = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.5, 0.5]]
+    q = [[3.0, 4.0], [0.3, 0.4], [-3.0, -4.0], [2.5, 3.5]]
+    sol = [[1.0, 1.0], [0.0, 0.0], [-1.0, -1.0], [1.0, 1.0]]
+    # Case 1 : block soft-threshold out of the box -> clip u-s
+    # Case 2 : ‖q+x+s‖ ≤ σλ -> prox = 0, in the box -> 0
+    # Case 3 : block soft-threshold out of the box -> clip l-s
+    # Case 4 : xk ≠ 0, solution out of the box -> clip u-s
+
+    for i = 1:4
+      h = GroupNormL2(λ, idx)
+      ψ = shifted(h, x[i], l, u)
+      ω = shifted(ψ, s)
+      y = similar(q[i])
+      prox!(y, ω, q[i], σ)
+      @test isapprox(y, sol[i], atol = 1.0e-8)
+    end
+  end
+
+  @testset "ShiftedGroupNormL2Box with selected" begin
+    σ = 1.0
+    λ = [1.0]
+    idx = [1:3]
+    l = [-1.0, -1.0, -1.0]
+    u = [1.0, 1.0, 1.0]
+    s = [0.0, 0.0, 0.0]
+    x = [0.0, 0.0, 0.0]
+    selected = [1, 2]   # index 3 excluded from the group penalty
+
+    q   = [[3.0, 4.0, 0.0], [3.0, 4.0, 5.0], [3.0, 4.0, -5.0]]
+    sol = [[1.0, 1.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, -1.0]]
+    # Case 1 : q[3] = 0 ∈ [l-s,u-s] -> prox_zero(0,-1,1) = 0
+    # Case 2 : q[3] = 5 > u-s = 1   -> prox_zero(5,-1,1) = 1 (clip u-s)
+    # Case 3 : q[3] = -5 < l-s = -1 -> prox_zero(-5,-1,1) = -1 (clip l-s)
+
+    for i = 1:3
+      h = GroupNormL2(λ, idx)
+      ψ = shifted(h, x, l, u, selected)
+      ω = shifted(ψ, s)
+      y = similar(q[i])
+      prox!(y, ω, q[i], σ)
+      @test isapprox(y, sol[i], atol = 1.0e-8)
+    end
+
+    # check if selected is propagated after the shift
+    h = GroupNormL2(λ, idx)
+    ψ = shifted(h, x, l, u, selected)
+    ω = shifted(ψ, s)
+    @test ω.selected == selected
+  end
+end
