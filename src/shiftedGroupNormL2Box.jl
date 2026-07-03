@@ -1,5 +1,16 @@
 export ShiftedGroupNormL2Box
 
+"""
+Allows to compute the shifted GroupNormL2 operator with variable bounds: t ↦ Σᵢ λᵢ ‖xk + sj + t‖₂ + χ({sj + t .∈ [l,u]})
+
+The proximal operator is also provided. To do so, we use the Moreau's decomposition theorem (see "Moreau’s Decomposition in Banach Spaces", P.L. Combettes et al.¹).
+A direct expression of the proximal operator can be found in "Proximal Algorithms", N. Parikh et al.² 
+
+¹https://arxiv.org/pdf/1103.3178
+²https://web.stanford.edu/~boyd/papers/pdf/prox_algs.pdf
+
+"""
+
 mutable struct ShiftedGroupNormL2Box{
   R <: Real,
   RR <: AbstractVector{R},
@@ -94,6 +105,7 @@ function prox!(
     λ = ψ.h.lambda
 
     @. ψ.sol = q + ψ.xk + ψ.sj
+    val = zero(R)
     for (idx, λ) ∈ zip(ψ.h.idx, λ)
         sol_idx = view(ψ.sol, idx)
         yv = view(y, idx)
@@ -106,7 +118,6 @@ function prox!(
         end
     end
     @. y -= (ψ.xk + ψ.sj)
-
     for i ∈ eachindex(y)
         li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
         ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
@@ -118,5 +129,13 @@ function prox!(
             y[i] = prox_zero(qi, li - si, ui - si)
         end
     end
-    return y
+    val = zero(R)
+    for (idx, λ) ∈ zip(ψ.h.idx, ψ.h.lambda)
+      group_val = zero(R)
+      for j ∈ idx
+        group_val += (y[j] + ψ.xk[j] + ψ.sj[j])^2
+      end
+      val += λ * sqrt(group_val)
+    end
+    return val
 end
