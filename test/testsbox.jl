@@ -365,3 +365,76 @@ for (op, shifted_op) ∈ zip((:GroupNormL2,), (:ShiftedGroupNormL2Box,))
     @test ω.selected == selected
   end
 end
+
+for (op, shifted_op) ∈ zip((:NormLinf,), (:ShiftedNormLinfBox,))
+
+  function _proj_l1ball(v::AbstractVector{R}, r::R) where {R <: Real}
+    # Implements algorithm proposed in:
+    # Duchi et al. "Efficient Projections onto the ℓ₁-ball for Learning in High Dimensions",
+    if norm(v, 1) ≤ r
+      return copy(v)
+    end
+    μ = sort(abs.(v), rev = true)
+    cssμ = cumsum(μ)
+    list_inx = collect(1:length(μ))
+    rho = findlast(μ .* list_inx - (cssμ .- r) .+ eps(R) .> 0)
+    θ = (cssμ[rho] - r) / rho
+    return sign.(v) .* max.(abs.(v) .- θ, zero(R))
+  end
+
+  @testset "$shifted_op" begin
+    ## Testing ShiftedNormLinfBox
+    # Looking for argmin_t obj(t) = 1/(2σ) * ‖t-q‖² + λ * ‖x+s+t‖∞ + χ{s+t ∈ [l,u]}
+    σ = 1.0
+    λ = 1.5
+    l = [-1.0, -1.0]
+    u = [1.0, 1.0]
+    s = [0.0, 0.0]
+    x = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.5, 0.5]]
+    q = [[3.0, 4.0], [0.1, 0.1], [-3.0, -4.0], [2.5, 3.5]]
+    # sol = [[1.0, 1.0], [0.1, 0.1] .- _proj_l1ball([0.1, 0.1], σ * λ), [-1.0, -1.0], [1.0, 1.0]]
+    sol = [[1.0, 1.0], [0.0, 0.0], [-1.0, -1.0], [1.0, 1.0]]
+    # Case 1 : prox out of box -> clip u-s
+    # Case 2 : q small, prox in box -> no clip
+    # Case 3 : prox out of box -> clip l-s
+    # Case 4 : xk ≠ 0, prox out of box -> clip u-s
+    for i = 1:4
+      h = NormLinf(λ)
+      ψ = shifted(h, x[i], l, u)
+      ω = shifted(ψ, s)
+      y = similar(q[i])
+      val = prox!(y, ω, q[i], σ)
+      @test isapprox(y, sol[i], atol = 1.0e-8)
+      @test all(l .- s .- sqrt(eps()) .≤ y .≤ u .- s .+ sqrt(eps()))
+      @test isapprox(val, ω(y), atol = 1.0e-8)
+    end
+  end
+  @testset "ShiftedNormLinfBox with selected" begin
+    σ = 1.0
+    λ = 1.5
+    l = [-1.0, -1.0, -1.0]
+    u = [1.0, 1.0, 1.0]
+    s = [0.0, 0.0, 0.0]
+    x = [0.0, 0.0, 0.0]
+    selected = [1, 2]  # index 3 excluded from the norm
+    q   = [[3.0, 4.0, 0.0], [3.0, 4.0, 5.0], [3.0, 4.0, -5.0]]
+    sol = [[1.0, 1.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, -1.0]]
+    # Case 1 : q[3] = 0 ∈ [l-s,u-s] -> prox_zero(0,-1,1) = 0
+    # Case 2 : q[3] = 5 > u-s = 1   -> prox_zero(5,-1,1) = 1
+    # Case 3 : q[3] = -5 < l-s = -1 -> prox_zero(-5,-1,1) = -1
+    for i = 1:3
+      h = NormLinf(λ)
+      ψ = shifted(h, x, l, u, selected)
+      ω = shifted(ψ, s)
+      y = similar(q[i])
+      val = prox!(y, ω, q[i], σ)
+      @test isapprox(y, sol[i], atol = 1.0e-8)
+      @test isapprox(val, ω(y), atol = 1.0e-8)
+    end
+    # check selected is propagated after shift
+    h = NormLinf(λ)
+    ψ = shifted(h, x, l, u, selected)
+    ω = shifted(ψ, s)
+    @test ω.selected == selected
+  end
+end
