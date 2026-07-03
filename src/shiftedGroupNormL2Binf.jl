@@ -118,7 +118,7 @@ function prox!(
   val = zero(R)
   for (idx, λ) ∈ zip(ψ.h.idx, ψ.h.lambda)
     group_val = zero(R)
-    for j ∈ idx
+    for j ∈ eachindex(y)
       group_val += (y[j] + ψ.xk[j] + ψ.sj[j])^2
     end
     val += λ * sqrt(group_val)
