@@ -68,5 +68,5 @@ function prox!(
   sortperm!(ψ.p, y, rev = true, by = abs) # stock with ψ.p as placeholder
   y[ψ.p[(ψ.h.r + 1):end]] .= 0 # set smallest to zero
   y .-= ψ.xk .+ ψ.sj
-  return y
+  return zero(R)
 end

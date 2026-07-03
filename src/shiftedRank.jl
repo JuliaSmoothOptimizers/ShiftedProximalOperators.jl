@@ -70,6 +70,7 @@ function prox!(
   ψ.h.A .= reshape_array(ψ.sol, size(ψ.h.A))
   psvd_dd!(ψ.h.F, ψ.h.A, full = false)
   c = sqrt(2 * λ * σ)
+  val = zero(R)
   for i ∈ eachindex(ψ.h.F.S)
     if ψ.h.F.S[i] <= c
       ψ.h.F.U[:, i] .= 0
@@ -77,9 +78,10 @@ function prox!(
       for j = 1:size(ψ.h.A, 1)
         ψ.h.F.U[j, i] = ψ.h.F.U[j, i] .* ψ.h.F.S[i]
       end
+      val += λ
     end
   end
   mul!(ψ.h.A, ψ.h.F.U, ψ.h.F.Vt)
   y .= reshape_array(ψ.h.A, size(y)) .- (ψ.xk .+ ψ.sj)
-  return y
+  return val
 end
