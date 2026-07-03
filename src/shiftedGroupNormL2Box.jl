@@ -106,6 +106,7 @@ function prox!(
 
     @. ψ.sol = q + ψ.xk + ψ.sj
     val = zero(R)
+    # Compute prox_L2 for each group without bounds
     for (idx, λ) ∈ zip(ψ.h.idx, λ)
         sol_idx = view(ψ.sol, idx)
         yv = view(y, idx)
@@ -118,6 +119,7 @@ function prox!(
         end
     end
     @. y -= (ψ.xk + ψ.sj)
+    # Apply clipping
     for i ∈ eachindex(y)
         li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
         ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
@@ -130,6 +132,7 @@ function prox!(
         end
     end
     val = zero(R)
+    # Compute h(y)
     for (idx, λ) ∈ zip(ψ.h.idx, ψ.h.lambda)
       group_val = zero(R)
       for j ∈ idx
