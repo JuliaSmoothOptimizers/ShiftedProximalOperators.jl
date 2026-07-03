@@ -36,7 +36,6 @@ include("shiftedNormL0.jl")
 include("shiftedNormL0Box.jl")
 include("shiftedRootNormLhalf.jl")
 include("shiftedNormL1.jl")
-include("shiftedNormLinf.jl")
 include("shiftedGroupNormL2.jl")
 
 include("shiftedNormL1B2.jl")
