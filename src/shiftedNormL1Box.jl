@@ -66,6 +66,14 @@ shifted(
   sj::AbstractVector{R},
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
   ShiftedNormL1Box(ψ.h, ψ.xk, sj, ψ.l, ψ.u, true, ψ.selected)
+shifted(
+  ψ::ShiftedNormL1{R, V0, V1, V2},
+  sj::AbstractVector{R},
+  l,
+  u,
+  selected::AbstractArray{T} = 1:length(sj),
+) where {R <: Real, T <: Integer, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
+  ShiftedNormL1Box(ψ.h, ψ.xk, sj, l, u, true, selected)
 
 function (ψ::ShiftedNormL1Box)(y)
   @. ψ.xsy = @views ψ.xk[ψ.selected] + ψ.sj[ψ.selected] + y[ψ.selected]
@@ -121,7 +129,11 @@ function prox!(
       y[i] = prox_zero(qi, li - si, ui - si)
     end
   end
-  return y
+  val = zero(R)
+  @inbounds for i ∈ ψ.selected
+    val += λ .* abs.(y[i] + ψ.xk[i] + ψ.sj[i])
+  end
+  return val
 end
 
 # arg min yᵀDy/2 + gᵀy + λ h(x + s + y) + χ(y | [l-s, u-s])

@@ -48,16 +48,17 @@ function prox!(
   ϕ(z) = acos(νλ / 4 * (abs(z) / 3)^(-3 / 2))
   p = 54^(1 / 3) * (2νλ)^(2 / 3) / 4
   ψ.sol .= q .+ (ψ.xk .+ ψ.sj)
-
+  ysum = zero(T)
   for i ∈ eachindex(y)
     aqi = abs(ψ.sol[i])
     if aqi ≤ p
       y[i] = 0
     else
       y[i] = 2 * sign(ψ.sol[i]) / 3 * aqi * (1 + cos(2 * π / 3 - 2 * ϕ(ψ.sol[i]) / 3))
+      ysum += sqrt(abs(y[i]))
     end
     y[i] -= (ψ.xk[i] + ψ.sj[i])
   end
 
-  return y
+  return f.lambda * ysum
 end
