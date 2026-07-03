@@ -93,6 +93,7 @@ function prox!(
 
   ψ.sol .= (ψ.xk .+ ψ.sj)
   RNorm(tt, l) = (tt - q[l])^2 / 2 / σ + ψ.λ * sqrt(abs(tt + ψ.sol[l]))
+  val = zero(R)
   for i ∈ eachindex(q)
     li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
     ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
@@ -116,5 +117,8 @@ function prox!(
       y[i] = prox_zero(qi, li - si, ui - si)
     end
   end
-  return y
+  for i ∈ ψ.selected
+    val += sqrt(abs(y[i] + ψ.xk[i] + ψ.sj[i]))
+  end
+  return ψ.λ * val
 end

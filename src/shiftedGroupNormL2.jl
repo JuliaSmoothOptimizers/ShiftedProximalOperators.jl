@@ -63,6 +63,7 @@ function prox!(
   V2 <: AbstractVector{R},
 }
   @. ψ.sol = q + ψ.xk + ψ.sj
+  val = zero(R)
   for (idx, λ) ∈ zip(ψ.h.idx, ψ.h.lambda)
     sol_idx = view(ψ.sol, idx)
     yv = view(y, idx)
@@ -73,7 +74,12 @@ function prox!(
       α = max(1 - σ * λ / snorm, 0)
       @. yv = α * sol_idx
     end
+    group_val = zero(R)
+    for j ∈ eachindex(yv)
+      group_val += (yv[j])^2
+    end
+    val += λ * sqrt(group_val)
   end
   @. y -= (ψ.xk + ψ.sj)
-  return y
+  return val
 end

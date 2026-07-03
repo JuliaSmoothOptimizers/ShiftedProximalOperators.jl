@@ -50,7 +50,11 @@ function prox!(
     y[i] = min(max(y[i], q[i] - λ * σ), q[i] + λ * σ)
   end
 
-  return y
+  val = zero(R)
+  @inbounds for i ∈ eachindex(y)
+    val += λ * abs(y[i] + ψ.xk[i] + ψ.sj[i])
+  end
+  return val
 end
 
 # arg min yᵀDy/2 - gᵀy + λ h(x + s + y)

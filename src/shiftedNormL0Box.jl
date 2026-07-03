@@ -94,7 +94,7 @@ function prox!(
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   λ = ψ.h.lambda
   c = 2 * λ * σ
-
+  val = zero(R)
   for i ∈ eachindex(q)
     li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
     ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
@@ -102,7 +102,6 @@ function prox!(
     qi = q[i]
     si = ψ.sj[i]
     sq = si + qi
-
     if i ∈ ψ.selected
       xi = ψ.xk[i]
       xs = xi + si
@@ -122,12 +121,14 @@ function prox!(
         val_xsq = xsq == 0 ? zero(R) : c
         val_xsq < val_min && (y[i] = qi)
       end
-
+      if y[i] != 0.0
+        val += 1
+      end
     else # min ½ σ⁻¹ (y - qi)² subject to li - si ≤ y ≤ ui - si
       y[i] = prox_zero(qi, li - si, ui - si)
     end
   end
-  return y
+  return λ*val
 end
 
 # arg min yᵀDy/2 + gᵀy + λ h(x + s + y) + χ(y | [l-s, u-s])
