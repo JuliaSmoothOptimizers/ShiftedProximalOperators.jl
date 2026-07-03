@@ -58,7 +58,11 @@ function prox!(
   r = σ * λ
   y .= ψ.sol .- _proj_l1ball(ψ.sol, r)
   @. y -= (ψ.xk + ψ.sj)
-  return λ * norm(y .+ ψ.xk .+ ψ.sj, Inf)
+  val = zero(R)
+  @inbounds for i ∈ eachindex(y)
+    val = max(val, λ * abs(y[i] + ψ.xk[i] + ψ.sj[i]))
+  end
+  return val
 end
 
 function _proj_l1ball(v::AbstractVector{R}, r::R) where {R <: Real}
