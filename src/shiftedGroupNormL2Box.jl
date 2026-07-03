@@ -115,41 +115,42 @@ function prox!(
 }
   λ = ψ.h.lambda
 
-  @. ψ.sol = q + ψ.xk + ψ.sj
-  val = zero(R)
-  # Compute prox_L2 for each group without bounds
-  for (idx, λ) ∈ zip(ψ.h.idx, λ)
-    sol_idx = view(ψ.sol, idx)
-    yv = view(y, idx)
-    snorm = norm(sol_idx)
-    if snorm == 0
-      yv .= 0
-    else
-      α = max(1.0 - σ * λ / snorm, 0.0)
-      @. yv = α * sol_idx
+    @. ψ.sol = q + ψ.xk + ψ.sj
+    val = zero(R)
+    # Compute prox_L2 for each group without bounds
+    for (idx, λ) ∈ zip(ψ.h.idx, λ)
+        sol_idx = view(ψ.sol, idx)
+        yv = view(y, idx)
+        snorm = norm(sol_idx)
+        if snorm == 0
+            yv .= 0
+        else
+            α = max(1.0 - σ * λ / snorm, 0.0)
+            @. yv = α * sol_idx
+        end
     end
-  end
-  @. y -= (ψ.xk + ψ.sj)
-  # Apply clipping
-  for i ∈ eachindex(y)
-    li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
-    ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
-    si = ψ.sj[i]
-    qi = q[i]
-    if i ∈ ψ.selected
-      y[i] = min(max(y[i], li - si), ui - si)
-    else
-      y[i] = prox_zero(qi, li - si, ui - si)
+    @. y -= (ψ.xk + ψ.sj)
+    # Apply clipping
+    for i ∈ eachindex(y)
+        li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]
+        ui = isa(ψ.u, Real) ? ψ.u : ψ.u[i]
+        si = ψ.sj[i]
+        qi = q[i]
+        if i ∈ ψ.selected
+            y[i] = min(max(y[i], li - si), ui - si)
+        else
+            y[i] = prox_zero(qi, li - si, ui - si)
+        end
     end
-  end
-  val = zero(R)
-  # Compute h(y)
-  for (idx, λ) ∈ zip(ψ.h.idx, ψ.h.lambda)
-    group_val = zero(R)
-    for j ∈ idx
-      group_val += (y[j] + ψ.xk[j] + ψ.sj[j])^2
+    val = zero(R)
+    # Compute h(y)
+    for (idx, λ) ∈ zip(ψ.h.idx, ψ.h.lambda)
+      group_val = zero(R)
+      for j ∈ idx
+        group_val += (y[j] + ψ.xk[j] + ψ.sj[j])^2
+      end
+      val += λ * sqrt(group_val)
     end
     val += λ * sqrt(group_val)
-  end
   return val
 end
