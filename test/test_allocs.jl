@@ -148,3 +148,22 @@ end
     @test @wrappedallocs(prox!(y, f, q, γ)) == 0
   end
 end
+
+for (op, shifted_op) ∈ zip((:GroupNormL2,), (:ShiftedGroupNormL2,), (:ShiftedGroupNormL2Box,))
+  λ = [1.0, 2.0]
+  idx = [1:500, 501:1000]
+  h = GroupNormL2(λ, idx)
+  n = 1000
+  xk = rand(n)
+  y = rand(n)
+  l = -3.0 * ones(n)
+  u = 4.0 * ones(n)
+
+  ψ = shifted(h, xk, l, u)
+  @test @wrappedallocs(ψ(y)) == 0
+  @test @wrappedallocs(prox!(y, ψ, y, 1.0)) == 0
+
+  ω = shifted(ψ, rand(n))
+  @test @wrappedallocs(ω(y)) == 0
+  @test @wrappedallocs(prox!(y, ω, y, 1.0)) == 0
+end
