@@ -343,7 +343,7 @@ for (op, shifted_op) ∈ zip((:GroupNormL2,), (:ShiftedGroupNormL2Box,))
     x = [0.0, 0.0, 0.0]
     selected = [1, 2]   # index 3 excluded from the group penalty
 
-    q   = [[3.0, 4.0, 0.0], [3.0, 4.0, 5.0], [3.0, 4.0, -5.0]]
+    q = [[3.0, 4.0, 0.0], [3.0, 4.0, 5.0], [3.0, 4.0, -5.0]]
     sol = [[1.0, 1.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, -1.0]]
     # Case 1 : q[3] = 0 ∈ [l-s,u-s] -> prox_zero(0,-1,1) = 0
     # Case 2 : q[3] = 5 > u-s = 1   -> prox_zero(5,-1,1) = 1 (clip u-s)
