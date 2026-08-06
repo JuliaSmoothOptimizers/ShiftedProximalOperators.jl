@@ -31,6 +31,9 @@ include("Rank.jl")
 include("cappedl1.jl")
 include("Nuclearnorm.jl")
 
+include("null.jl")
+include("shiftedNullBox.jl")
+
 include("shiftedCompositeNormL2.jl")
 include("shiftedNormL0.jl")
 include("shiftedNormL0Box.jl")
@@ -99,6 +102,7 @@ end
 set_radius!(ψ::ShiftedNormL0Box, Δ::R) where {R <: Real} = set_bounds!(ψ, -Δ, Δ)
 set_radius!(ψ::ShiftedNormL1Box, Δ::R) where {R <: Real} = set_bounds!(ψ, -Δ, Δ)
 set_radius!(ψ::ShiftedRootNormLhalfBox, Δ::R) where {R <: Real} = set_bounds!(ψ, -Δ, Δ)
+set_radius!(ψ::ShiftedNullRegularizerBox, Δ::R) where {R <: Real} = set_bounds!(ψ, -Δ, Δ)
 
 """
     set_bounds!(ψ, l, u)
