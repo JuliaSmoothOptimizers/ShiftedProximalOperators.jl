@@ -67,13 +67,23 @@ function iprox!(
   λ = ψ.h.lambda
   for i ∈ eachindex(y)
     di = d[i]
-    @assert di > 0
-    ci = sqrt(2 * λ * di)
-    xps = ψ.xk[i] + ψ.sj[i]
-    if abs(di * xps - g[i]) ≤ ci
-      y[i] = -xps
-    else
-      y[i] = -g[i] / di
+    gi = g[i]
+    if di < 0
+      y[i] = -Inf
+    elseif di == 0
+      if gi == 0
+        y[i] = -ψ.xk[i] - ψ.sj[i]
+      else
+        y[i] = sign(gi) * Inf
+      end
+    else 
+      ci = sqrt(2 * λ * di)
+      xps = ψ.xk[i] + ψ.sj[i]
+      if abs(di * xps - gi) ≤ ci
+        y[i] = -xps
+      else
+        y[i] = -gi / di
+      end
     end
   end
   return y
