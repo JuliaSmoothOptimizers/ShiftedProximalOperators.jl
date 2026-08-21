@@ -48,7 +48,7 @@ function prox!(
   ϕ(z) = acos(νλ / 4 * (abs(z) / 3)^(-3 / 2))
   p = 54^(1 / 3) * (2νλ)^(2 / 3) / 4
   ψ.sol .= q .+ (ψ.xk .+ ψ.sj)
-  ysum = zero(T)
+  ysum = zero(R)
   for i ∈ eachindex(y)
     aqi = abs(ψ.sol[i])
     if aqi ≤ p
@@ -60,5 +60,5 @@ function prox!(
     y[i] -= (ψ.xk[i] + ψ.sj[i])
   end
 
-  return f.lambda * ysum
+  return ψ.λ * ysum
 end
