@@ -151,6 +151,5 @@ function prox!(
       end
       val += λ * sqrt(group_val)
     end
-    val += λ * sqrt(group_val)
   return val
 end
