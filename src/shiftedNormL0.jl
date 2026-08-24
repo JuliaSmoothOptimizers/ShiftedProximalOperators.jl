@@ -43,6 +43,7 @@ function prox!(
 ) where {R <: Real, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}}
   λ = ψ.h.lambda
   c = sqrt(2 * λ * σ)
+  val = zero(R)
   for i ∈ eachindex(q)
     xps = ψ.xk[i] + ψ.sj[i]
     if abs(xps + q[i]) ≤ c
@@ -50,8 +51,11 @@ function prox!(
     else
       y[i] = q[i]
     end
+    if y[i] != 0.0
+      val += 1
+    end
   end
-  return y
+  return λ*val
 end
 
 # arg min yᵀDy/2 - gᵀy + λ h(x + s + y)

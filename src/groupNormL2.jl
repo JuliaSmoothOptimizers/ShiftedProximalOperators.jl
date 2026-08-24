@@ -51,7 +51,7 @@ function prox!(
       y[idx] .= 0
     else
       y[idx] .= max.(1 .- γ .* λ ./ yt, 0) .* x[idx]
-      ysum += λ * yt
+      ysum += λ * norm(y[idx])
     end
   end
   return ysum

@@ -60,5 +60,9 @@ function prox!(
     y .= ProjB((-ψ.xk) .* (η / ψ.Δ)) * (ψ.Δ / η)
   end
   y .-= ψ.sj
-  return y
+  val = zero(R)
+  @inbounds for i ∈ eachindex(y)
+    val += ψ.λ * abs(y[i] + ψ.xk[i] + ψ.sj[i])
+  end
+  return val
 end

@@ -36,6 +36,7 @@ include("shiftedNormL0.jl")
 include("shiftedNormL0Box.jl")
 include("shiftedRootNormLhalf.jl")
 include("shiftedNormL1.jl")
+include("shiftedNormLinf.jl")
 include("shiftedGroupNormL2.jl")
 
 include("shiftedNormL1B2.jl")
@@ -45,6 +46,7 @@ include("shiftedIndBallL0BInf.jl")
 include("shiftedRootNormLhalfBox.jl")
 include("shiftedGroupNormL2Binf.jl")
 include("shiftedGroupNormL2Box.jl")
+include("shiftedNormLinfBox.jl")
 include("shiftedRank.jl")
 include("shiftedCappedl1.jl")
 include("shiftedNuclearnorm.jl")
@@ -188,8 +190,10 @@ See the documentation of `prox!`.
 In this form, the solution is stored in ψ's internal storage and a reference
 is returned.
 """
-prox(ψ::ShiftedProximableFunction, q::V, σ::R) where {R <: Real, V <: AbstractVector{R}} =
+prox(ψ::ShiftedProximableFunction, q::V, σ::R) where {R <: Real, V <: AbstractVector{R}} = begin
   prox!(ψ.sol, ψ, q, σ)
+  ψ.sol
+end
 
 """
     prox_zero(q, l, u)
