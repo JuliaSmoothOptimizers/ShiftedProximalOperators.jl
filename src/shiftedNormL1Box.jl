@@ -72,8 +72,13 @@ shifted(
   l,
   u,
   selected::AbstractArray{T} = 1:length(sj),
-) where {R <: Real, T <: Integer, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
-  ShiftedNormL1Box(ψ.h, ψ.xk, sj, l, u, true, selected)
+) where {
+  R <: Real,
+  T <: Integer,
+  V0 <: AbstractVector{R},
+  V1 <: AbstractVector{R},
+  V2 <: AbstractVector{R},
+} = ShiftedNormL1Box(ψ.h, ψ.xk, sj, l, u, true, selected)
 
 function (ψ::ShiftedNormL1Box)(y)
   @. ψ.xsy = @views ψ.xk[ψ.selected] + ψ.sj[ψ.selected] + y[ψ.selected]

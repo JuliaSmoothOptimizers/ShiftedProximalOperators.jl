@@ -33,8 +33,8 @@ mutable struct ShiftedNormLinf{
   end
 end
 
-shifted(h::Conjugate{IndBallL1{R}}, xk::AbstractVector{R}) where {R <: Real} = 
-    ShiftedNormLinf(h, xk, zero(xk), false)
+shifted(h::Conjugate{IndBallL1{R}}, xk::AbstractVector{R}) where {R <: Real} =
+  ShiftedNormLinf(h, xk, zero(xk), false)
 shifted(
   ψ::ShiftedNormLinf{R, V0, V1, V2},
   sj::AbstractVector{R},
@@ -44,7 +44,6 @@ shifted(
 fun_name(ψ::ShiftedNormLinf) = "shifted L∞ norm"
 fun_expr(ψ::ShiftedNormLinf) = "t ↦ λ ‖xk + sj + t‖∞"
 fun_params(ψ::ShiftedNormLinf) = "xk = $(ψ.xk)\n" * " "^14 * "sj = $(ψ.sj)\n" * " "^14
-
 
 function prox!(
   y::AbstractVector{R},

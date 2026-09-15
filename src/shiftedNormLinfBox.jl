@@ -61,8 +61,7 @@ shifted(
   l,
   u,
   selected::AbstractArray{T} = 1:length(xk),
-) where {R <: Real, T <: Integer} =
-  ShiftedNormLinfBox(h, xk, zero(xk), l, u, false, selected)
+) where {R <: Real, T <: Integer} = ShiftedNormLinfBox(h, xk, zero(xk), l, u, false, selected)
 
 shifted(
   ψ::ShiftedNormLinfBox{R, V0, V1, V2},
@@ -75,8 +74,13 @@ shifted(
   l,
   u,
   selected::AbstractArray{T} = 1:length(sj),
-) where {R <: Real, T <: Integer, V0 <: AbstractVector{R}, V1 <: AbstractVector{R}, V2 <: AbstractVector{R}} =
-  ShiftedNormL1Box(ψ.h, ψ.xk, sj, l, u, true, selected)
+) where {
+  R <: Real,
+  T <: Integer,
+  V0 <: AbstractVector{R},
+  V1 <: AbstractVector{R},
+  V2 <: AbstractVector{R},
+} = ShiftedNormL1Box(ψ.h, ψ.xk, sj, l, u, true, selected)
 
 function (ψ::ShiftedNormLinfBox)(y)
   tmp = ψ.xk .+ ψ.sj .+ y
