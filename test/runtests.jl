@@ -976,7 +976,8 @@ for (op, shifted_op) ∈ zip((:Rank,), (:ShiftedRank,))
     y = zeros(n^2)
     k = NormL0(λ)
     t = ProximalOperators.prox(k, st1 + st1 .^ 2 + st1 / 2, λ)[1]
-    @test all(Diagonal(t - st1 - st1 / 2) .≈ reshape(prox!(y, f, q, λ), n, n))
+    prox!(y, f, q, λ)
+    @test all(Diagonal(t - st1 - st1 / 2) .≈ reshape(y, n, n))
 
     # Rectangular Matrix (m,n)
     m = 10
@@ -993,7 +994,8 @@ for (op, shifted_op) ∈ zip((:Rank,), (:ShiftedRank,))
     k = NormL0(λ)
     Q = svd(reshape(q + s + x, m, n))
     t = ProximalOperators.prox(k, Q.S, γ)[1]
-    @test all(Q.U * Diagonal(t) * Q.Vt - reshape(x + s, m, n) .≈ reshape(prox!(y, f, q, γ), m, n))
+    prox!(y, f, q, γ)
+    @test all(Q.U * Diagonal(t) * Q.Vt - reshape(x + s, m, n) .≈ reshape(y, m, n))
   end
 end
 
@@ -1098,7 +1100,8 @@ for (op, shifted_op) ∈ zip((:Cappedl1,), (:ShiftedCappedl1,))
     y = zeros(n^2)
     k = NormL0(λ)
     t = ProximalOperators.prox(k, st1 + st1 .^ 2 + st1 / 2, λ)[1]
-    @test all(Diagonal(t - st1 - st1 / 2) .≈ reshape(prox!(y, f, q, λ), n, n))
+    prox!(y, f, q, λ)
+    @test all(Diagonal(t - st1 - st1 / 2) .≈ reshape(y, n, n))
   end
 end
 
@@ -1201,7 +1204,8 @@ for (op, shifted_op) ∈ zip((:Nuclearnorm,), (:ShiftedNuclearnorm,))
     y = zeros(n^2)
     k = NormL1(λ)
     t = ProximalOperators.prox(k, st1 + st1 .^ 2 + st1 / 2, λ)[1]
-    @test all(Diagonal(t - st1 - st1 / 2) .≈ reshape(prox!(y, f, q, λ), n, n))
+    prox!(y, f, q, λ)
+    @test all(Diagonal(t - st1 - st1 / 2) .≈ reshape(y, n, n))
 
     # Rectangular Matrix (m,n)
     m = 10
@@ -1218,7 +1222,8 @@ for (op, shifted_op) ∈ zip((:Nuclearnorm,), (:ShiftedNuclearnorm,))
     k = NormL1(λ)
     Q = svd(reshape(q + s + x, m, n))
     t = ProximalOperators.prox(k, Q.S, γ)[1]
-    @test all(Q.U * Diagonal(t) * Q.Vt - reshape(x + s, m, n) .≈ reshape(prox!(y, f, q, γ), m, n))
+    prox!(y, f, q, γ)
+    @test all(Q.U * Diagonal(t) * Q.Vt - reshape(x + s, m, n) .≈ reshape(y, m, n))
   end
 end
 
@@ -1261,6 +1266,123 @@ for (op, shifted_op) ∈ zip((:GroupNormL2,), (:ShiftedGroupNormL2Box,))
     @test all(φ.xk .== y)
     @test φ.l == l
     @test φ.u == u
+  end
+end
+
+for (op, shifted_op) ∈ zip((:GroupNormL2,), (:ShiftedGroupNormL2Box,))
+  @testset "$shifted_op" begin
+    ShiftedOp = eval(shifted_op)
+    Op = eval(op)
+
+    λ = [1.0, 2.0]
+    idx = [1:2, 3:4]
+    h = Op(λ, idx)
+    x = zeros(4)
+    l = [-1.0, -1.0, -1.0, -1.0]
+    u = [1.0, 1.0, 1.0, 1.0]
+
+    ψ = shifted(h, x, l, u)
+    @test typeof(ψ) <: ShiftedOp
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== x)
+    @test ψ.l == l
+    @test ψ.u == u
+    @test ψ.selected == 1:4
+
+    # test value function in the box
+    @test ψ(zeros(4)) == h(x)
+
+    # test value function out of the box -> Inf
+    @test ψ(2 .* ones(4)) == Inf
+
+    # test shift update
+    y = rand(4)
+    shift!(ψ, y)
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== y)
+
+    # shift a shifted operator
+    s = ones(4) ./ 2
+    φ = shifted(ψ, s)
+    @test all(φ.sj .== s)
+    @test all(φ.xk .== y)
+    @test φ.l == l
+    @test φ.u == u
+  end
+end
+
+for (op, shifted_op) ∈ zip((:NormLinf,), (:ShiftedNormLinf,))
+  @testset "$shifted_op" begin
+    ShiftedOp = eval(shifted_op)
+    Op = eval(op)
+    h = NormLinf(1.5)
+    n = 5
+    x = zeros(n)
+    ψ = shifted(h, x)
+    @test typeof(ψ) <: ShiftedOp
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== x)
+    # test value function
+    @test ψ(zeros(n)) == h(x)
+    # test shift update
+    y = rand(n)
+    shift!(ψ, y)
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== y)
+    # shift a shifted operator
+    s = ones(n) ./ 2
+    φ = shifted(ψ, s)
+    @test all(φ.sj .== s)
+    @test all(φ.xk .== y)
+    # test prox
+    q = randn(n)
+    ν = rand()
+    yp = similar(q)
+    val = prox!(yp, φ, q, ν)
+    @test val ≈ φ(yp)
+    @test val ≈ φ.h.f.r * norm(yp .+ φ.xk .+ φ.sj, Inf)
+  end
+end
+
+for (op, shifted_op) ∈ zip((:NormLinf,), (:ShiftedNormLinfBox,))
+  @testset "$shifted_op" begin
+    ShiftedOp = eval(shifted_op)
+    h = NormLinf(1.5)
+    n = 5
+    x = zeros(n)
+    l = -ones(n)
+    u = ones(n)
+    ψ = shifted(h, x, l, u)
+    @test typeof(ψ) <: ShiftedOp
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== x)
+    @test ψ.l == l
+    @test ψ.u == u
+    @test ψ.selected == 1:n
+    # test value function in the box
+    @test ψ(zeros(n)) == h(x)
+    # test value function out of the box -> Inf
+    @test ψ(2 .* ones(n)) == Inf
+    # test shift update
+    y = rand(n)
+    shift!(ψ, y)
+    @test all(ψ.sj .== 0)
+    @test all(ψ.xk .== y)
+    # shift a shifted operator
+    s = ones(n) ./ 2
+    φ = shifted(ψ, s)
+    @test all(φ.sj .== s)
+    @test all(φ.xk .== y)
+    @test φ.l == l
+    @test φ.u == u
+    # test prox
+    q = randn(n)
+    ν = rand()
+    yp = similar(q)
+    val = prox!(yp, φ, q, ν)
+    @test val ≈ φ(yp)
+    @test all(l .- s .- sqrt(eps()) .≤ yp .≤ u .- s .+ sqrt(eps()))
+    @test val ≈ φ.h.f.r * norm(yp[φ.selected] .+ φ.xk[φ.selected] .+ φ.sj[φ.selected], Inf)
   end
 end
 

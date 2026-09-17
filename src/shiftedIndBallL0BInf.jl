@@ -91,5 +91,5 @@ function prox!(
     y[i] = min(max(y[i] - (ψ.xk[i] + ψ.sj[i]), -ψ.Δ), ψ.Δ)
   end
 
-  return y
+  return zero(R)
 end
