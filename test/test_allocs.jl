@@ -148,18 +148,3 @@ end
     @test @wrappedallocs(prox!(y, f, q, γ)) == 0
   end
 end
-
-# for op ∈ (:shiftedNormLinf,)
-#   h = NormLinf(1.0)
-#   n = 1000
-#   xk = rand(n)
-#   y = rand(n)
-
-#   ψ = shifted(h, xk)
-#   @test @wrappedallocs(ψ(y)) == 0
-#   @test @wrappedallocs(prox!(y, ψ, y, 1.0)) == 0
-
-#   ψ = shifted(h, xk, -3.0 * ones(n), 4.0 * ones(n), rand(1:n, Int(n / 2)))
-#   @test @wrappedallocs(ψ(y)) == 0
-#   @test @wrappedallocs(prox!(y, ψ, y, 1.0)) == 0
-# end
