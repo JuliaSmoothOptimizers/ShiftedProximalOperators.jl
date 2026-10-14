@@ -26,14 +26,19 @@ mutable struct ShiftedSelected{
   sol::V
 
   function ShiftedSelected(
-  ψ::ShiftedProximableFunction,
-  x::AbstractVector{R},
-  selected::AbstractVector{<:Integer},
-) where {R <: Real}
+    ψ::ShiftedProximableFunction,
+    x::AbstractVector{R},
+    selected::AbstractVector{<:Integer},
+  ) where {R <: Real}
     checkbounds(x, selected)
     allunique(selected) || throw(ArgumentError("selected variables must be unique"))
     unselected = setdiff(eachindex(x), selected) # compute it once instead of every time in prox!
-    return new{typeof(ψ), typeof(selected), typeof(unselected), typeof(x)}(ψ, selected, unselected, similar(x))
+    return new{typeof(ψ), typeof(selected), typeof(unselected), typeof(x)}(
+      ψ,
+      selected,
+      unselected,
+      similar(x),
+    )
   end
 end
 
@@ -94,5 +99,4 @@ set_bounds!(ψ::ShiftedSelected, l, u) =
 
 fun_name(ψ::ShiftedSelected) = fun_name(ψ.ψ) * " on selected variables"
 fun_expr(ψ::ShiftedSelected) = "t ↦ h(xk[selected] + sj[selected] + t[selected])"
-fun_params(ψ::ShiftedSelected) =
-  "selected = $(ψ.selected)\n" * " "^14 * fun_params(ψ.ψ)
+fun_params(ψ::ShiftedSelected) = "selected = $(ψ.selected)\n" * " "^14 * fun_params(ψ.ψ)
