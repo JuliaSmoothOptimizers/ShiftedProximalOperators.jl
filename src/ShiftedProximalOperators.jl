@@ -21,6 +21,11 @@ abstract type CompositeProximableFunction end
 abstract type AbstractCompositeNorm <: CompositeProximableFunction end
 abstract type ShiftedCompositeProximableFunction <: ShiftedProximableFunction end
 
+# Types of the bounds l and u in shifted(h, xk, l, u[, selected]).
+const BoundType = Union{Real, AbstractVector{<:Real}}
+# Norms χ defining a trust region in shifted(h, xk, Δ, χ[, selected]).
+const TrustRegionNorm{R} = Union{NormL2{R}, Conjugate{IndBallL1{R}}}
+
 include("utils.jl")
 include("psvd.jl")
 

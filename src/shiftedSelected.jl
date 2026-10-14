@@ -13,6 +13,8 @@ This works for any `h` for which `shifted(h, xk)` is defined, because
     minimize ½ σ⁻¹ ‖t - q‖² + h(xk[selected] + t[selected])
 
 separates into the proximal operator of the shifted `h` on the `selected` indices, and `t[i] = q[i]` elsewhere.
+
+If `selected == eachindex(xk)`, the plain `shifted(h, xk)` is returned.
 """
 mutable struct ShiftedSelected{
   P <: ShiftedProximableFunction,
@@ -24,29 +26,40 @@ mutable struct ShiftedSelected{
   selected::I1
   unselected::I2
   sol::V
-
-  function ShiftedSelected(
-    ψ::ShiftedProximableFunction,
-    x::AbstractVector{R},
-    selected::AbstractVector{<:Integer},
-  ) where {R <: Real}
-    checkbounds(x, selected)
-    allunique(selected) || throw(ArgumentError("selected variables must be unique"))
-    unselected = setdiff(eachindex(x), selected) # compute it once instead of every time in prox!
-    return new{typeof(ψ), typeof(selected), typeof(unselected), typeof(x)}(
-      ψ,
-      selected,
-      unselected,
-      similar(x),
-    )
-  end
 end
 
-shifted(h, xk::AbstractVector{R}, selected::AbstractVector{<:Integer}) where {R <: Real} =
-  ShiftedSelected(shifted(h, view(xk, selected)), xk, selected)
+function shifted(h, xk::AbstractVector{R}, selected::AbstractVector{<:Integer}) where {R <: Real}
+  selected == eachindex(xk) && return shifted(h, xk) # all variables are selected, return the plain shifted function
+
+  checkbounds(xk, selected)
+  allunique(selected) || throw(ArgumentError("selected variables must be unique"))
+
+  unselected = setdiff(eachindex(xk), selected) # compute it once instead of every time in prox!
+  return ShiftedSelected(shifted(h, view(xk, selected)), selected, unselected, similar(xk))
+end
 
 shifted(ψ::ShiftedSelected, sj::AbstractVector{R}) where {R <: Real} =
-  ShiftedSelected(shifted(ψ.ψ, view(sj, ψ.selected)), sj, ψ.selected)
+  ShiftedSelected(shifted(ψ.ψ, view(sj, ψ.selected)), ψ.selected, ψ.unselected, ψ.sol)
+
+# Trust regions without a variant restricted to selected variables accept `selected`
+# only when all the variables are selected, so that callers may always pass it.
+# The box variants of NormL0, NormL1 and RootNormLhalf with χ = NormLinf(1) are more specific
+# and handle any `selected`.
+function shifted(
+  h,
+  xk::AbstractVector{R},
+  Δ::R,
+  χ::TrustRegionNorm{R},
+  selected::AbstractArray{<:Integer},
+) where {R <: Real}
+  selected == eachindex(xk) && return shifted(h, xk, Δ, χ) # all variables are selected, return the plain shifted function
+  throw(
+    ArgumentError(
+      "shifted(h, xk, Δ, χ, selected) with $(typeof(h).name.name) and $(typeof(χ).name.name) " *
+      "requires all variables to be selected",
+    ),
+  )
+end
 
 # Fields of the wrapper are its own; any other property, e.g., h, λ, xk or sj,
 # is that of the shifted function on the selected variables.
