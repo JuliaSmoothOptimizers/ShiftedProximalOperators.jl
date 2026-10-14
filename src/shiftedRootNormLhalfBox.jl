@@ -47,8 +47,8 @@ end
 shifted(
   h::RootNormLhalf{R},
   xk::AbstractVector{R},
-  l,
-  u,
+  l::BoundType,
+  u::BoundType,
   selected::AbstractArray{T} = 1:length(xk),
 ) where {R <: Real, T <: Integer} = ShiftedRootNormLhalfBox(h, xk, zero(xk), l, u, false, selected)
 shifted(
