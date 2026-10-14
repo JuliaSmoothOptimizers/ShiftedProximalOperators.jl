@@ -15,25 +15,26 @@ This works for any `h` for which `shifted(h, xk)` is defined, because
 separates into the proximal operator of the shifted `h` on the `selected` indices, and `t[i] = q[i]` elsewhere.
 """
 mutable struct ShiftedSelected{
-  R <: Real,
   P <: ShiftedProximableFunction,
-  I <: AbstractVector{<:Integer},
-  V <: AbstractVector{R},
+  I1 <: AbstractVector{<:Integer},
+  I2 <: AbstractVector{<:Integer},
+  V <: AbstractVector{<:Real},
 } <: ShiftedProximableFunction
   ψ::P                     # h shifted on the selected variables only
-  selected::I
-  unselected::Vector{Int}
-end
+  selected::I1
+  unselected::I2
+  sol::V
 
-function ShiftedSelected(
+  function ShiftedSelected(
   ψ::ShiftedProximableFunction,
   x::AbstractVector{R},
   selected::AbstractVector{<:Integer},
 ) where {R <: Real}
-  checkbounds(x, selected)
-  allunique(selected) || throw(ArgumentError("selected variables must be unique"))
-  unselected = setdiff(eachindex(x), selected) # compute it once instead of every time in prox!
-  return ShiftedSelected(ψ, selected, unselected)
+    checkbounds(x, selected)
+    allunique(selected) || throw(ArgumentError("selected variables must be unique"))
+    unselected = setdiff(eachindex(x), selected) # compute it once instead of every time in prox!
+    return new{typeof(ψ), typeof(selected), typeof(unselected), typeof(x)}(ψ, selected, unselected, similar(x))
+  end
 end
 
 shifted(h, xk::AbstractVector{R}, selected::AbstractVector{<:Integer}) where {R <: Real} =
@@ -58,7 +59,7 @@ end
 
 function prox!(
   y::AbstractVector{R},
-  ψ::ShiftedSelected{R},
+  ψ::ShiftedSelected,
   q::AbstractVector{R},
   σ::R,
 ) where {R <: Real}
@@ -72,7 +73,7 @@ end
 # Along the variables that are not selected, minimize ½ d y² + g y, which requires d > 0.
 function iprox!(
   y::AbstractVector{R},
-  ψ::ShiftedSelected{R},
+  ψ::ShiftedSelected,
   g::AbstractVector{R},
   d::AbstractVector{R},
 ) where {R <: Real}

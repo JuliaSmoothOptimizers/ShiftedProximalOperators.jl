@@ -67,7 +67,7 @@ end
       y = copy(iprox(ψ, g, d))
       @test y[selected] ≈ iprox(shifted(h, x[selected]), g[selected], d[selected])
       @test y[unselected] ≈ -g[unselected] ./ d[unselected]
-      @test_throws DomainError iprox(ψ, g, zeros(n))
+      @test_throws AssertionError iprox(ψ, g, zeros(n))
     end
   end
 
