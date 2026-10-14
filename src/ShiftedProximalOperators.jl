@@ -48,6 +48,7 @@ include("shiftedGroupNormL2Box.jl")
 include("shiftedRank.jl")
 include("shiftedCappedl1.jl")
 include("shiftedNuclearnorm.jl")
+include("shiftedSelected.jl")
 
 function (ψ::ShiftedProximableFunction)(y)
   @. ψ.xsy = ψ.xk + ψ.sj + y
