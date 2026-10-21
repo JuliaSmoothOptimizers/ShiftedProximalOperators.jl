@@ -1,7 +1,7 @@
 export ShiftedNormLinf
 
 """
-Allows to compute the ‖.‖∞ operator with variable bounds: t ↦ λ ‖xk + sj + t‖∞
+Computes the shifted ‖.‖∞ operator: t ↦ λ ‖xk + sj + t‖∞, where xk and sj are shifts.
 
 The proximal operator is also provided. To do so, we use the algorithm proposed in Efficient Projections onto the ℓ1-Ball for Learning in High Dimensions¹
 
@@ -56,7 +56,10 @@ function prox!(
   @. ψ.sol = q + ψ.xk + ψ.sj
 
   r = σ * λ
-  y .= ψ.sol .- _proj_l1ball(ψ.sol, r)
+  # y .= ψ.sol .- _proj_l1ball(ψ.sol, r)
+  _proj_l1ball!(y, ψ.sol, r)
+  y .= -y
+  y .+= ψ.sol
   @. y -= (ψ.xk + ψ.sj)
   val = zero(R)
   @inbounds for i ∈ eachindex(y)
@@ -65,16 +68,32 @@ function prox!(
   return val
 end
 
-function _proj_l1ball(v::AbstractVector{R}, r::R) where {R <: Real}
+# function _proj_l1ball(v::AbstractVector{R}, r::R) where {R <: Real}
+#   # Implements algorithm proposed in:
+#   # Duchi et al. "Efficient Projections onto the ℓ₁-ball for Learning in High Dimensions",
+#   if norm(v, 1) ≤ r
+#     return copy(v)
+#   end
+#   μ = sort(abs.(v), rev = true)
+#   cssμ = cumsum(μ)
+#   list_inx = collect(1:length(μ))
+#   rho = findlast(μ .* list_inx - (cssμ .- r) .+ eps(R) .> 0)
+#   θ = (cssμ[rho] - r) / rho
+#   return sign.(v) .* max.(abs.(v) .- θ, zero(R))
+# end
+
+function _proj_l1ball!(y, v::AbstractVector{R}, r::R) where {R <: Real}
   # Implements algorithm proposed in:
   # Duchi et al. "Efficient Projections onto the ℓ₁-ball for Learning in High Dimensions",
   if norm(v, 1) ≤ r
-    return copy(v)
+    y .= copy(v)
+    return y
   end
   μ = sort(abs.(v), rev = true)
   cssμ = cumsum(μ)
   list_inx = collect(1:length(μ))
   rho = findlast(μ .* list_inx - (cssμ .- r) .+ eps(R) .> 0)
   θ = (cssμ[rho] - r) / rho
-  return sign.(v) .* max.(abs.(v) .- θ, zero(R))
+  y .= sign.(v) .* max.(abs.(v) .- θ, zero(R))
+  return y
 end

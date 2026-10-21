@@ -107,7 +107,10 @@ function prox!(
   @. ψ.sol = q + ψ.xk + ψ.sj
 
   r = σ * λ
-  y .= ψ.sol .- _proj_l1ball(ψ.sol, r)
+  # y .= ψ.sol .- _proj_l1ball(ψ.sol, r)
+  _proj_l1ball!(y, ψ.sol, r)
+  y .= -y
+  y .+= ψ.sol
 
   for i ∈ eachindex(y)
     li = isa(ψ.l, Real) ? ψ.l : ψ.l[i]

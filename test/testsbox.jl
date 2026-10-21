@@ -368,20 +368,6 @@ end
 
 for (op, shifted_op) ∈ zip((:NormLinf,), (:ShiftedNormLinfBox,))
 
-  function _proj_l1ball(v::AbstractVector{R}, r::R) where {R <: Real}
-    # Implements algorithm proposed in:
-    # Duchi et al. "Efficient Projections onto the ℓ₁-ball for Learning in High Dimensions",
-    if norm(v, 1) ≤ r
-      return copy(v)
-    end
-    μ = sort(abs.(v), rev = true)
-    cssμ = cumsum(μ)
-    list_inx = collect(1:length(μ))
-    rho = findlast(μ .* list_inx - (cssμ .- r) .+ eps(R) .> 0)
-    θ = (cssμ[rho] - r) / rho
-    return sign.(v) .* max.(abs.(v) .- θ, zero(R))
-  end
-
   @testset "$shifted_op" begin
     ## Testing ShiftedNormLinfBox
     # Looking for argmin_t obj(t) = 1/(2σ) * ‖t-q‖² + λ * ‖x+s+t‖∞ + χ{s+t ∈ [l,u]}
