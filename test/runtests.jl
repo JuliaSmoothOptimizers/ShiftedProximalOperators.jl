@@ -1264,6 +1264,60 @@ for (op, shifted_op) ∈ zip((:GroupNormL2,), (:ShiftedGroupNormL2Box,))
   end
 end
 
+@testset "NormL2Inf" begin
+  omega = [1.0, 2.0]
+  h = NormL2Inf(omega, 3)
+  x = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+  @test h(x) == 2.0
+
+  x2 = [3.0, 4.0, 0.0, 1.0, 0.0, 0.0]
+  @test h(x2) == 25.0
+
+  x3 = zeros(6)
+  @test h(x3) == 0.0
+end
+
+@testset "ShiftedNormL2Inf" begin
+  omega = [1.0, 2.0]
+  h = NormL2Inf(omega, 3)
+  xk = ones(6)
+  ψ = shifted(h, xk)
+
+  @test typeof(ψ) == ShiftedNormL2Inf{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}}
+  @test all(ψ.sj .== 0)
+  @test all(ψ.xk .== xk)
+
+  @test ψ(zeros(6)) == h(xk)
+
+  t = rand(6)
+  @test ψ(t) == h(xk + t)
+
+  s = 0.5 * ones(6)
+  φ = shifted(ψ, s)
+  @test all(φ.sj .== s)
+  @test all(φ.xk .== xk)
+  @test φ.shifted_twice == true
+  @test φ(zeros(6)) == h(xk + s)
+  y2 = rand(6)
+  @test φ(y2) == h(xk + s + y2)
+
+  sigma = 0.5
+  q = randn(6)
+  y = similar(q)
+  yref = similar(q)
+  prox!(y, ψ, q, sigma)
+  prox!(yref, h, q + xk, sigma)
+  @test isapprox(y, yref - xk, atol = 1e-10)
+
+  y2r = similar(q)
+  prox!(y2r, φ, q, sigma)
+  prox!(yref, h, q + xk + s, sigma)
+  @test isapprox(y2r, yref - xk - s, atol = 1e-10)
+
+  val = prox!(y, ψ, q, sigma)
+  @test isapprox(val, h(xk + y), atol = 1e-10)
+end
+
 include("testsbox.jl")
 include("partial_prox.jl")
 include("test_allocs.jl")

@@ -167,3 +167,33 @@ for (op, shifted_op) ∈ zip((:GroupNormL2,), (:ShiftedGroupNormL2,), (:ShiftedG
   @test @wrappedallocs(ω(y)) == 0
   @test @wrappedallocs(prox!(y, ω, y, 1.0)) == 0
 end
+
+for op ∈ (:NormL2Inf,)
+  @testset "allocs $op" begin
+    omega = [1.0, 2.0]
+    n_group = 500
+    n = 2 * n_group
+    h = NormL2Inf(omega, n_group)
+    xk = rand(n)
+    y  = rand(n)
+
+    ψ = shifted(h, xk)
+    @test @wrappedallocs(ψ(y)) == 0
+    @test @wrappedallocs(prox!(y, h, y, 1.0)) == 0
+    @test @wrappedallocs(prox!(y, ψ, y, 1.0)) == 0
+
+    ω = shifted(ψ, rand(n))
+    @test @wrappedallocs(ω(y)) == 0
+    @test @wrappedallocs(prox!(y, ω, y, 1.0)) == 0
+
+    l = -3.0 * ones(n)
+    u =  4.0 * ones(n)
+    ψb = shifted(h, xk, l, u)
+    @test @wrappedallocs(ψb(y)) == 0
+    @test @wrappedallocs(prox!(y, ψb, y, 1.0)) == 0
+
+    ωb = shifted(ψb, rand(n))
+    @test @wrappedallocs(ωb(y)) == 0
+    @test @wrappedallocs(prox!(y, ωb, y, 1.0)) == 0
+  end
+end

@@ -25,9 +25,15 @@ mutable struct ShiftedNormL2Inf{
   h::NormL2Inf{R}
   xk::V0
   sj::V1
-  sol::V2 # scratch: full shifted argument q + xk + sj
+  sol::V2 # full shifted argument q + xk + sj
   shifted_twice::Bool
-  xsy::V2 # scratch buffer (same length as sol)
+  xsy::V2 # buffer (same length as sol)
+  α::Vector{R} # αᵢ
+  λv::Vector{R} # λᵢ
+  p::Vector{R} # solution simplex
+  order::Vector{Int} # buffer
+  α_sqrt::Vector{R} # buffer
+  λ_sqrt::Vector{R} # buffer
 
   function ShiftedNormL2Inf(
     h::NormL2Inf{R},
@@ -37,7 +43,12 @@ mutable struct ShiftedNormL2Inf{
   ) where {R <: Real}
     sol = similar(sj)
     xsy = similar(sj)
-    new{R, typeof(xk), typeof(sj), typeof(sol)}(h, xk, sj, sol, shifted_twice, xsy)
+    N = length(h.omega)
+    new{R, typeof(xk), typeof(sj), typeof(sol)}(
+      h, xk, sj, sol, shifted_twice, xsy,
+      Vector{R}(undef, N), Vector{R}(undef, N), Vector{R}(undef, N),
+      Vector{Int}(undef, N), Vector{R}(undef, N), Vector{R}(undef, N),
+    )
   end
 end
 
@@ -84,16 +95,14 @@ function prox!(
   @. ψ.sol = q + ψ.xk + ψ.sj
 
   # αᵢ = ωᵢ ‖vᵢ‖², λᵢ = σ ωᵢ
-  α = Vector{R}(undef, N)
-  λv = Vector{R}(undef, N)
   for i = 1:N
     vi = view(ψ.sol, _group_range(i, n))
-    α[i] = h.omega[i] * sum(abs2, vi)
-    λv[i] = σ * h.omega[i]
+    ψ.α[i] = h.omega[i] * sum(abs2, vi)
+    ψ.λv[i] = σ * h.omega[i]
   end
 
   # Solve auxiliary simplex problem → p ∈ ΔN  (Prop. 2.2)
-  p = _solve_aux_simplex(α, λv)
+  _solve_aux_simplex!(ψ.p, ψ.α, ψ.λv, ψ.order, ψ.α_sqrt, ψ.λ_sqrt)
 
   # Apply Prop. 2.1:  prox_{σh}(v)ᵢ = vᵢ / (1 + 2 λᵢ pᵢ),
   # then subtract (xk + sj) to get the increment y
@@ -102,7 +111,7 @@ function prox!(
     rng = _group_range(i, n)
     vi = view(ψ.sol, rng)
     yi = view(y, rng)
-    denom = one(R) + 2 * λv[i] * p[i]
+    denom = one(R) + 2 * ψ.λv[i] * ψ.p[i]
     @. yi = vi / denom
     val = max(val, h.omega[i] * sum(abs2, yi))
   end

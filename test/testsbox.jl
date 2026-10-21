@@ -365,3 +365,110 @@ for (op, shifted_op) ∈ zip((:GroupNormL2,), (:ShiftedGroupNormL2Box,))
     @test ω.selected == selected
   end
 end
+
+for (op, shifted_op) ∈ zip((:NormL2Inf,), (:ShiftedNormL2InfBox,))
+  @testset "$shifted_op" begin
+    ## Testing ShiftedNormL2InfBox
+    # Looking for argmin_t  1/(2σ) ‖t-q‖² + max_i ωᵢ ‖xk+sj+t‖² + χ{sj+t ∈ [l,u]}
+
+    sigma = 1.0
+    omega = [1.0, 2.0]
+    n_group = 2
+    l = [-1.0, -1.0, -1.0, -1.0]
+    u = [ 1.0,  1.0,  1.0,  1.0]
+    s = [0.0, 0.0, 0.0, 0.0]
+
+    x = [
+      [ 0.0,  0.0,  0.0,  0.0],   # cas 1 : q grand → prox >> u, clip u pour les 2 groupes
+      [ 0.0,  0.0,  0.0,  0.0],   # cas 2 : q petit négatif → prox << l, clip l
+      [ 0.0,  0.0,  0.0,  0.0],   # cas 3 : q petit → prox dans la boîte, vérif sans clip
+      [ 0.5,  0.5,  0.5,  0.5],   # cas 4 : xk ≠ 0, v très grand → clip u pour les 2 groupes
+    ]
+    q = [
+      [ 3.0,  4.0,  3.0,  4.0],
+      [-3.0, -4.0, -3.0, -4.0],
+      [ 0.3,  0.3,  0.3,  0.3],
+      [ 4.5,  4.5,  4.5,  4.5],   # v = q+xk = [5,5,5,5] → prox >> u pour les 2 groupes
+    ]
+    sol = [
+      [ 1.0,  1.0,  1.0,  1.0],   # cas 1 : clip u
+      [-1.0, -1.0, -1.0, -1.0],   # cas 2 : clip l
+      nothing,                     # cas 3 : vérifié autrement
+      [ 1.0,  1.0,  1.0,  1.0],   # cas 4 : clip u
+    ]
+
+    for i in [1, 2, 4]
+      h = NormL2Inf(omega, n_group)
+      ψ = shifted(h, x[i], l, u)
+      ω_op = shifted(ψ, s)
+      y = similar(q[i])
+      prox!(y, ω_op, q[i], sigma)
+      @test isapprox(y, sol[i], atol = 1e-8)
+    end
+
+    # cas 3 : prox dans la boîte → résultat identique au prox non contraint
+    let i = 3
+      h = NormL2Inf(omega, n_group)
+      ψ_box = shifted(h, x[i], l, u)
+      ψ_unc = shifted(h, x[i])
+      ω_box = shifted(ψ_box, s)
+      ω_unc = shifted(ψ_unc, s)
+      y_box = similar(q[i])
+      y_unc = similar(q[i])
+      prox!(y_box, ω_box, q[i], sigma)
+      prox!(y_unc, ω_unc, q[i], sigma)
+      @test all(y_box .≥ l .- 1e-10)
+      @test all(y_box .≤ u .+ 1e-10)
+      @test isapprox(y_box, y_unc, atol = 1e-8)
+    end
+
+    h = NormL2Inf(omega, n_group)
+    ψ = shifted(h, zeros(4), l, u)
+    @test ψ(2 .* ones(4)) == Inf
+
+    ψ2 = shifted(h, zeros(4), l, u)
+    @test all(ψ2.sj .== 0)
+    @test all(ψ2.xk .== 0)
+    @test ψ2.l == l
+    @test ψ2.u == u
+    @test ψ2.selected == 1:4
+
+    s2 = 0.5 * ones(4)
+    φ2 = shifted(ψ2, s2)
+    @test all(φ2.sj .== s2)
+    @test all(φ2.xk .== 0)
+    @test φ2.l == l
+    @test φ2.u == u
+  end
+
+  @testset "ShiftedNormL2InfBox with selected" begin
+    sigma = 1.0
+    omega = [1.0]
+    n_group = 2
+    l = [-1.0, -1.0, -1.0]
+    u = [ 1.0,  1.0,  1.0]
+    s = [0.0, 0.0, 0.0]
+    x = zeros(3)
+    selected = [1, 2]
+
+    q   = [[3.0, 4.0, 0.0], [3.0, 4.0, 5.0], [3.0, 4.0, -5.0]]
+    sol = [[1.0, 1.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, -1.0]]
+    # Case 1 : q[3]=0  ∈ [l-s,u-s] → prox_zero(0,-1,1)  = 0
+    # Case 2 : q[3]=5  > u-s=1     → prox_zero(5,-1,1)  = 1
+    # Case 3 : q[3]=-5 < l-s=-1   → prox_zero(-5,-1,1) = -1
+
+    for i = 1:3
+      h = NormL2Inf(omega, n_group)
+      ψ = shifted(h, x, l, u, selected)
+      ω = shifted(ψ, s)
+      y = similar(q[i])
+      prox!(y, ω, q[i], sigma)
+      @test isapprox(y, sol[i], atol = 1e-8)
+    end
+
+    h = NormL2Inf(omega, n_group)
+    ψ = shifted(h, x, l, u, selected)
+    ω = shifted(ψ, s)
+    @test ω.selected == selected
+  end
+end

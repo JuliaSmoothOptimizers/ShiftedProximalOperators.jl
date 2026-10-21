@@ -21,14 +21,24 @@ Propositions 2.1 and 2.2 in:
   "Proximity operator of the weighted squared ℓ₂,∞ norm with applications",
   S. López-Rivera, 2026.
 """
-struct NormL2Inf{R <: Real} <: ProximableFunction
+mutable struct NormL2Inf{R <: Real} # <: ProximableFunction
   omega::Vector{R} # weights ωᵢ > 0, length N
   n::Int # group size (number of components per block)
+  α::Vector{R} # αᵢ = ωᵢ ‖xᵢ‖²
+  λv::Vector{R} # λᵢ = λ ωᵢ
+  p::Vector{R} # solution simplex
+  order::Vector{Int} # buffer
+  α_sqrt::Vector{R} # buffer
+  λ_sqrt::Vector{R} # buffer
 
   function NormL2Inf(omega::AbstractVector{R}, n::Int = 0) where {R <: Real}
     all(>(0), omega) || error("All weights ωᵢ must be strictly positive.")
     n >= 0 || error("Group size n must be non-negative.")
-    new{R}(collect(omega), n)
+    N = length(omega)
+    new{R}(
+      collect(omega), n, Vector{R}(undef, N), Vector{R}(undef, N), Vector{R}(undef, N),
+      Vector{Int}(undef, N), Vector{R}(undef, N), Vector{R}(undef, N),
+      )
   end
 end
 
@@ -93,9 +103,16 @@ explicitly via KKT conditions.
 
 See Proposition 2.2 of "Proximity operator of the weighted squared ℓ₂,∞ norm with applications", S. López-Rivera, 2026.
 """
-function _solve_aux_simplex(α::Vector{R}, λv::Vector{R}) where {R <: Real}
+function _solve_aux_simplex!(
+    p,
+    α::Vector{R},
+    λv::Vector{R},
+    order::Vector{Int},
+    α_srt::Vector{R},
+    λ_srt::Vector{R}
+  ) where {R <: Real}
   N = length(α)
-  p = zeros(R, N)
+  # p = zeros(R, N)
 
   # If all αᵢ = 0, any simplex point is optimal
   if all(iszero, α)
@@ -104,14 +121,18 @@ function _solve_aux_simplex(α::Vector{R}, λv::Vector{R}) where {R <: Real}
   end
 
   # Sort indices so that α_{ℓ₁} ≤ … ≤ α_{ℓN}
-  order = sortperm(α)
-  α_srt = α[order]
-  λ_srt = λv[order]
-
-  # Initialise sums over the full active set {1,…,N}
+  # Initialize sums over the full active set {1,…,N}
   # S₁ = Σ_{j∉Iᵢ} 1/λⱼ, S₂ = Σ_{j∉Iᵢ} √αⱼ/λⱼ
-  S1 = sum(1 / λ_srt[j] for j = 1:N)
-  S2 = sum(sqrt(α_srt[j]) / λ_srt[j] for j = 1:N)
+  sortperm!(order, α)
+  S1 = zero(R)
+  S2 = zero(R)
+  @inbounds for i = 1:N
+    α_srt[i] = α[order[i]]
+    λ_srt[i] = λv[order[i]]
+
+    S1 += one(R) / λ_srt[i]
+    S2 += sqrt(α_srt[i]) / λ_srt[i]
+  end
 
   # Find k = min{ i ∈ {0,…,N-1} : (2 + S1) √α_{ℓᵢ₊₁} > S2 }
   # We remove one element at a time from the active set as i increases.
@@ -132,7 +153,14 @@ function _solve_aux_simplex(α::Vector{R}, λv::Vector{R}) where {R <: Real}
 
   # Assign pᵢ for each original index
   for i = 1:N
-    spos = findfirst(==(i), order) # position of original index i in the sorted order
+    # position of original index i in the sorted order
+    spos = 0
+    for j = 1:N
+      if order[j] == i
+        spos = j
+        break
+      end
+    end
     if spos <= k + 1
       # i ∈ Iₖ → pᵢ = 0
       p[i] = zero(R)
@@ -163,16 +191,14 @@ function prox!(
   N = length(h.omega)
 
   # Build αᵢ = ωᵢ ‖xᵢ‖²  and  λᵢ = λ ωᵢ
-  α = Vector{R}(undef, N)
-  λv = Vector{R}(undef, N)
   for i = 1:N
     xi = view(x, _group_range(i, n))
-    α[i] = h.omega[i] * norm(xi, 2)^2
-    λv[i] = λ * h.omega[i]
+    h.α[i] = h.omega[i] * norm(xi, 2)^2
+    h.λv[i] = λ * h.omega[i]
   end
 
   # Solve auxiliary simplex problem
-  p = _solve_aux_simplex(α, λv)
+  _solve_aux_simplex!(h.p, h.α, h.λv, h.order, h.α_sqrt, h.λ_sqrt)
 
   # Apply prox formula and evaluate h(y)
   val = zero(R)
@@ -180,7 +206,7 @@ function prox!(
     rng = _group_range(i, n)
     xi = view(x, rng)
     yi = view(y, rng)
-    denom = one(R) + 2 * λv[i] * p[i]
+    denom = one(R) + 2 * h.λv[i] * h.p[i]
     @. yi = xi / denom
     val = max(val, h.omega[i] * sum(abs2, yi))
   end

@@ -35,6 +35,12 @@ mutable struct ShiftedNormL2InfBox{
   shifted_twice::Bool
   selected::VI # indices involved in the norm (active coordinates)
   xsy::V2 # scratch buffer
+  α::Vector{R} # αᵢ
+  λv::Vector{R} # λᵢ
+  p::Vector{R} # solution simplex
+  order::Vector{Int} # buffer
+  α_sqrt::Vector{R} # buffer
+  λ_sqrt::Vector{R} # buffer
 
   function ShiftedNormL2InfBox(
     h::NormL2Inf{R},
@@ -48,8 +54,11 @@ mutable struct ShiftedNormL2InfBox{
     any(l .> u) && error("At least one lower bound exceeds the corresponding upper bound.")
     sol = similar(xk)
     xsy = similar(xk, length(selected))
+    N = length(h.omega)
     new{R, typeof(xk), typeof(sj), typeof(sol), typeof(l), typeof(u), typeof(selected)}(
       h, xk, sj, sol, l, u, shifted_twice, selected, xsy,
+      Vector{R}(undef, N), Vector{R}(undef, N), Vector{R}(undef, N),
+      Vector{Int}(undef, N), Vector{R}(undef, N), Vector{R}(undef, N),
     )
   end
 end
@@ -134,27 +143,25 @@ function prox!(
   σ::R,
 ) where {R <: Real, V0, V1, V2}
   h = ψ.h
-  n = _group_size(h, q)
+  n = _group_size(h, view(q, ψ.selected))
   N = length(h.omega)
 
   @. ψ.sol = q + ψ.xk + ψ.sj
 
   # αᵢ = ωᵢ ‖vᵢ‖²,   λᵢ = σ ωᵢ
-  α  = Vector{R}(undef, N)
-  λv = Vector{R}(undef, N)
   for i = 1:N
     vi = view(ψ.sol, _group_range(i, n))
-    α[i] = h.omega[i] * sum(abs2, vi)
-    λv[i] = σ * h.omega[i]
+    ψ.α[i] = h.omega[i] * sum(abs2, vi)
+    ψ.λv[i] = σ * h.omega[i]
   end
 
-  p = _solve_aux_simplex(α, λv)
+  _solve_aux_simplex!(ψ.p, ψ.α, ψ.λv, ψ.order, ψ.α_sqrt, ψ.λ_sqrt)
 
   for i = 1:N
     rng = _group_range(i, n)
     vi = view(ψ.sol, rng)
     yi = view(y, rng)
-    denom = one(R) + 2 * λv[i] * p[i]
+    denom = one(R) + 2 * ψ.λv[i] * ψ.p[i]
     @. yi = vi / denom
   end
 
