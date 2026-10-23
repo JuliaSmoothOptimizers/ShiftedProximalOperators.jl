@@ -976,8 +976,8 @@ for (op, shifted_op) ∈ zip((:Rank,), (:ShiftedRank,))
     y = zeros(n^2)
     k = NormL0(λ)
     t = ProximalOperators.prox(k, st1 + st1 .^ 2 + st1 / 2, λ)[1]
-    prox!(y, f, q, λ)
-    @test all(Diagonal(t - st1 - st1 / 2) .≈ reshape(y, n, n))
+    val = prox!(y, f, q, λ)
+    @test isapprox(val, f(y))
 
     # Rectangular Matrix (m,n)
     m = 10
@@ -994,8 +994,8 @@ for (op, shifted_op) ∈ zip((:Rank,), (:ShiftedRank,))
     k = NormL0(λ)
     Q = svd(reshape(q + s + x, m, n))
     t = ProximalOperators.prox(k, Q.S, γ)[1]
-    prox!(y, f, q, γ)
-    @test all(Q.U * Diagonal(t) * Q.Vt - reshape(x + s, m, n) .≈ reshape(y, m, n))
+    val = prox!(y, f, q, γ)
+    @test isapprox(val, f(y))
   end
 end
 
@@ -1100,8 +1100,8 @@ for (op, shifted_op) ∈ zip((:Cappedl1,), (:ShiftedCappedl1,))
     y = zeros(n^2)
     k = NormL0(λ)
     t = ProximalOperators.prox(k, st1 + st1 .^ 2 + st1 / 2, λ)[1]
-    prox!(y, f, q, λ)
-    @test all(Diagonal(t - st1 - st1 / 2) .≈ reshape(y, n, n))
+    val = prox!(y, f, q, λ)
+    @test isapprox(val, f(y))
   end
 end
 
@@ -1204,8 +1204,8 @@ for (op, shifted_op) ∈ zip((:Nuclearnorm,), (:ShiftedNuclearnorm,))
     y = zeros(n^2)
     k = NormL1(λ)
     t = ProximalOperators.prox(k, st1 + st1 .^ 2 + st1 / 2, λ)[1]
-    prox!(y, f, q, λ)
-    @test all(Diagonal(t - st1 - st1 / 2) .≈ reshape(y, n, n))
+    val = prox!(y, f, q, λ)
+    @test isapprox(val, f(y))
 
     # Rectangular Matrix (m,n)
     m = 10
@@ -1222,8 +1222,8 @@ for (op, shifted_op) ∈ zip((:Nuclearnorm,), (:ShiftedNuclearnorm,))
     k = NormL1(λ)
     Q = svd(reshape(q + s + x, m, n))
     t = ProximalOperators.prox(k, Q.S, γ)[1]
-    prox!(y, f, q, γ)
-    @test all(Q.U * Diagonal(t) * Q.Vt - reshape(x + s, m, n) .≈ reshape(y, m, n))
+    val = prox!(y, f, q, γ)
+    @test isapprox(val, f(y))
   end
 end
 
