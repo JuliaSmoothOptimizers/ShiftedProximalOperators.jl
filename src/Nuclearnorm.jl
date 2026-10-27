@@ -57,12 +57,14 @@ function prox!(
   psvd_dd!(f.F, f.A, full = false)
   c = sqrt(2 * f.lambda * gamma)
   f.F.S .= max.(0, f.F.S .- f.lambda * gamma)
+  val = zero(R)
   for i ∈ eachindex(f.F.S)
     for j = 1:size(f.A, 1)
       f.F.U[j, i] = f.F.U[j, i] * f.F.S[i]
     end
+    val += f.lambda * f.F.S[i]
   end
   mul!(f.A, f.F.U, f.F.Vt)
   y .= reshape_array(f.A, (size(y, 1), 1))
-  return y
+  return val
 end

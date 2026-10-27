@@ -57,6 +57,7 @@ function prox!(
 ) where {R <: Real, S <: AbstractArray, T, Tr, M <: AbstractArray{T}}
   f.A .= ShiftedProximalOperators.reshape_array(x, size(f.A))
   psvd_dd!(f.F, f.A, full = false)
+  val = zero(R)
   for i ∈ eachindex(f.F.S)
     x1 = max(f.theta, f.F.S[i])
     x2 = min(f.theta, max(0, f.F.S[i] - f.lambda * gamma))
@@ -69,8 +70,9 @@ function prox!(
     for j = 1:size(f.A, 1)
       f.F.U[j, i] = f.F.U[j, i] * f.F.S[i]
     end
+    val += f.lambda * min(f.theta, f.F.S[i])
   end
   mul!(f.A, f.F.U, f.F.Vt)
   y .= ShiftedProximalOperators.reshape_array(f.A, (size(y, 1), 1))
-  return y
+  return val
 end
