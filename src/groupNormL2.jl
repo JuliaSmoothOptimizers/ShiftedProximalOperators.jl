@@ -17,13 +17,9 @@ struct GroupNormL2{R <: Real, RR <: AbstractVector{R}, I}
   idx::I
 
   function GroupNormL2{R, RR, I}(lambda::RR, idx::I) where {R <: Real, RR <: AbstractVector{R}, I}
-    if any(lambda .< 0)
-      error("weights λ must be nonnegative")
-    elseif length(lambda) != length(idx)
-      error("number of weights and groups must be the same")
-    else
-      new{R, RR, I}(lambda, idx)
-    end
+    any(lambda .< 0) && error("weights λ must be nonnegative")
+    length(lambda) != length(idx) && error("number of weights and groups must be the same")
+    new{R, RR, I}(lambda, idx)
   end
 end
 
