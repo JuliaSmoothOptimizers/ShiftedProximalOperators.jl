@@ -50,8 +50,8 @@ end
 shifted(
   h::NormL1{R},
   xk::AbstractVector{R},
-  l,
-  u,
+  l::BoundType,
+  u::BoundType,
   selected::AbstractArray{T} = 1:length(xk),
 ) where {R <: Real, T <: Integer} = ShiftedNormL1Box(h, xk, zero(xk), l, u, false, selected)
 shifted(

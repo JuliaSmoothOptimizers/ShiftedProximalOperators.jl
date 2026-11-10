@@ -1271,4 +1271,5 @@ end
 
 include("testsbox.jl")
 include("partial_prox.jl")
+include("test_selected.jl")
 include("test_allocs.jl")

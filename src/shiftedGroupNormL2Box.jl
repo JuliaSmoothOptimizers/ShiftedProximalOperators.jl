@@ -63,8 +63,8 @@ end
 shifted(
   h::GroupNormL2{R, RR, I},
   xk::AbstractVector{R},
-  l,
-  u,
+  l::BoundType,
+  u::BoundType,
   selected::AbstractArray{T} = 1:length(xk),
 ) where {R <: Real, RR <: AbstractVector{R}, I, T <: Integer} =
   ShiftedGroupNormL2Box(h, xk, zero(xk), l, u, false, selected)
