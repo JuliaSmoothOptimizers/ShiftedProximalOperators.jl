@@ -1269,6 +1269,451 @@ for (op, shifted_op) ∈ zip((:GroupNormL2,), (:ShiftedGroupNormL2Box,))
   end
 end
 
+# Group ℓ₀: hard threshold, cardinality window, and a product of sets.
+@testset "GroupNormL0" begin
+  λ = [0.3, 1.2, 0.5]
+  x = [0.4, -2.0, 0.1]
+  ν = 0.7
+  h = GroupNormL0(λ, 3)
+  y = similar(x)
+  ytrue = similar(x)
+  prox!(y, h, x, ν)
+  for i = 1:3
+    prox!(view(ytrue, i:i), NormL0(λ[i]), view(x, i:i), ν)
+  end
+  @test y ≈ ytrue
+  @test h(x) ≈ sum(NormL0(λ[i])(x[i:i]) for i = 1:3)
+
+  # A group is kept as a block when its squared norm exceeds 2γλ.
+  idx = [1:2, 3:4]
+  λg = [1.0, 0.25]
+  xg = [3.0, 0.0, 0.4, 0.0]
+  yg = zeros(4)
+  vg = prox!(yg, GroupNormL0(λg, idx), xg, 1.0)
+  @test yg == [3.0, 0.0, 0.0, 0.0]
+  @test vg == 1.0
+
+  # The threshold is strict: ‖x‖² = 2γλ turns the group off.
+  yeq = ones(2)
+  prox!(yeq, GroupNormL0(0.5, 2), [1.0, 0.0], 1.0)
+  @test yeq == [0.0, 0.0]
+
+  # A coordinate in no group is outside h.
+  yout = zeros(3)
+  prox!(yout, GroupNormL0(0.25, [[1, 3]]), [2.0, 9.0, -2.0], 1.0)
+  @test yout == [2.0, 9.0, -2.0]
+
+  @test GroupNormL0(1, 3).idx == [1:1, 2:2, 3:3]
+  @test GroupNormL0([1, 2], [1:1, 2:2]).lambda == [1.0, 2.0]
+  @test_throws "index 1, 2, 3" GroupNormL0(-0.1, 3)
+  msg = try
+    GroupNormL0([1.0, -0.2, -3.0], [1:1, 2:2, 3:3])
+    ""
+  catch e
+    sprint(showerror, e)
+  end
+  @test occursin("index 2, 3", msg)
+  @test_throws "number of weights" GroupNormL0([1.0], [1:1, 2:2])
+  @test_throws "disjoint" GroupNormL0(1.0, [[1, 2], [2, 3]])
+  @test_throws "repeats index" GroupNormL0(1.0, [[1, 1, 2]])
+  @test_throws "nonnegative" GroupNormL0(1.0, -1)
+end
+
+@testset "ShiftedGroupNormL0" begin
+  λ = [1.2, 0.4]
+  idx = [1:3, 4:6]
+  h = GroupNormL0(λ, idx)
+  x = ones(6)
+  ψ = shifted(h, x)
+  @test typeof(ψ) == ShiftedGroupNormL0{
+    Float64,
+    Vector{Float64},
+    Vector{UnitRange{Int64}},
+    Vector{Float64},
+    Vector{Float64},
+    Vector{Float64},
+  }
+  @test all(ψ.sj .== 0)
+  @test all(ψ.xk .== x)
+  @test ψ.λ == h.lambda
+  @test typeof(ψ.λ) == Vector{Float64}
+
+  @test ψ(zeros(6)) == h(x)
+  y = [0.2, -0.4, 0.1, 0.0, 1.5, -0.3]
+  @test ψ(y) == h(x + y)
+
+  q = [0.5, -1.0, 0.3, 2.0, -0.2, 0.7]
+  ν = 0.8
+  yψ = similar(q)
+  yp = similar(q)
+  vψ = prox!(yψ, ψ, q, ν)
+  vψ2 = prox!(yψ, ψ, q, ν)
+  vp = prox!(yp, h, q + x, ν)
+  @test yψ ≈ yp - x
+  @test vψ ≈ vp
+  @test vψ2 ≈ vp
+  @test ψ(yψ) == h(yp)
+
+  shift!(ψ, y)
+  @test all(ψ.sj .== 0)
+  @test all(ψ.xk .== y)
+
+  s = ones(6) / 2
+  φ = shifted(ψ, s)
+  @test all(φ.sj .== s)
+  @test all(φ.xk .== y)
+  @test φ(zeros(6)) == h(y + s)
+  @test φ(q) == h(y + s + q)
+  yφ = similar(q)
+  yp2 = similar(q)
+  vφ = prox!(yφ, φ, q, ν)
+  vp2 = prox!(yp2, h, q + y + s, ν)
+  @test yφ ≈ yp2 - y - s
+  @test vφ ≈ vp2
+
+  h32 = GroupNormL0(Float32(1.2), 5)
+  y32 = rand(Float32, 10)
+  x32 = view(y32, 1:2:10)
+  ψ32 = shifted(h32, x32)
+  @test typeof(ψ32) == ShiftedGroupNormL0{
+    Float32,
+    Vector{Float32},
+    Vector{UnitRange{Int64}},
+    SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+    Vector{Float32},
+    Vector{Float32},
+  }
+  @test typeof(ψ32.λ) == Vector{Float32}
+  @test ψ32.λ == h32.lambda
+  @test ψ32(zeros(Float32, 5)) == h32(x32)
+end
+
+@testset "GroupRankL0" begin
+  idx = [1:2, 3:4]
+  λ = [1.0, 0.25]
+  x = [3.0, 0.0, 0.4, 0.0]
+  # No cardinality bound: the same hard threshold as GroupNormL0.
+  y = zeros(4)
+  yn = zeros(4)
+  prox!(y, GroupRankL0(λ, idx, 0, 2; delta = 0.1), x, 1.0)
+  prox!(yn, GroupNormL0(λ, idx), x, 1.0)
+  @test y == yn
+
+  # The cap keeps the group with the larger shifted gain.
+  ycap = zeros(2)
+  vcap = prox!(ycap, GroupRankL0([1.0, 0.1], 2, 0, 1), [sqrt(5.0), 2.0], 1.0)
+  @test ycap ≈ [0.0, 2.0]
+  @test vcap ≈ 0.1
+
+  # l = s = 0 turns every group off. l = s = m keeps every block.
+  y0 = ones(3)
+  v0 = prox!(y0, GroupRankL0(0.0, 3, 0, 0), [0.1, -0.2, 0.3], 1.0)
+  @test y0 == [0.0, 0.0, 0.0]
+  @test v0 == 0.0
+  xall = [0.1, -0.2, 0.3]
+  yall = zeros(3)
+  vall = prox!(yall, GroupRankL0(10.0, 3, 3, 3; delta = 1e-6), xall, 2.0)
+  @test yall ≈ xall
+  @test vall ≈ 30.0
+
+  # The largest gain is positive and the other two are zero, so only that group is kept.
+  ytie = zeros(3)
+  prox!(ytie, GroupRankL0(fill(0.5, 3), 3, 1, 3), [1.0, 2.0, 1.0], 1.0)
+  @test ytie ≈ [0.0, 2.0, 0.0]
+
+  h = GroupRankL0(1.0, 2, 1, 1; delta = 0.1)
+  @test h([0.0, 0.0]) == Inf
+  @test h([1.0, 1.0]) == Inf
+  @test h([1.0, 0.0]) == 1.0
+  @test GroupRankL0(1.0, 1, 1, 1; delta = 0.1)([1e-8]) == Inf
+  @test GroupRankL0(1.0, 1, 0, 1)([1e-18]) == 1.0
+
+  # Inside the supplied ball the candidate lies on the sphere.
+  yrad = zeros(1)
+  prox!(yrad, GroupRankL0(1.0, [1:1], 1, 1; delta = 0.1), [0.03], 1.0)
+  @test yrad ≈ [0.1]
+  yneg = zeros(1)
+  prox!(yneg, GroupRankL0(1.0, [1:1], 1, 1; delta = 0.1), [-0.03], 1.0)
+  @test yneg ≈ [-0.1]
+  yori = zeros(3)
+  prox!(yori, GroupRankL0(1.0, [[1, 3]], 1, 1; delta = 0.2), [0.0, 9.0, 0.0], 1.0)
+  @test yori ≈ [0.2, 9.0, 0.0]
+
+  # The default radius warns and names the groups it moved onto the sphere.
+  ydef = zeros(3)
+  logs, _ = Test.collect_test_logs() do
+    prox!(ydef, GroupRankL0(1.0, 3, 2, 2), zeros(3), 1.0)
+  end
+  active = [i for i in 1:3 if ydef[i] == sqrt(eps(Float64))]
+  @test length(logs) == 1
+  @test occursin("default exclusion ball", String(logs[1].message))
+  @test occursin("groups $active", String(logs[1].message))
+  @test length(active) == 2
+  @test count(iszero, ydef) == 1
+  yuser = zeros(3)
+  logs_user, _ = Test.collect_test_logs() do
+    prox!(yuser, GroupRankL0(1.0, 3, 2, 2; delta = 1e-8), zeros(3), 1.0)
+  end
+  @test isempty(logs_user)
+  @test count(==(1e-8), yuser) == 2
+  # A block the support turns off is written as zero and does not warn.
+  yoff = zeros(2)
+  logs_off, _ = Test.collect_test_logs() do
+    prox!(yoff, GroupRankL0(0.1, 2, 0, 1), [0.0, 5.0], 1.0)
+  end
+  @test isempty(logs_off)
+  @test yoff ≈ [0.0, 5.0]
+
+  @test_throws "0 ≤ l ≤ s" GroupRankL0(1.0, [1:1, 2:2], 2, 1)
+  @test_throws "0 ≤ l ≤ s" GroupRankL0(1.0, 3, -1, 2)
+  @test_throws "0 ≤ l ≤ s" GroupRankL0(1.0, 3, 0, 4)
+  @test_throws "positive" GroupRankL0(1.0, 1, 0, 1; delta = 0.0)
+  @test_throws "positive" GroupRankL0(1.0, 1, 0, 1; delta = -0.1)
+  @test_throws "positive" GroupRankL0(1.0, 1, 0, 1; delta = Inf)
+  @test_throws "number of weights" GroupRankL0([1, 2], [1:1], 0, 1)
+  @test_throws "index 1, 2" GroupRankL0(-0.1, 2, 0, 1)
+  msg = try
+    GroupRankL0([1.0, -0.2, -3.0], [1:1, 2:2, 3:3], 0, 2)
+    ""
+  catch e
+    sprint(showerror, e)
+  end
+  @test occursin("index 2, 3", msg)
+  @test_throws "index 5" GroupRankL0(1.0, [[1, 3, 5], [5]], 0, 1)
+end
+
+@testset "ShiftedGroupRankL0" begin
+  λ = [1.0, 0.4]
+  idx = [1:3, 4:6]
+  h = GroupRankL0(λ, idx, 0, 1; delta = 0.1)
+  x = [0.4, -1.2, 0.5, 2.0, 0.1, -0.3]
+  ψ = shifted(h, x)
+  @test typeof(ψ) == ShiftedGroupRankL0{
+    Float64,
+    Vector{Float64},
+    Vector{UnitRange{Int64}},
+    Vector{Float64},
+    Vector{Float64},
+    Vector{Float64},
+  }
+  @test all(ψ.sj .== 0)
+  @test all(ψ.xk .== x)
+  @test ψ.λ == h.lambda
+  @test typeof(ψ.λ) == Vector{Float64}
+
+  @test ψ(zeros(6)) == h(x)
+  y = [0.2, -0.1, 0.0, 0.4, -0.2, 0.3]
+  @test ψ(y) == h(x + y)
+
+  q = [1.0, 0.2, -0.5, 0.3, 1.1, -0.4]
+  ν = 1.0
+  yψ = similar(q)
+  yp = similar(q)
+  vψ = prox!(yψ, ψ, q, ν)
+  vψ2 = prox!(yψ, ψ, q, ν)
+  vp = prox!(yp, h, q + x, ν)
+  @test yψ ≈ yp - x
+  @test vψ ≈ vp
+  @test vψ2 ≈ vp
+  @test ψ(yψ) == h(yp)
+
+  shift!(ψ, y)
+  @test all(ψ.sj .== 0)
+  @test all(ψ.xk .== y)
+  s = fill(0.25, 6)
+  φ = shifted(ψ, s)
+  @test all(φ.sj .== s)
+  @test all(φ.xk .== y)
+  @test φ(zeros(6)) == h(y + s)
+  yφ = similar(q)
+  yp2 = similar(q)
+  vφ = prox!(yφ, φ, q, ν)
+  vp2 = prox!(yp2, h, q + y + s, ν)
+  @test yφ ≈ yp2 - y - s
+  @test vφ ≈ vp2
+
+  h32 = GroupRankL0(Float32(1.2), 5, 0, 3; delta = Float32(0.1))
+  y32 = rand(Float32, 10)
+  x32 = view(y32, 1:2:10)
+  ψ32 = shifted(h32, x32)
+  @test typeof(ψ32) == ShiftedGroupRankL0{
+    Float32,
+    Vector{Float32},
+    Vector{UnitRange{Int64}},
+    SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+    Vector{Float32},
+    Vector{Float32},
+  }
+  @test typeof(ψ32.λ) == Vector{Float32}
+  @test ψ32.λ == h32.lambda
+  @test ψ32(zeros(Float32, 5)) == h32(x32)
+end
+
+@testset "GroupRankProjL0" begin
+  copyproj!(dst, src, i) = copyto!(dst, src)
+  idx = [1:2, 3:5]
+  λ = [0.2, 0.5]
+  x = [1.0, -0.5, 0.2, 3.0, -1.0]
+  y = zeros(5)
+  yr = zeros(5)
+  vp = prox!(y, GroupRankProjL0(λ, idx, 0, 2, copyproj!), x, 0.5)
+  vr = prox!(yr, GroupRankL0(λ, idx, 0, 2; delta = 0.1), x, 0.5)
+  @test y ≈ yr
+  @test vp ≈ vr
+
+  # The stored projection is what an active group receives.
+  idxp = [[1, 3, 5], [2, 4]]
+  xp = [3.0, 0.1, 4.0, 0.2, -5.0]
+  P = [[1.0, 1.0, 1.0], [2.0, 2.0]]
+  project!(dst, src, i) = copyto!(dst, P[i])
+  yp = zeros(5)
+  vp = prox!(yp, GroupRankProjL0([0.1, 0.1], idxp, 0, 1, project!), xp, 1.0)
+  @test yp == [1.0, 0.0, 1.0, 0.0, 1.0]
+  @test vp ≈ 0.1
+
+  calls = Ref(0)
+  function counting!(dst, src, i)
+    calls[] += 1
+    copyto!(dst, P[i])
+  end
+  prox!(zeros(5), GroupRankProjL0([0.1, 0.1], idxp, 0, 1, counting!), xp, 1.0)
+  @test calls[] == 2
+
+  # l = s = m writes every projection, and a returned vector is accepted.
+  yret = zeros(2)
+  prox!(yret, GroupRankProjL0(0.0, 2, 2, 2, (dst, src, i) -> [Float64(i)]), [4.0, 5.0], 1.0)
+  @test yret ≈ [1.0, 2.0]
+
+  proj_zero!(dst, src, i) = (fill!(dst, 0.0); dst)
+  yzero = zeros(5)
+  prox!(yzero, GroupRankProjL0(0.1, idxp, 0, 2, proj_zero!), xp, 1.0)
+  @test all(iszero, yzero)
+
+  msgof(f) = try
+    f()
+    ""
+  catch e
+    sprint(showerror, e)
+  end
+  # Every origin is named, including a group the support would turn off.
+  msg = msgof() do
+    prox!(zeros(5), GroupRankProjL0(0.1, idxp, 1, 2, proj_zero!), xp, 1.0)
+  end
+  @test occursin("group 1", msg) && occursin("group 2", msg)
+  proj_one_zero!(dst, src, i) = (fill!(dst, i == 2 ? 0.0 : 1.0); dst)
+  msg = msgof() do
+    prox!(zeros(5), GroupRankProjL0(0.1, idxp, 1, 2, proj_one_zero!), xp, 1.0)
+  end
+  @test occursin("group 2", msg)
+  proj_loser!(dst, src, i) = begin
+    i == 1 ? copyto!(dst, [1.0, 1.0, 1.0]) : fill!(dst, 0.0)
+    return dst
+  end
+  msg = msgof() do
+    prox!(zeros(5), GroupRankProjL0(0.1, idxp, 1, 1, proj_loser!), xp, 1.0)
+  end
+  @test occursin("group 2", msg)
+
+  proj_short!(dst, src, i) = i == 1 ? [1.0] : [1.0, 1.0, 1.0]
+  msg = msgof() do
+    prox!(zeros(5), GroupRankProjL0(0.1, idxp, 0, 2, proj_short!), xp, 1.0)
+  end
+  @test occursin("group 1 has idx length 3 and projection length 1", msg)
+  @test occursin("group 2 has idx length 2 and projection length 3", msg)
+  proj_copy_bad!(dst, src, i) = begin
+    copyto!(dst, i == 1 ? [1.0, 1.0, 1.0, 1.0] : [1.0, 1.0, 1.0])
+    return dst
+  end
+  msg = msgof() do
+    prox!(zeros(5), GroupRankProjL0(0.1, idxp, 0, 2, proj_copy_bad!), xp, 1.0)
+  end
+  @test occursin("group 1 has idx length 3", msg)
+  @test occursin("group 2 has idx length 2", msg)
+
+  @test_throws MethodError GroupRankProjL0(1.0, [1:1], 0, 1)
+  @test_throws "index 1, 2" GroupRankProjL0(-0.1, 2, 0, 1, copyproj!)
+  msg = try
+    GroupRankProjL0([1.0, -0.2, -3.0], [1:1, 2:2, 3:3], 0, 2, copyproj!)
+    ""
+  catch e
+    sprint(showerror, e)
+  end
+  @test occursin("index 2, 3", msg)
+  @test_throws "number of weights" GroupRankProjL0([1.0], [1:1, 2:2], 0, 1, copyproj!)
+  @test_throws "disjoint" GroupRankProjL0(1.0, [1:2, 2:3], 0, 1, copyproj!)
+  @test_throws "0 ≤ l ≤ s" GroupRankProjL0(1.0, [1:1], 2, 0, copyproj!)
+end
+
+@testset "ShiftedGroupRankProjL0" begin
+  project!(dst, src, i) = copyto!(dst, src)
+  λ = [0.3, 0.8]
+  idx = [1:2, 3:4]
+  h = GroupRankProjL0(λ, idx, 1, 2, project!)
+  x = [1.5, -0.4, 0.2, 2.0]
+  ψ = shifted(h, x)
+  @test typeof(ψ) == ShiftedGroupRankProjL0{
+    Float64,
+    Vector{Float64},
+    Vector{UnitRange{Int64}},
+    typeof(project!),
+    Vector{Float64},
+    Vector{Float64},
+    Vector{Float64},
+  }
+  @test all(ψ.sj .== 0)
+  @test all(ψ.xk .== x)
+  @test ψ.λ == h.lambda
+  @test typeof(ψ.λ) == Vector{Float64}
+
+  @test ψ(zeros(4)) == h(x)
+  y = [0.1, -0.2, 0.3, -0.4]
+  @test ψ(y) == h(x + y)
+
+  q = [0.6, -1.0, 0.4, 0.2]
+  ν = 1.0
+  yψ = similar(q)
+  yp = similar(q)
+  vψ = prox!(yψ, ψ, q, ν)
+  vψ2 = prox!(yψ, ψ, q, ν)
+  vp = prox!(yp, h, q + x, ν)
+  @test yψ ≈ yp - x
+  @test vψ ≈ vp
+  @test vψ2 ≈ vp
+  @test ψ(yψ) == h(yp)
+
+  shift!(ψ, y)
+  @test all(ψ.sj .== 0)
+  @test all(ψ.xk .== y)
+  s = fill(0.5, 4)
+  φ = shifted(ψ, s)
+  @test all(φ.sj .== s)
+  @test all(φ.xk .== y)
+  @test φ(zeros(4)) == h(y + s)
+  yφ = similar(q)
+  yp2 = similar(q)
+  vφ = prox!(yφ, φ, q, ν)
+  vp2 = prox!(yp2, h, q + y + s, ν)
+  @test yφ ≈ yp2 - y - s
+  @test vφ ≈ vp2
+
+  h32 = GroupRankProjL0(Float32(1.2), 5, 0, 3, project!)
+  y32 = rand(Float32, 10)
+  x32 = view(y32, 1:2:10)
+  ψ32 = shifted(h32, x32)
+  @test typeof(ψ32) == ShiftedGroupRankProjL0{
+    Float32,
+    Vector{Float32},
+    Vector{UnitRange{Int64}},
+    typeof(project!),
+    SubArray{Float32, 1, Vector{Float32}, Tuple{StepRange{Int64, Int64}}, true},
+    Vector{Float32},
+    Vector{Float32},
+  }
+  @test typeof(ψ32.λ) == Vector{Float32}
+  @test ψ32.λ == h32.lambda
+  @test ψ32(zeros(Float32, 5)) == h32(x32)
+end
+
 include("testsbox.jl")
 include("partial_prox.jl")
 include("test_allocs.jl")
